@@ -1,0 +1,55 @@
+# Publish dsh-web-search-ext to npm with provenance when a GitHub release
+# is published. Flow:
+#   1. bump "version" in package.json, commit, push
+#   2. create a tag vX.Y.Z and publish a GitHub release for it
+#      (or trigger manually via Actions -> publish -> Run workflow)
+#   3. this workflow tests (mocked Part A; Part B live smoke is skipped in
+#      CI) and runs `npm publish --provenance`
+#
+# Requires a repository secret NPM_TOKEN:
+#   - npmjs.com -> Account settings -> Access tokens -> Granular Access
+#     Token, enable "Publish packages" + "Read package metadata &
+#     versions", scope to this package, paste it here; or
+#   - enable GitHub's pre-provisioned token for public repos:
+#     Settings -> Secrets and variables -> Actions -> Node.js / NPM.
+
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test (Part A; Part B live smoke skipped in CI)
+        run: npm test
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

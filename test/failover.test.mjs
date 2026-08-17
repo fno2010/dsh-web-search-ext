@@ -83,9 +83,12 @@ function ok(label) {
 	console.log(`  ok ${label}`);
 }
 
-// 1. Exa anonymous MCP happy path maps Title/URL/Published/Highlights.
+// 1. preferred=exa: exa succeeds → firecrawl never called.
 {
-	mockFetch(async () => jsonResponse(200, EXA_MCP_OK));
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_OK);
+		throw new Error("firecrawl should not be called");
+	});
 	const p = providerWith(DEFAULTS);
 	assert.equal(p.id, PROVIDER_ID);
 	assert.equal(p.available(), true);
@@ -98,6 +101,35 @@ function ok(label) {
 	assert.equal(result.truncated, false);
 	restoreFetch();
 	ok("exa MCP happy path maps Title/URL/Highlights, drops N/A");
+}
+
+// 2. exa 429 → firecrawl v2 succeeds (failover + snippet cleaning).
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(429, "");
+		assert.ok(url.startsWith("https://api.firecrawl.dev/v2/search"));
+		return jsonResponse(200, FIRECRAWL_V2_OK);
+	});
+	const p = providerWith(DEFAULTS);
+	const result = await p.search({ query: "hello", maxResults: 5 });
+	assert.equal(result.sources.length, 2);
+	assert.equal(result.sources[0].snippet, "Desc one with **markdown**.", "image markdown stripped, whitespace collapsed");
+	assert.equal(result.sources[1].snippet, undefined, "URL-only source kept without snippet");
+	restoreFetch();
+	ok("exa 429 fails over to firecrawl; v2 data.web[] mapped; markdown cleaned");
+}
+
+// 3. firecrawl 401 (keyless dead) with preferred=firecrawl → exa succeeds.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) return jsonResponse(401, "");
+		return jsonResponse(200, EXA_MCP_OK);
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources[0].url, "https://a.example/1");
+	restoreFetch();
+	ok("preferred=firecrawl: 401 falls through to exa");
 }
 
 // 6. abort already signaled → immediate WEB_ABORTED, no network.
@@ -132,7 +164,20 @@ function ok(label) {
 	ok("exa REST with key: Bearer auth, results[].highlights mapped");
 }
 
-console.log(`\nPart A: ${passed}/3 scenarios passed`);
+// 9. firecrawlKeyless=false and no key → firecrawl skipped entirely.
+{
+	mockFetch(async (url) => {
+		assert.ok(!url.startsWith("https://api.firecrawl.dev"));
+		return jsonResponse(200, EXA_MCP_OK);
+	});
+	const p = providerWith({ ...DEFAULTS, firecrawlKeyless: false });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources.length, 2);
+	restoreFetch();
+	ok("firecrawlKeyless=false with no key: backend excluded from plan");
+}
+
+console.log(`\nPart A: ${passed}/6 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 
@@ -149,6 +194,23 @@ restoreFetch();
 		assert.ok(source.snippet.length > 0, "snippet present");
 	}
 	console.log(`  ok exa anonymous MCP live: ${result.sources.length} sources, first: ${result.sources[0].title ?? result.sources[0].url}`);
+}
+
+// B2: firecrawl keyless v2 through the provider (force firecrawl first).
+{
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl", numResults: 3 });
+	const result = await p.search({ query: "DeepSeek Harness agent harness" });
+	assert.ok(result.sources.length >= 1, "firecrawl keyless returned sources");
+	console.log(`  ok firecrawl keyless v2 live: ${result.sources.length} sources, first: ${result.sources[0].title ?? result.sources[0].url}`);
+}
+
+// B3: dual-backend failover live — exa 429 simulated is hard to force live, so
+// instead verify a normal dual plan works end-to-end with exa first.
+{
+	const p = providerWith({ ...DEFAULTS, numResults: 3 });
+	const result = await p.search({ query: "firecrawl web search api" });
+	assert.ok(result.sources.length >= 1);
+	console.log(`  ok dual plan live (exa preferred): ${result.sources.length} sources`);
 }
 
 console.log(`\nAll tests passed.`);

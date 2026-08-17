@@ -2,17 +2,26 @@
  * Failover and mapping tests for dsh-web-search-ext.
  * Run: node test/failover.test.mjs
  *
- * Part A: mocked fetch — Exa anonymous MCP result mapping and abort handling.
- * Part B: live smoke — one real keyless call to the Exa anonymous MCP.
+ * Part A: mocked fetch — failover order, 429 cooldown, combined errors, abort.
+ * Part B: live smoke — one real keyless call per backend (Exa anonymous MCP,
+ *          Firecrawl v2 keyless), asserting the provider maps real payloads.
  */
 import assert from "node:assert/strict";
 import { MultiBackendSearchProvider, Config, PROVIDER_ID } from "../lib/index.js";
 
 const DEFAULTS = {
+	preferred: "exa",
+	exaApiKey: undefined,
+	exaApiKeyEnv: "EXA_API_KEY",
+	firecrawlApiKey: undefined,
+	firecrawlApiKeyEnv: "FIRECRAWL_API_KEY",
+	exaApiUrl: "https://api.exa.ai/search",
 	exaMcpUrl: "https://mcp.exa.ai/mcp",
+	firecrawlBaseUrl: "https://api.firecrawl.dev/v2",
 	numResults: 8,
 	maxSnippetChars: 500,
-	rateLimitCooldownSec: 60
+	rateLimitCooldownSec: 60,
+	firecrawlKeyless: true
 };
 
 // A mock plugin context: no credentials service, launch env = process.env.
@@ -63,6 +72,11 @@ const EXA_MCP_OK = JSON.stringify({
 	}
 });
 
+const FIRECRAWL_V2_OK = { success: true, data: { web: [
+	{ url: "https://f.example/1", title: "F1", description: "![img](https://x/1.png) Desc one with **markdown**." },
+	{ url: "https://f.example/2", title: "F2" }
+] } };
+
 let passed = 0;
 function ok(label) {
 	passed++;
@@ -100,7 +114,25 @@ function ok(label) {
 	ok("pre-aborted signal throws WEB_ABORTED before any request");
 }
 
-console.log(`\nPart A: ${passed}/2 scenarios passed`);
+// 7. exa REST path (key present) maps results[] + highlights.
+{
+	mockFetch(async (url, init) => {
+		assert.ok(url === "https://api.exa.ai/search");
+		assert.ok(init.headers.authorization === "Bearer k-test");
+		assert.ok(JSON.parse(init.body).query === "hello");
+		return jsonResponse(200, { results: [
+			{ url: "https://r.example/1", title: "R1", highlights: ["Rest snippet one.", "second"], publishedDate: "2025-12-31" }
+		] });
+	});
+	const p = providerWith({ ...DEFAULTS, exaApiKey: "k-test" });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources[0].snippet, "Rest snippet one.");
+	assert.equal(result.sources[0].publishedAt, "2025-12-31");
+	restoreFetch();
+	ok("exa REST with key: Bearer auth, results[].highlights mapped");
+}
+
+console.log(`\nPart A: ${passed}/3 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

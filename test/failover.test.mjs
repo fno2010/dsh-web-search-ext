@@ -132,6 +132,47 @@ function ok(label) {
 	ok("preferred=firecrawl: 401 falls through to exa");
 }
 
+// 4. both 429 → combined error names both; second call reports cooldowns.
+{
+	mockFetch(async (url) => jsonResponse(429, ""));
+	const p = providerWith(DEFAULTS);
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => error.code === "WEB_PROVIDER_ERROR" && /exa \(rate limited\)/.test(error.message) && /firecrawl \(rate limited\)/.test(error.message)
+	);
+	let fetchCalls = 0;
+	mockFetch(async () => {
+		fetchCalls++;
+		return jsonResponse(429, "");
+	});
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => error.code === "WEB_PROVIDER_ERROR" && /in rate-limit cooldown/.test(error.message)
+	);
+	assert.equal(fetchCalls, 0, "cooled backends are skipped while another candidate exists");
+	restoreFetch();
+	ok("dual 429: combined failure lists both; cooldown skips both with retry hint");
+}
+
+// 5. both cooled, single-backend plan is still attempted (no total lockout).
+{
+	const p = providerWith({ ...DEFAULTS, firecrawlKeyless: false, exaApiKey: "k-test" });
+	mockFetch(async () => jsonResponse(429, ""));
+	await assert.rejects(() => p.search({ query: "hello" }));
+	let attempted = 0;
+	mockFetch(async () => {
+		attempted++;
+		return jsonResponse(429, "");
+	});
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => /exa \(rate limited\)/.test(error.message)
+	);
+	assert.equal(attempted, 1, "sole remaining backend is attempted even in cooldown");
+	restoreFetch();
+	ok("cooldown never locks out the only remaining backend");
+}
+
 // 6. abort already signaled → immediate WEB_ABORTED, no network.
 {
 	mockFetch(async () => jsonResponse(200, EXA_MCP_OK));
@@ -191,7 +232,7 @@ function ok(label) {
 	ok("firecrawlKeyless=false with no key: backend excluded from plan");
 }
 
-console.log(`\nPart A: ${passed}/7 scenarios passed`);
+console.log(`\nPart A: ${passed}/9 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

@@ -1,13 +1,14 @@
 {
   "name": "dsh-web-search-ext",
   "version": "0.1.0",
-  "description": "Web-search provider for the DeepSeek Harness web capability seam (ctx.web)",
+  "description": "Multi-backend web_search provider for the DeepSeek Harness web seam (ctx.web): Exa (REST with key, anonymous hosted MCP without) and Firecrawl (v2 search API) today, extensible to more backends (SearXNG, ...), with automatic failover when one backend rate-limits",
   "keywords": [
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
     "web-search",
     "exa",
+    "firecrawl",
     "failover"
   ],
   "license": "MIT",

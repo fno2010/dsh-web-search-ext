@@ -1,6 +1,6 @@
 /**
  * Failover and mapping tests for dsh-web-search-ext.
- * Run: node test/failover.test.mjs
+ * Run: node test/failover.test.mjs (Part B live smoke is skipped when CI is set)
  *
  * Part A: mocked fetch — failover order, 429 cooldown, combined errors, abort.
  * Part B: live smoke — one real keyless call per backend (Exa anonymous MCP,
@@ -260,6 +260,14 @@ function ok(label) {
 console.log(`\nPart A: ${passed}/10 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
+
+if (process.env.CI) {
+	// Live endpoints are rate-limited; in CI the mocked Part A is what we
+	// verify. Run without the CI env var locally to include the live calls.
+	console.log("\nPart B: skipped in CI");
+	console.log(`\nAll tests passed.`);
+	process.exit(0);
+}
 
 console.log("\nPart B: live smoke tests (real network)");
 restoreFetch();

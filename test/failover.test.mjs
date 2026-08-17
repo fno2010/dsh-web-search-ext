@@ -164,6 +164,20 @@ function ok(label) {
 	ok("exa REST with key: Bearer auth, results[].highlights mapped");
 }
 
+// 8. firecrawl v1 shape (bare data array) still maps.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(429, "");
+		return jsonResponse(200, { success: true, data: [{ url: "https://v1.example/1", title: "V1", description: "old shape" }] });
+	});
+	const p = providerWith(DEFAULTS);
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources[0].url, "https://v1.example/1");
+	assert.equal(result.sources[0].snippet, "old shape");
+	restoreFetch();
+	ok("firecrawl v1 data[] envelope handled");
+}
+
 // 9. firecrawlKeyless=false and no key → firecrawl skipped entirely.
 {
 	mockFetch(async (url) => {
@@ -177,7 +191,7 @@ function ok(label) {
 	ok("firecrawlKeyless=false with no key: backend excluded from plan");
 }
 
-console.log(`\nPart A: ${passed}/6 scenarios passed`);
+console.log(`\nPart A: ${passed}/7 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

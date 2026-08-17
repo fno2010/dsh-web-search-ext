@@ -232,7 +232,32 @@ function ok(label) {
 	ok("firecrawlKeyless=false with no key: backend excluded from plan");
 }
 
-console.log(`\nPart A: ${passed}/9 scenarios passed`);
+// 10. Config schema + plugin exports sanity. Schemastery schemas declare, they
+// do not parse: the harness consumes toJSON() (a ref graph) for the settings
+// UI, so assert on the contract-critical markers in that graph.
+{
+	const graph = Config.toJSON();
+	const refs = Object.values(graph.refs ?? {});
+	const values = [];
+	const defaults = [];
+	const roles = [];
+	for (const node of refs) {
+		if (node.value !== undefined) values.push(node.value);
+		if (node.meta?.default !== undefined) defaults.push(node.meta.default);
+		if (node.meta?.role !== undefined) roles.push(node.meta.role);
+	}
+	for (const expected of ["exa", "firecrawl", "EXA_API_KEY", "FIRECRAWL_API_KEY", "https://api.exa.ai/search", "https://mcp.exa.ai/mcp", "https://api.firecrawl.dev/v2", 8, 500, 60, true]) {
+		assert.ok(values.includes(expected) || defaults.includes(expected), `schema graph carries ${String(expected)}`);
+	}
+	assert.equal(roles.filter((role) => role === "secret").length, 2, "both key literals declared secret");
+	const moduleExports = await import("../lib/index.js");
+	assert.equal(moduleExports.name, "dsh-web-search-ext");
+	assert.deepEqual(moduleExports.inject, ["web"]);
+	assert.equal(typeof moduleExports.apply, "function");
+	ok("Config schema graph markers + plugin exports match the contract");
+}
+
+console.log(`\nPart A: ${passed}/10 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

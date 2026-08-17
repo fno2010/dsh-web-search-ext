@@ -1,0 +1,24 @@
+# dsh-web-search-ext bundle patch.
+#
+# Mounts the multi-backend search provider (Exa + Firecrawl today, with
+# failover; the architecture admits further backends such as SearXNG) and
+# selects it as the web seam's search provider. The official
+# `deepseek-official` provider may remain registered; with an explicit
+# `searchProvider` the seam never reports WEB_PROVIDER_AMBIGUOUS.
+#
+# Keys are configured through the settings section (`web-search-ext`
+# in settings.yaml) or the credentials service (EXA_API_KEY /
+# FIRECRAWL_API_KEY). No key is required: Exa falls back to its anonymous
+# hosted MCP endpoint and Firecrawl may be queried keyless.
+#
+# To use the official DeepSeek backend instead, remove this `web` row or set
+# `searchProvider: deepseek-official` in the user's own profile patch.
+
+- insert:
+    - id: web-search-ext
+      name: 'dsh-web-search-ext'
+
+- id: web
+  name: '@deepseek-ai/dsh-web'
+  config:
+    searchProvider: web-search-ext

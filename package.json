@@ -1,7 +1,11 @@
 {
   "name": "@fno2010/dsh-web-search-ext",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-backend web_search provider for the DeepSeek Harness web seam (ctx.web): Exa (REST with key, anonymous hosted MCP without) and Firecrawl (v2 search API) today, extensible to more backends (SearXNG, ...), with automatic failover when one backend rate-limits",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fno2010/dsh-web-search-ext.git"
+  },
   "keywords": [
     "dsh",
     "dsh-plugin",

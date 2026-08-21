@@ -26,7 +26,7 @@ No other code changes: failover, cooldown, abort handling, and snippet bounding 
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-web-search-ext
+dsh plugin --profile web add @fno2010/dsh-web-search-ext
 # or from a local checkout:
 dsh plugin --profile web add ./path/to/dsh-web-search-ext
 ```
@@ -68,7 +68,7 @@ Or select this provider without the bundle patch: `DSH_WEB_SEARCH_PROVIDER=web-s
 ## Uninstall
 
 ```sh
-dsh plugin --profile web remove dsh-web-search-ext   # then restart dsh web
+dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh web
 ```
 
 ## Security notes

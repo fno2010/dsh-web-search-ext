@@ -59,4 +59,14 @@ jobs:
         with:
           node-version: 24
       - name: Publish to npm (trusted publishing, no token)
-        run: npm publish --provenance --access public
+        # Idempotent guard: if the version declared at this tag already exists
+        # on the registry (re-created tag, retag, accidental republish), skip
+        # with a notice instead of failing on E409/ETARGET.
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "::notice::$NAME@$VERSION is already published to the registry — skipping publish."
+            exit 0
+          fi
+          npm publish --provenance --access public

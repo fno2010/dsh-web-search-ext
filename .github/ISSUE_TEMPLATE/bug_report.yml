@@ -1,0 +1,35 @@
+name: "Bug report"
+description: A search failure, wrong result mapping, or unexpected backend behaviour.
+title: "[bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected vs what actually happened.
+      placeholder: "Exa kept returning 429 and firecrawl fallback didn't kick in…"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Backend(s) involved, settings in use (web-search-ext section — no keys!), and a query that fails reliably if there is one.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output
+      description: Paste the error the tool returned (redact any keys).
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: dsh version, node version, OS, which backends you have keys for.
+    validations:
+      required: false

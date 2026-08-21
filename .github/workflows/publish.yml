@@ -1,23 +1,32 @@
-# Publish dsh-web-search-ext to npm with provenance when a GitHub release
-# is published. Flow:
-#   1. bump "version" in package.json, commit, push
-#   2. create a tag vX.Y.Z and publish a GitHub release for it
-#      (or trigger manually via Actions -> publish -> Run workflow)
-#   3. this workflow tests (mocked Part A; Part B live smoke is skipped in
-#      CI) and runs `npm publish --provenance`
+# Publish dsh-web-search-ext to npm via trusted publishing (OIDC).
+# No npm token is stored anywhere in this repo.
 #
-# Requires a repository secret NPM_TOKEN:
-#   - npmjs.com -> Account settings -> Access tokens -> Granular Access
-#     Token, enable "Publish packages" + "Read package metadata &
-#     versions", scope to this package, paste it here; or
-#   - enable GitHub's pre-provisioned token for public repos:
-#     Settings -> Secrets and variables -> Actions -> Node.js / NPM.
+# One-time bootstrap (in this order):
+#   1. First version is published locally:
+#        npm login && npm publish --access public
+#      (a package must exist on the registry before its trusted publisher
+#       can be configured)
+#   2. npmjs.com -> package dsh-web-search-ext -> Settings ->
+#      Trusted Publisher -> GitHub Actions:
+#        Organization or user: fno2010
+#        Repository:           dsh-web-search-ext
+#        Workflow filename:    publish.yml
+#        Allowed actions:      npm publish
+#   3. From then on, every release is: bump "version" in package.json,
+#      commit, tag vX.Y.Z, push the tag -> this workflow publishes.
+#
+# Notes:
+#   - The published version is whatever package.json says at the tagged
+#     commit; tag it only after the version bump commit.
+#   - Part B live smoke is skipped in CI (CI env var); Part A is mocked.
+#   - Provenance attestations are generated automatically under trusted
+#     publishing; --provenance is kept explicit.
 
 name: publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
   workflow_dispatch: {}
 
 permissions:
@@ -32,8 +41,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Install dependencies
@@ -45,11 +54,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - name: Publish to npm with provenance
+      - name: Publish to npm (trusted publishing, no token)
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

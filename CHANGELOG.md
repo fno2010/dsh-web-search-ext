@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.2] - 2026-08-21
+
+### Fixed
+
+- Corrected the README (EN + ZH) claim about where the Exa/Firecrawl keys are configured: the Web "Models" page manages **LLM provider** credentials only and has no field for `EXA_API_KEY` / `FIRECRAWL_API_KEY`. The docs now name the real channels (settings literal, the credentials file, launch env var) and point to the tracked settings-UI feature request.
+
+### Changed
+
+- Attribution user-agent bumped to match the package version.
+
 ## [0.1.1] - 2026-08-21
 
 ### Added

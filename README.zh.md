@@ -71,7 +71,7 @@ web-search-ext:
 每个后端按以下优先级解析 key：
 
 1. 设置段里的明文 key（`exaApiKey` / `firecrawlApiKey`）
-2. 凭证服务：`EXA_API_KEY` / `FIRECRAWL_API_KEY`（Web 的 "Models" 页面会写入；`~/.dsh/.credentials.yaml`）
+2. 凭证服务：`~/.dsh/.credentials.yaml` 中的 `EXA_API_KEY` / `FIRECRAWL_API_KEY` 条目（Web 的 "Models" 页面只管理 LLM 提供方凭证，没有这两个字段——直接编辑文件即可；界面配置入口见待办的 settings-UI feature issue）
 3. 同名的启动环境变量
 
 一个 key 都没有也能工作：Exa 走匿名 MCP 端点，Firecrawl 以无 key 方式尝试。

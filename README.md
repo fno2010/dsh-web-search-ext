@@ -71,7 +71,7 @@ Or select this provider without the bundle patch: `DSH_WEB_SEARCH_PROVIDER=web-s
 Any of these, in order of precedence per backend:
 
 1. Literal key in the settings section (`exaApiKey` / `firecrawlApiKey`)
-2. Credentials service: `EXA_API_KEY` / `FIRECRAWL_API_KEY` (the Web "Models" page writes them; `~/.dsh/.credentials.yaml`)
+2. Credentials service: the `EXA_API_KEY` / `FIRECRAWL_API_KEY` entries in `~/.dsh/.credentials.yaml` (the Web "Models" page manages LLM provider credentials only and has no field for these — add them by editing the file; a settings-UI entry point is tracked as a feature request)
 3. Launch environment variable of the same name
 
 No keys at all still works: Exa uses its anonymous MCP endpoint and Firecrawl is tried keyless.

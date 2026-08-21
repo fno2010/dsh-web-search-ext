@@ -19,15 +19,18 @@
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node test/failover.test.mjs"
+    "test": "node test/failover.test.mjs",
+    "build:client": "tsdown && node scripts/wrap-client.mjs"
   },
   "exports": {
     ".": "./lib/index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./client/client.js"
   },
   "files": [
     "lib",
+    "client",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md",
@@ -51,6 +54,19 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-api-remotes"
+      ]
     }
+  },
+  "devDependencies": {
+    "tsdown": "^0.22.14"
   }
 }

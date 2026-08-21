@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # npm dependencies (lib) — auto-PR on weekly scan.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+  # GitHub Actions versions (workflows) — keeps checkout/setup-node current.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"

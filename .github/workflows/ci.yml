@@ -1,0 +1,29 @@
+# Continuous integration: run the test suite on every push to main and every
+# pull request. This is the merge gate — publishing is NOT done here.
+#
+# Publishing lives in publish.yml (tag-triggered, trusted publishing / OIDC).
+# Part B (live keyless smoke) is skipped in CI (CI env var); Part A is mocked.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test (Part A; Part B live smoke skipped in CI)
+        run: npm test

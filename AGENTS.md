@@ -38,6 +38,6 @@ A DSH (DeepSeek Harness) plugin: a multi-backend `web_search` provider for the b
 
 1. Bump `version` in `package.json` + `CHANGELOG.md` entry, in one PR.
 2. On the merged commit: `git tag vX.Y.Z && git push origin vX.Y.Z`. `publish.yml` runs the test gate then `npm publish --provenance` (idempotent: already-published versions skip with a notice).
-3. `gh release create vX.Y.Z` with notes mirroring the changelog.
-- **Tag pushes run the workflow file *at the tagged commit*, not main's.** Merge pipeline changes before cutting the tag.
+3. `gh release create vX.Y.Z` with notes mirroring the changelog (if the tag is missing, this command creates it at main HEAD — footgun documented in CONTRIBUTING.md).
+4. **Tag pushes run the workflow file *at the tagged commit*, not main's.** Merge pipeline changes before cutting the tag.
 - `peerDependencies` prerelease ranges do not automatically cover a *new* prerelease line (e.g. `^0.1.0-rc.6` excludes `0.2.0-rc.1`). When the harness moves to a new prerelease line, add a `||` branch to the affected range (details in CONTRIBUTING.md), or installs break with `ERESOLVE`.

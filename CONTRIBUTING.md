@@ -4,7 +4,7 @@ Thanks for improving the plugin! This file covers development, conventions, addi
 
 ## Development
 
-- Node.js >= 22, no build step. Install deps with `npm install` (a lockfile-less dev is fine; the package publishes only `lib/`).
+- Node.js >= 22, no build step. Install deps with `npm install` (a lockfile-less dev is fine; the package publishes `lib/`, the Cordis patch file, and the docs).
 - Run the suite: `npm test`
   - **Part A** — 10 mocked failover/mapping scenarios (deterministic, no network).
   - **Part B** — 3 live keyless smoke calls (Exa anonymous MCP, Firecrawl keyless, dual plan). Skipped automatically when `CI` is set (`CI=true npm test` = Part A only). Part B hits shared anonymous rate limits — don't run it in a tight loop.
@@ -45,8 +45,8 @@ Releases are tag-driven; the workflow publishes via **trusted publishing** (OIDC
 2. Tag the merged commit and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
    The `publish` workflow runs the test gate, then `npm publish --provenance` (SLSA provenance attestation is attached automatically). The publish job is idempotent: if the version already exists on the registry, it skips with a notice instead of failing.
 3. Backfill a GitHub Release with notes: `gh release create vX.Y.Z --title "vX.Y.Z" --notes "…"` (mirrors the CHANGELOG entry). Note: `gh release create` creates and pushes a missing tag — if the version was never tagged, the tag lands at the current main HEAD, which may declare a *different* version than the tag name implies.
-- **Tag pushes run the workflow file *at the tagged commit*, not main's.** Merge any pipeline change to main first; only tags cut after that merge use the new pipeline. (The v0.1.0 backfill tag is the example: it pointed at a commit predating the idempotent guard, so its run failed on a guaranteed E409.)
-4. Keep the attribution label in sync: `USER_AGENT` in `lib/index.js` carries the package version.
+4. **Tag pushes run the workflow file *at the tagged commit*, not main's.** Merge any pipeline change to main first; only tags cut after that merge use the new pipeline. (The v0.1.0 backfill tag is the example: it pointed at a commit predating the idempotent guard, so its run failed on a guaranteed E409.)
+5. Keep the attribution label in sync: `USER_AGENT` in `lib/index.js` carries the package version.
 
 Versioning: `0.x` — the settings surface may still gain fields; breaking changes allowed but noted in the changelog. `1.0.0` — the `Config` field surface is frozen; only additive changes thereafter.
 

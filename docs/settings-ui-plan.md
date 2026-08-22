@@ -283,8 +283,17 @@ copy comes from `t()` — matching the settings shell's "ownerless copy" model
    two `window.__ModuleLoader__.load` calls — one per install form's key
    (`dsh-web-search-ext` link key, `@fno2010/dsh-web-search-ext` npm key).
    Verified live: the link-install profile materializes the unscoped row;
-   the npm-install path is covered by the second registration (same
-   factory body; the unmaterialized registration costs one idle closure).
+   the npm-install path is covered by the second registration (verified
+   against the loader's boot/registration semantics; same factory body,
+   the unmaterialized registration costs one idle closure).
+   **HMR caveat** (both handled in the wrap script): the HMR driver
+   invalidates and re-executes only the reloaded row's id — so (a) the
+   other id's re-registration throws the loader's duplicate error on
+   every dev-loop rebuild; each emitted `load` swallows exactly that
+   message and rethrows everything else, and (b) `removeOwnedStyles(id)`
+   deletes `<style data-plugin>` tags by exact match on the row id, so
+   the emitted `data-plugin` attribute carries each block's own id or the
+   stale stylesheet would survive the swap on link: profiles.
 2. **`LocaleNamespaceMap` typing.** `locale.register` is "checked against
    `LocaleNamespaceMap`" — a typed namespace registry. Confirm whether a
    third-party namespace registers at runtime without a type-level entry, or

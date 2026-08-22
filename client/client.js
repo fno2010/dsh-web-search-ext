@@ -1,3 +1,4 @@
+try {
 window.__ModuleLoader__.load({ id: "dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
@@ -5,7 +6,7 @@ const wsxCss = ".card-module__card {\n  border: 1px solid var(--dsw-alias-border
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
-	tag.dataset.plugin = "@fno2010/dsh-web-search-ext";
+	tag.dataset.plugin = "dsh-web-search-ext";
 	tag.dataset.pluginCss = wsxTagId;
 	tag.textContent = wsxCss;
 	document.head.appendChild(tag);
@@ -398,7 +399,11 @@ exports.name = name;
 	return module.exports;
 }
 });
+} catch (wsxErr) {
+if (!String((wsxErr && wsxErr.message) || wsxErr).includes("duplicate factory registration")) throw wsxErr;
+}
 
+try {
 window.__ModuleLoader__.load({ id: "@fno2010/dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
@@ -799,3 +804,6 @@ exports.name = name;
 	return module.exports;
 }
 });
+} catch (wsxErr) {
+if (!String((wsxErr && wsxErr.message) || wsxErr).includes("duplicate factory registration")) throw wsxErr;
+}

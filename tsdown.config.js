@@ -15,7 +15,7 @@ export default defineConfig({
       // No [hash] in the pattern: lightningcss hashes from the absolute
       // source path, so a hash would differ per machine and break the
       // committed-bundle drift check in CI. [name]__[local] is stable
-      // everywhere and collision-safe (unique "card_module_" prefix).
+      // everywhere and collision-safe (unique "card-module__" prefix).
       generateScopedName: "[name]__[local]"
     }
   },

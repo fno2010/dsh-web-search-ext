@@ -1,7 +1,7 @@
 window.__ModuleLoader__.load({ id: "dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = "._4TrM5a_card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n._4TrM5a_card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n._4TrM5a_header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n._4TrM5a_headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n._4TrM5a_name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n._4TrM5a_description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n._4TrM5a_chevronOpen {\n  transform: rotate(180deg);\n}\n\n._4TrM5a_body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n._4TrM5a_field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n._4TrM5a_field + ._4TrM5a_field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n._4TrM5a_head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n._4TrM5a_label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n._4TrM5a_badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n._4TrM5a_badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n._4TrM5a_pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n._4TrM5a_input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n._4TrM5a_hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n._4TrM5a_footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n._4TrM5a_failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard, ._4TrM5a_save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n._4TrM5a_discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n._4TrM5a_discard:disabled, ._4TrM5a_save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n._4TrM5a_discard:focus-visible, ._4TrM5a_save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n._4TrM5a_spin {\n  animation: .8s linear infinite _4TrM5a_wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes _4TrM5a_wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -60,31 +60,31 @@ const zh = {
 //#endregion
 //#region src/client/card.module.css
 var card_module_default = {
-	"badge": "_4TrM5a_badge",
-	"badgeMuted": "_4TrM5a_badgeMuted",
-	"badges": "_4TrM5a_badges",
-	"body": "_4TrM5a_body",
-	"card": "_4TrM5a_card",
-	"cardOpen": "_4TrM5a_cardOpen",
-	"check": "_4TrM5a_check",
-	"chevron": "_4TrM5a_chevron",
-	"chevronOpen": "_4TrM5a_chevronOpen",
-	"description": "_4TrM5a_description",
-	"discard": "_4TrM5a_discard",
-	"failed": "_4TrM5a_failed",
-	"field": "_4TrM5a_field",
-	"footer": "_4TrM5a_footer",
-	"head": "_4TrM5a_head",
-	"header": "_4TrM5a_header",
-	"headText": "_4TrM5a_headText",
-	"hint": "_4TrM5a_hint",
-	"input": "_4TrM5a_input",
-	"label": "_4TrM5a_label",
-	"name": "_4TrM5a_name",
-	"pending": "_4TrM5a_pending",
-	"save": "_4TrM5a_save",
-	"spin": "_4TrM5a_spin",
-	"wsx-rot": "_4TrM5a_wsx-rot"
+	"badge": "card-module__badge",
+	"badgeMuted": "card-module__badgeMuted",
+	"badges": "card-module__badges",
+	"body": "card-module__body",
+	"card": "card-module__card",
+	"cardOpen": "card-module__cardOpen",
+	"check": "card-module__check",
+	"chevron": "card-module__chevron",
+	"chevronOpen": "card-module__chevronOpen",
+	"description": "card-module__description",
+	"discard": "card-module__discard",
+	"failed": "card-module__failed",
+	"field": "card-module__field",
+	"footer": "card-module__footer",
+	"head": "card-module__head",
+	"header": "card-module__header",
+	"headText": "card-module__headText",
+	"hint": "card-module__hint",
+	"input": "card-module__input",
+	"label": "card-module__label",
+	"name": "card-module__name",
+	"pending": "card-module__pending",
+	"save": "card-module__save",
+	"spin": "card-module__spin",
+	"wsx-rot": "card-module__wsx-rot"
 };
 //#endregion
 //#region src/client/index.js
@@ -402,7 +402,7 @@ exports.name = name;
 window.__ModuleLoader__.load({ id: "@fno2010/dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = "._4TrM5a_card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n._4TrM5a_card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n._4TrM5a_header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n._4TrM5a_headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n._4TrM5a_name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n._4TrM5a_description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n._4TrM5a_chevronOpen {\n  transform: rotate(180deg);\n}\n\n._4TrM5a_body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n._4TrM5a_field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n._4TrM5a_field + ._4TrM5a_field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n._4TrM5a_head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n._4TrM5a_label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n._4TrM5a_badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n._4TrM5a_badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n._4TrM5a_pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n._4TrM5a_input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n._4TrM5a_hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n._4TrM5a_footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n._4TrM5a_failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard, ._4TrM5a_save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n._4TrM5a_discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n._4TrM5a_discard:disabled, ._4TrM5a_save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n._4TrM5a_discard:focus-visible, ._4TrM5a_save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n._4TrM5a_spin {\n  animation: .8s linear infinite _4TrM5a_wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes _4TrM5a_wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -461,31 +461,31 @@ const zh = {
 //#endregion
 //#region src/client/card.module.css
 var card_module_default = {
-	"badge": "_4TrM5a_badge",
-	"badgeMuted": "_4TrM5a_badgeMuted",
-	"badges": "_4TrM5a_badges",
-	"body": "_4TrM5a_body",
-	"card": "_4TrM5a_card",
-	"cardOpen": "_4TrM5a_cardOpen",
-	"check": "_4TrM5a_check",
-	"chevron": "_4TrM5a_chevron",
-	"chevronOpen": "_4TrM5a_chevronOpen",
-	"description": "_4TrM5a_description",
-	"discard": "_4TrM5a_discard",
-	"failed": "_4TrM5a_failed",
-	"field": "_4TrM5a_field",
-	"footer": "_4TrM5a_footer",
-	"head": "_4TrM5a_head",
-	"header": "_4TrM5a_header",
-	"headText": "_4TrM5a_headText",
-	"hint": "_4TrM5a_hint",
-	"input": "_4TrM5a_input",
-	"label": "_4TrM5a_label",
-	"name": "_4TrM5a_name",
-	"pending": "_4TrM5a_pending",
-	"save": "_4TrM5a_save",
-	"spin": "_4TrM5a_spin",
-	"wsx-rot": "_4TrM5a_wsx-rot"
+	"badge": "card-module__badge",
+	"badgeMuted": "card-module__badgeMuted",
+	"badges": "card-module__badges",
+	"body": "card-module__body",
+	"card": "card-module__card",
+	"cardOpen": "card-module__cardOpen",
+	"check": "card-module__check",
+	"chevron": "card-module__chevron",
+	"chevronOpen": "card-module__chevronOpen",
+	"description": "card-module__description",
+	"discard": "card-module__discard",
+	"failed": "card-module__failed",
+	"field": "card-module__field",
+	"footer": "card-module__footer",
+	"head": "card-module__head",
+	"header": "card-module__header",
+	"headText": "card-module__headText",
+	"hint": "card-module__hint",
+	"input": "card-module__input",
+	"label": "card-module__label",
+	"name": "card-module__name",
+	"pending": "card-module__pending",
+	"save": "card-module__save",
+	"spin": "card-module__spin",
+	"wsx-rot": "card-module__wsx-rot"
 };
 //#endregion
 //#region src/client/index.js

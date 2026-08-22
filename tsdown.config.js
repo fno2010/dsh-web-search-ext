@@ -10,6 +10,15 @@ export default defineConfig({
   outDir: "client-build",
   dts: false,
   sourcemap: false,
+  css: {
+    modules: {
+      // No [hash] in the pattern: lightningcss hashes from the absolute
+      // source path, so a hash would differ per machine and break the
+      // committed-bundle drift check in CI. [name]__[local] is stable
+      // everywhere and collision-safe (unique "card_module_" prefix).
+      generateScopedName: "[name]__[local]"
+    }
+  },
   deps: {
     neverBundle: [
       "react",

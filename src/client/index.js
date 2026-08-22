@@ -11,9 +11,15 @@
 //
 // Verified live (spike, 2026-08-21): namespace snapshot shape is
 // { status, value, base, user, revision, writable, mode }; `value` is the
-// effective merged value.
+// effective merged value (schema defaults included).
+//
+// Key auto-discovery: credentials.describe reports per ref
+// { configured, source: "env" | "file" | .env fallback, writable }
+// (dsh-credentials-local). Refs supplied by the live process environment
+// are read-only — the shadowing rule rejects writes an env value would
+// shadow — and the card renders them disabled up front.
 
-import { createElement as h, useState, useEffect } from "react";
+import { createElement as h, useState, useEffect, useRef } from "react";
 import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
 import css from "./card.module.css";
@@ -27,6 +33,8 @@ const FIELDS = ["preferred", ...NUMERIC, "firecrawlKeyless"];
 // Module-level injection: services this client plugin needs, by name.
 const inject = ["slots", "locale", "connection", "settingsScope", "remote"];
 
+const NO_KEY_STATE = { configured: false, writable: true, source: "" };
+
 /** Defensively read whatever shape the derived scope exposes. */
 function readScope(scope) {
   try {
@@ -39,28 +47,31 @@ function readScope(scope) {
   return null;
 }
 
+function effectiveValue(snap, field) {
+  return snap && snap.value ? snap.value[field] : undefined;
+}
+
 function initialDraft(snap) {
-  const v = (snap && snap.value) || {};
   return {
-    preferred: v.preferred,
-    numResults: v.numResults,
-    maxSnippetChars: v.maxSnippetChars,
-    rateLimitCooldownSec: v.rateLimitCooldownSec,
-    firecrawlKeyless: v.firecrawlKeyless
+    preferred: effectiveValue(snap, "preferred"),
+    numResults: effectiveValue(snap, "numResults"),
+    maxSnippetChars: effectiveValue(snap, "maxSnippetChars"),
+    rateLimitCooldownSec: effectiveValue(snap, "rateLimitCooldownSec"),
+    firecrawlKeyless: effectiveValue(snap, "firecrawlKeyless")
   };
 }
 
 /**
- * credentials.describe reports, per ref, which layer supplies it and
- * whether that layer accepts writes: { configured, source: "env" | "file"
- * | .env fallback, writable } (dsh-credentials-local). A ref supplied by
- * the live process environment is read-only: the shadowing rule rejects
- * writes that would be silently ignored, so the card renders it disabled.
+ * Per-ref credentials state. describe({refs}) returns, per ref, which layer
+ * supplies the key and whether that layer accepts writes; a missing/failed
+ * response degrades to "unconfigured but writable" (the safe default: the
+ * input stays editable and a failed write reports itself on save).
  */
 function keyStateFrom(res) {
   const c = (res && res.credentials) || {};
   const one = (ref) => {
-    const d = c[ref] || {};
+    const d = c[ref];
+    if (!d || typeof d !== "object") return { ...NO_KEY_STATE };
     return { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" };
   };
   return { exa: one(EXA_REF), fc: one(FC_REF) };
@@ -74,19 +85,44 @@ function WebSearchExtCard(props) {
   const [snap, setSnap] = useState(null);
   const [draft, setDraft] = useState(null);
   const [keyDraft, setKeyDraft] = useState({ exa: "", fc: "" });
-  const [keyState, setKeyState] = useState({ exa: false, fc: false });
+  const [keyState, setKeyState] = useState(() => keyStateFrom(null));
   const [status, setStatus] = useState({ kind: "idle", msg: "" });
   const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef(false);
 
-  // Read the live namespace + key badges once on mount.
+  function markDirty(value) {
+    dirtyRef.current = value;
+    setDirty(value);
+  }
+
+  // Read the live namespace + key badges once on mount, and keep the
+  // snapshot current after that (the derived scope folds its own writes —
+  // and other surfaces' writes — back into the mirror it mirrors).
   useEffect(() => {
     const s = readScope(scope);
     setSnap(s);
     setDraft(initialDraft(s));
+    let off = null;
+    try {
+      off = scope.subscribe(() => {
+        const next = readScope(scope);
+        setSnap(next);
+        if (!dirtyRef.current) setDraft(initialDraft(next));
+      });
+    } catch (err) {
+      off = null;
+    }
     Promise.resolve()
       .then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] }))
       .then((res) => setKeyState(keyStateFrom(res)))
       .catch(() => {});
+    return () => {
+      if (typeof off === "function") {
+        try {
+          off();
+        } catch (err) {}
+      }
+    };
   }, [scope, api]);
 
   // Re-read key badges when they change on another surface.
@@ -99,9 +135,13 @@ function WebSearchExtCard(props) {
             Promise.resolve()
               .then(() => api.credentials.describe({ refs: [ref] }))
               .then((res) => {
-                const d = ((res && res.credentials) || {})[ref] || {};
-                const st = { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" };
-                setKeyState((prev) => (ref === EXA_REF ? { ...prev, exa: st } : { ...prev, fc: st }));
+                const d = ((res && res.credentials) || {})[ref];
+                setKeyState((prev) => {
+                  const st = d && typeof d === "object"
+                    ? { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" }
+                    : { ...NO_KEY_STATE };
+                  return ref === EXA_REF ? { ...prev, exa: st } : { ...prev, fc: st };
+                });
               })
               .catch(() => {});
           })
@@ -121,7 +161,12 @@ function WebSearchExtCard(props) {
 
   function setField(field, value) {
     setDraft((d) => ({ ...d, [field]: value }));
-    setDirty(true);
+    markDirty(true);
+  }
+
+  function setKey(kind, value) {
+    setKeyDraft((k) => ({ ...k, [kind]: value }));
+    markDirty(true);
   }
 
   async function save() {
@@ -129,15 +174,24 @@ function WebSearchExtCard(props) {
     try {
       for (const field of FIELDS) {
         const value = draft[field];
-        const base = snap && snap.value ? snap.value[field] : undefined;
-        if (value === undefined || value === base) continue; // unchanged
-        let toWrite = value;
+        if (value === undefined) continue;
+        const base = effectiveValue(snap, field);
         if (NUMERIC.includes(field)) {
-          toWrite = Number(value);
-          if (!Number.isFinite(toWrite)) throw new Error(`${field}: not a number`);
+          // Inputs deliver strings; the snapshot holds numbers. An empty
+          // input reverts the field to its layer default instead of
+          // writing 0 (which the schema rejects for min(1) fields).
+          if (value === "") {
+            await scope.unset(field);
+            continue;
+          }
+          const n = Number(value);
+          if (!Number.isFinite(n)) throw new Error(`${field}: not a number`);
+          if (n === base) continue; // no effective change — don't pin the user layer
+          await scope.set(field, n);
+        } else {
+          if (value === base) continue; // unchanged
+          await scope.set(field, value);
         }
-        if (toWrite === "") await scope.unset(field);
-        else await scope.set(field, toWrite);
       }
       if (keyDraft.exa.trim() && keyState.exa.writable !== false) await api.credentials.set({ ref: EXA_REF, value: keyDraft.exa.trim() });
       if (keyDraft.fc.trim() && keyState.fc.writable !== false) await api.credentials.set({ ref: FC_REF, value: keyDraft.fc.trim() });
@@ -145,8 +199,8 @@ function WebSearchExtCard(props) {
         .then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] }))
         .catch(() => null);
       if (c && c.credentials) setKeyState(keyStateFrom(c));
+      markDirty(false);
       setStatus({ kind: "saved", msg: "" });
-      setDirty(false);
     } catch (err) {
       setStatus({ kind: "error", msg: String((err && err.message) || err) });
     }
@@ -156,29 +210,33 @@ function WebSearchExtCard(props) {
     setDraft(initialDraft(snap));
     setKeyDraft({ exa: "", fc: "" });
     setStatus({ kind: "idle", msg: "" });
-    setDirty(false);
+    markDirty(false);
   }
 
   const saving = status.kind === "saving";
   const busy = dirty || saving;
+  // Read-only settings mode: the snapshot says so; the form offers nothing
+  // the host would reject field by field.
+  const ro = snap === null ? false : snap.writable === false;
 
   function keyField(labelKey, ref, value, onChange, state) {
+    const st = state && typeof state === "object" ? state : NO_KEY_STATE;
     // Env-supplied refs are read-only (shadowing rule): the host rejects
     // writes that the live process environment would shadow, so render the
     // input disabled up front — exactly what describe().writable is for.
-    const readOnly = state.configured && !state.writable;
+    const readOnly = st.configured && !st.writable;
     return h("div", { className: css.field },
       h("div", { className: css.head },
         h("label", { className: css.label }, t(labelKey)),
         h("span", { className: css.badges },
-          h("span", { className: state.configured ? css.badge : css.badgeMuted }, t(state.configured ? "keySet" : "keyUnset")))
+          h("span", { className: st.configured ? css.badge : css.badgeMuted }, t(st.configured ? "keySet" : "keyUnset")))
       ),
       h("input", {
         className: css.input,
         type: "password",
         autoComplete: "off",
-        disabled: readOnly,
-        placeholder: readOnly ? `${ref} · ${state.source || "env"}` : (state.configured ? "" : ref),
+        disabled: ro || readOnly,
+        placeholder: readOnly ? `${ref} · ${st.source || "env"}` : (st.configured ? "" : ref),
         value: value,
         onChange: (e) => onChange(e.target.value)
       }),
@@ -195,6 +253,7 @@ function WebSearchExtCard(props) {
         className: css.input,
         type: type,
         min: min,
+        disabled: ro,
         value: draft ? String(draft[field] == null ? "" : draft[field]) : "",
         onChange: (e) => setField(field, e.target.value)
       })
@@ -226,7 +285,8 @@ function WebSearchExtCard(props) {
             ),
             h("select", {
               className: css.input,
-              value: String(draft ? draft.preferred : "exa"),
+              disabled: ro,
+              value: String(draft?.preferred ?? "exa"),
               onChange: (e) => setField("preferred", e.target.value)
             },
               h("option", { value: "exa" }, "exa"),
@@ -241,13 +301,14 @@ function WebSearchExtCard(props) {
               h("input", {
                 type: "checkbox",
                 className: css.check,
+                disabled: ro,
                 checked: draft ? !!draft.firecrawlKeyless : true,
                 onChange: (e) => setField("firecrawlKeyless", e.target.checked)
               })
             )
           ),
-          keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKeyDraft((k) => ({ ...k, exa: v })), keyState.exa),
-          keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKeyDraft((k) => ({ ...k, fc: v })), keyState.fc),
+          keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKey("exa", v), keyState.exa),
+          keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKey("fc", v), keyState.fc),
           h("div", { className: css.footer },
             status.kind === "error"
               ? h("p", { className: css.failed }, t("error"), " ", status.msg)
@@ -257,13 +318,13 @@ function WebSearchExtCard(props) {
             h("button", {
               type: "button",
               className: css.discard,
-              disabled: !busy || saving,
+              disabled: !busy || saving || ro,
               onClick: discard
             }, t("discard")),
             h("button", {
               type: "button",
               className: css.save,
-              disabled: !busy || saving,
+              disabled: !busy || saving || ro,
               onClick: () => save()
             }, saving ? h("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
               h("span", { className: css.spin }, h(IconLoadingOutline16, { size: 16 })),

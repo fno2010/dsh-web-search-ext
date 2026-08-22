@@ -9,7 +9,7 @@ export default defineConfig({
   target: "esnext",
   outDir: "client-build",
   dts: false,
-  sourcemap: true,
+  sourcemap: false,
   deps: {
     neverBundle: [
       "react",

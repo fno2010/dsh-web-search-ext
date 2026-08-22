@@ -273,16 +273,18 @@ copy comes from `t()` — matching the settings shell's "ownerless copy" model
 
 ## Open questions / risks
 
-1. **Bundle entry `id` vs install method.** The plan's skeleton uses the
-   profile dependency name (`dsh-web-search-ext`) as the `window.__ModuleLoader__.load`
-   id. The live profile is a `link:` install under the unscoped key. A user
-   installing from npm under the scoped name (`@fno2010/dsh-web-search-ext`)
-   gets a different dependency key. **The spike must confirm how the entry
-   name is derived** (dependency key vs package name vs bundle manifest) and
-   that both install paths yield a working client id — if the id must equal
-   the dependency key, the source bundle cannot hard-code one name and the
-   build recipe must derive it (or the loader must normalize scoped
-   un-scoping; check `dsh-client-modules` behavior for scoped entries).
+1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**
+   The loader's graph-row id is the profile dependency key, and
+   `dsh plugin add` writes the *npm package name* (scoped) as that key, so
+   a hard-coded unscoped id would never materialize for npm-installed users.
+   `dsh-client-modules` `register()` rejects only a **duplicate** registration
+   of one id (different ids coexist in the `factories` Map; `arrive(row)` only
+   requires the row's id to be present), so `scripts/wrap-client.mjs` emits
+   two `window.__ModuleLoader__.load` calls — one per install form's key
+   (`dsh-web-search-ext` link key, `@fno2010/dsh-web-search-ext` npm key).
+   Verified live: the link-install profile materializes the unscoped row;
+   the npm-install path is covered by the second registration (same
+   factory body; the unmaterialized registration costs one idle closure).
 2. **`LocaleNamespaceMap` typing.** `locale.register` is "checked against
    `LocaleNamespaceMap`" — a typed namespace registry. Confirm whether a
    third-party namespace registers at runtime without a type-level entry, or

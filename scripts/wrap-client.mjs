@@ -9,16 +9,27 @@
 //     return module.exports;
 //   }
 //
-// The entry id must match how the profile's Loader entry is named (for the
-// live link: install that is the profile dependency key "dsh-web-search-ext";
-// see docs/settings-ui-plan.md, Open question #1 — the scoped npm install
-// path may need a different id).
+// The entry id must match how the profile's Loader entry is named, and that
+// name is the profile dependency key — which differs by install form:
+//
+//   - npm install (`dsh plugin add @fno2010/dsh-web-search-ext`) keys the
+//     dependency by the scoped package name;
+//   - a local link: install keys it by whatever the author named it (this
+//     repo's live profile uses the unscoped "dsh-web-search-ext").
+//
+// The loader's register() rejects a DUPLICATE registration of one id but
+// happily keeps several different ids (factories is a plain Map; arrive()
+// only requires the row's id to be present), so the bundle registers under
+// every known entry name. A profile materializes exactly one of them.
+// Pass extra ids as arguments to override the default set.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const id = process.argv[2] || "dsh-web-search-ext";
+const ids = process.argv.slice(2).length
+  ? process.argv.slice(2)
+  : ["dsh-web-search-ext", "@fno2010/dsh-web-search-ext"];
 const bodyPath = join(here, "..", "client-build", "index.cjs");
 const outPath = join(here, "..", "client", "client.js");
 
@@ -29,26 +40,28 @@ const body = readFileSync(bodyPath, "utf8");
 // dshmarket bundles): a <style> tag keyed by data-plugin-css so the module
 // body's side effects include its own stylesheet. tsdown extracts the CSS
 // to a sibling asset; the browser-side loader never loads it, so it has to
-// travel inside the bundle.
+// travel inside the bundle. Constant names are package-unique so they can
+// never collide with a future tsdown/@tsdown/css output convention.
 const cssPath = join(here, "..", "client-build", "style.css");
 const cssBlock = existsSync(cssPath)
   ? [
-      'const css$0 = ' + JSON.stringify(readFileSync(cssPath, "utf8")) + ";",
-      'const tagId$0 = "@fno2010/dsh-web-search-ext/card.module.css";',
-      'if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$0) + "]") === null) {',
+      'const wsxCss = ' + JSON.stringify(readFileSync(cssPath, "utf8")) + ";",
+      'const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";',
+      'if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {',
       '\tconst tag = document.createElement("style");',
       '\ttag.dataset.plugin = "@fno2010/dsh-web-search-ext";',
-      '\ttag.dataset.pluginCss = tagId$0;',
-      '\ttag.textContent = css$0;',
+      '\ttag.dataset.pluginCss = wsxTagId;',
+      '\ttag.textContent = wsxCss;',
       '\tdocument.head.appendChild(tag);',
       "}",
       ""
     ].join("\n")
   : "";
 
-const out = [
-  `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, factory: (require) => {`,
-  "",
+// One factory body, registered under each known entry id. (The loader
+// de-dupes per id and materializes at most one row per profile, so the
+// unmaterialized registration costs one idle closure.)
+const factoryBody = [
   "\tvar module = { exports: {} };",
   "\tvar exports = module.exports;",
   // NOTE: the tsdown CJS body defines exports[Symbol.toStringTag] itself —
@@ -56,14 +69,14 @@ const out = [
   // non-configurable property throws and kills the factory at load time).
   cssBlock,
   body,
-  "\treturn module.exports;",
-  "}",
-  "});",
-  "",
-  "//# sourceMappingURL=client.js.map",
-  ""
+  "\treturn module.exports;"
 ].join("\n");
 
+const loads = ids.map(
+  (id) =>
+    `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, factory: (require) => {\n${factoryBody}\n}\n});`
+).join("\n\n");
+
 mkdirSync(dirname(outPath), { recursive: true });
-writeFileSync(outPath, out);
-console.log(`wrote ${outPath} (id=${id}, ${out.length} bytes)`);
+writeFileSync(outPath, loads + "\n");
+console.log(`wrote ${outPath} (ids=${JSON.stringify(ids)}, ${loads.length} bytes)`);

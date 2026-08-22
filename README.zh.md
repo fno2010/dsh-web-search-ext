@@ -20,6 +20,7 @@
 - **自动故障切换**：任何后端失败（429、401/402/403、5xx、网络错误、响应体不合法）都会按偏好顺序落到下一个后端
 - **按后端的 429 冷却**（默认 60 秒）：被限流的后端在冷却期内被跳过；全部后端都失败时，错误信息会列出每个后端的失败原因（含冷却状态）
 - **可选 key**，按后端独立解析，优先级：设置明文 → 凭证服务 → 启动环境变量
+- **Web 端设置卡片**：设置 → 插件 → 插件配置 中可编辑五个配置字段和两个 API key，key 状态自动发现自凭证各层
 - **无安装期脚本**：纯 ESM JavaScript，无构建步骤，无 `postinstall`/`prepare`
 - **可扩展**：加一个后端 = 一个搜索函数 + 一个 plan 条目 + 配置字段，见 [CONTRIBUTING](CONTRIBUTING.md)
 
@@ -71,8 +72,10 @@ web-search-ext:
 每个后端按以下优先级解析 key：
 
 1. 设置段里的明文 key（`exaApiKey` / `firecrawlApiKey`）
-2. 凭证服务：`~/.dsh/.credentials.yaml` 中的 `EXA_API_KEY` / `FIRECRAWL_API_KEY` 条目（Web 的 "Models" 页面只管理 LLM 提供方凭证，没有这两个字段——直接编辑文件即可；界面配置入口见待办的 settings-UI feature issue）
+2. 凭证服务：`~/.dsh/.credentials.yaml`（或 `.env` 文件）中的 `EXA_API_KEY` / `FIRECRAWL_API_KEY` 条目
 3. 同名的启动环境变量
+
+**设置界面（Web）**：本插件在 **设置 → 插件 → 插件配置** 中有卡片，可编辑五个配置字段和两个 API key。key 状态自动发现自上述各层——`~/.dsh/.credentials.yaml` 变更时"已配置/未配置"徽章实时更新；由 live 进程环境变量提供的 key 渲染为只读，因为宿主会拒绝会被环境变量值遮蔽的 UI 写入。（"模型"页面只管理 LLM 提供方凭证。）
 
 一个 key 都没有也能工作：Exa 走匿名 MCP 端点，Firecrawl 以无 key 方式尝试。
 

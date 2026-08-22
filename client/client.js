@@ -130,7 +130,7 @@ function initialDraft(snap) {
 }
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
-	const [open, setOpen] = (0, react.useState)(true);
+	const [open, setOpen] = (0, react.useState)(false);
 	const [snap, setSnap] = (0, react.useState)(null);
 	const [draft, setDraft] = (0, react.useState)(null);
 	const [keyDraft, setKeyDraft] = (0, react.useState)({

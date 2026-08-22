@@ -52,7 +52,9 @@ function initialDraft(snap) {
 
 function WebSearchExtCard(props) {
   const { t, scope, api, remote } = props;
-  const [open, setOpen] = useState(true);
+  // Collapsed by default, like the built-in plugin cards and the
+  // third-party mirror shipped by dsh-market.
+  const [open, setOpen] = useState(false);
   const [snap, setSnap] = useState(null);
   const [draft, setDraft] = useState(null);
   const [keyDraft, setKeyDraft] = useState({ exa: "", fc: "" });

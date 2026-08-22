@@ -15,7 +15,8 @@ export const en = {
   discard: "Discard",
   saving: "Saving…",
   saved: "Saved.",
-  error: "Save failed:"
+  error: "Save failed:",
+  pending: "unsaved changes"
 };
 
 export const zh = {
@@ -35,5 +36,6 @@ export const zh = {
   discard: "放弃",
   saving: "保存中…",
   saved: "已保存。",
-  error: "保存失败："
+  error: "保存失败：",
+  pending: "未保存的更改"
 };

@@ -6,14 +6,17 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: ["src/client/index.js"],
   format: ["cjs"],
+  target: "esnext",
   outDir: "client-build",
   dts: false,
   sourcemap: true,
-  external: [
-    "react",
-    "react/jsx-runtime",
-    "@deepseek-ai/cordis",
-    "@deepseek-ai/dsh-client-ui-primitives",
-    "@deepseek-ai/dsh-client-ui-slots"
-  ]
+  deps: {
+    neverBundle: [
+      "react",
+      "react/jsx-runtime",
+      "@deepseek-ai/cordis",
+      "@deepseek-ai/dsh-client-ui-primitives",
+      "@deepseek-ai/dsh-client-ui-slots"
+    ]
+  }
 });

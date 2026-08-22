@@ -5,13 +5,18 @@
 // five settings fields (settings.mutate via the derived settings scope) and
 // two API-key inputs (credentials.set; blank keeps the stored key).
 //
+// The card chrome is a 1:1 mirror of the host's PluginCard / fields-module
+// design language (same tokens, same layout, host chevron icon, tsdown CSS
+// module injection) so it reads as part of the plugin configuration page.
+//
 // Verified live (spike, 2026-08-21): namespace snapshot shape is
 // { status, value, base, user, revision, writable, mode }; `value` is the
 // effective merged value.
 
 import { createElement as h, useState, useEffect } from "react";
+import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
-import { ensureStyle } from "./styles.js";
+import css from "./card.module.css";
 
 const NS = "web-search-ext";
 const EXA_REF = "EXA_API_KEY";
@@ -148,109 +153,109 @@ function WebSearchExtCard(props) {
   }
 
   const saving = status.kind === "saving";
+  const busy = dirty || saving;
 
-  return h("div", { className: `wsx-card${open ? " open" : ""}` },
-    h("div", {
-      className: "wsx-head",
-      role: "button",
+  function keyField(labelKey, ref, value, onChange, configured) {
+    return h("div", { className: css.field },
+      h("div", { className: css.head },
+        h("label", { className: css.label }, t(labelKey)),
+        h("span", { className: css.badges },
+          h("span", { className: configured ? css.badge : css.badgeMuted }, t(configured ? "keySet" : "keyUnset")))
+      ),
+      h("input", {
+        className: css.input,
+        type: "password",
+        autoComplete: "off",
+        placeholder: ref,
+        value: value,
+        onChange: (e) => onChange(e.target.value)
+      }),
+      h("p", { className: css.hint }, t("keyHint"))
+    );
+  }
+
+  function textField(labelKey, field, type, min) {
+    return h("div", { className: css.field },
+      h("div", { className: css.head },
+        h("label", { className: css.label }, t(labelKey))
+      ),
+      h("input", {
+        className: css.input,
+        type: type,
+        min: min,
+        value: draft ? String(draft[field] == null ? "" : draft[field]) : "",
+        onChange: (e) => setField(field, e.target.value)
+      })
+    );
+  }
+
+  return h("div", { className: `${css.card}${open ? ` ${css.cardOpen}` : ""}` },
+    h("button", {
+      type: "button",
+      className: css.header,
       "aria-expanded": open,
       onClick: () => setOpen((o) => !o)
     },
-      h("div", { className: "wsx-titles" },
-        h("div", { className: "wsx-title" }, t("title")),
-        h("div", { className: "wsx-desc" }, t("description"))
+      h("div", { className: css.headText },
+        h("div", { className: css.name }, t("title")),
+        h("div", { className: css.description }, t("description"))
       ),
-      h("span", { className: "wsx-chevron" })
+      dirty && !saving
+        ? h("span", { className: css.pending }, t("pending"))
+        : null,
+      h("span", { className: open ? `${css.chevron} ${css.chevronOpen}` : css.chevron },
+        h(IconChevronDownOutline14, { size: 14 }))
     ),
     open
-      ? h("div", { className: "wsx-body" },
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" }, h("label", { className: "wsx-label" }, t("preferred"))),
+      ? h("div", { className: css.body },
+          h("div", { className: css.field },
+            h("div", { className: css.head },
+              h("label", { className: css.label }, t("preferred"))
+            ),
             h("select", {
-              className: "wsx-select",
+              className: css.input,
               value: String(draft ? draft.preferred : "exa"),
               onChange: (e) => setField("preferred", e.target.value)
             },
               h("option", { value: "exa" }, "exa"),
               h("option", { value: "firecrawl" }, "firecrawl"))
           ),
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" }, h("label", { className: "wsx-label" }, t("numResults"))),
-            h("input", {
-              className: "wsx-input",
-              type: "number",
-              min: "1",
-              value: draft ? String(draft.numResults) : "",
-              onChange: (e) => setField("numResults", e.target.value)
-            })
-          ),
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" }, h("label", { className: "wsx-label" }, t("maxSnippetChars"))),
-            h("input", {
-              className: "wsx-input",
-              type: "number",
-              min: "1",
-              value: draft ? String(draft.maxSnippetChars) : "",
-              onChange: (e) => setField("maxSnippetChars", e.target.value)
-            })
-          ),
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" }, h("label", { className: "wsx-label" }, t("cooldown"))),
-            h("input", {
-              className: "wsx-input",
-              type: "number",
-              min: "0",
-              value: draft ? String(draft.rateLimitCooldownSec) : "",
-              onChange: (e) => setField("rateLimitCooldownSec", e.target.value)
-            })
-          ),
-          h("div", { className: "wsx-field" },
-            h("label", { className: "wsx-check" },
+          textField("numResults", "numResults", "number", "1"),
+          textField("maxSnippetChars", "maxSnippetChars", "number", "1"),
+          textField("cooldown", "rateLimitCooldownSec", "number", "0"),
+          h("div", { className: css.field },
+            h("div", { className: css.head },
+              h("label", { className: css.label }, t("keyless")),
               h("input", {
                 type: "checkbox",
+                className: css.check,
                 checked: draft ? !!draft.firecrawlKeyless : true,
                 onChange: (e) => setField("firecrawlKeyless", e.target.checked)
-              }),
-              t("keyless"))
+              })
+            )
           ),
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" },
-              h("label", { className: "wsx-label" }, t("exaKey")),
-              h("span", { className: `wsx-badge${keyState.exa ? " set" : ""}` }, t(keyState.exa ? "keySet" : "keyUnset"))
-            ),
-            h("input", {
-              className: "wsx-input",
-              type: "password",
-              autoComplete: "off",
-              placeholder: keyState.exa ? "" : EXA_REF,
-              value: keyDraft.exa,
-              onChange: (e) => setKeyDraft((k) => ({ ...k, exa: e.target.value }))
-            }),
-            h("div", { className: "wsx-hint" }, t("keyHint"))
-          ),
-          h("div", { className: "wsx-field" },
-            h("div", { className: "wsx-labelrow" },
-              h("label", { className: "wsx-label" }, t("firecrawlKey")),
-              h("span", { className: `wsx-badge${keyState.fc ? " set" : ""}` }, t(keyState.fc ? "keySet" : "keyUnset"))
-            ),
-            h("input", {
-              className: "wsx-input",
-              type: "password",
-              autoComplete: "off",
-              placeholder: keyState.fc ? "" : FC_REF,
-              value: keyDraft.fc,
-              onChange: (e) => setKeyDraft((k) => ({ ...k, fc: e.target.value }))
-            })
-          ),
-          h("div", { className: "wsx-footer" },
-            h("span", { className: `wsx-status${status.kind === "error" ? " error" : ""}` },
-              status.kind === "saving" ? t("saving")
-                : status.kind === "saved" ? t("saved")
-                  : status.kind === "error" ? h("span", null, t("error"), " ", status.msg)
-                    : ""
-            ),
-            h("button", { className: "wsx-btn", disabled: saving || !dirty, onClick: discard }, t("discard")),
-            h("button", { className: "wsx-btn primary", disabled: saving || !dirty, onClick: () => save() }, t("save"))
+          keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKeyDraft((k) => ({ ...k, exa: v })), keyState.exa),
+          keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKeyDraft((k) => ({ ...k, fc: v })), keyState.fc),
+          h("div", { className: css.footer },
+            status.kind === "error"
+              ? h("p", { className: css.failed }, t("error"), " ", status.msg)
+              : status.kind === "saved"
+                ? h("p", { className: css.hint, style: { flex: 1, margin: 0 } }, t("saved"))
+                : null,
+            h("button", {
+              type: "button",
+              className: css.discard,
+              disabled: !busy || saving,
+              onClick: discard
+            }, t("discard")),
+            h("button", {
+              type: "button",
+              className: css.save,
+              disabled: !busy || saving,
+              onClick: () => save()
+            }, saving ? h("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
+              h("span", { className: css.spin }, h(IconLoadingOutline16, { size: 16 })),
+              t("saving")) : t("save"))
           )
         )
       : null
@@ -258,11 +263,6 @@ function WebSearchExtCard(props) {
 }
 
 function apply(ctx) {
-  // Card CSS (theme-aware; injected once with the bundle's side effects).
-  try {
-    ensureStyle(globalThis.document);
-  } catch (err) {}
-
   // i18n: one dictionary namespace, EN + ZH (lookup chain: ns → common → en → key).
   ctx.effect(() => ctx.locale.register(NS, { en, zh }), "web-search-ext: dictionaries");
   const t = ctx.locale.bind(NS);
@@ -284,4 +284,4 @@ function apply(ctx) {
 }
 
 export { apply, inject };
-export const name = () => "web-search-ext";
+export const name = "web-search-ext";

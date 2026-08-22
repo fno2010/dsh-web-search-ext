@@ -2,8 +2,19 @@ window.__ModuleLoader__.load({ id: "dsh-web-search-ext", factory: (require) => {
 
 	var module = { exports: {} };
 	var exports = module.exports;
+const css$0 = "._4TrM5a_card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n._4TrM5a_card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n._4TrM5a_header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n._4TrM5a_headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n._4TrM5a_name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n._4TrM5a_description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n._4TrM5a_chevronOpen {\n  transform: rotate(180deg);\n}\n\n._4TrM5a_body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n._4TrM5a_field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n._4TrM5a_field + ._4TrM5a_field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n._4TrM5a_head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n._4TrM5a_label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n._4TrM5a_badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n._4TrM5a_badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n._4TrM5a_pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n._4TrM5a_input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n._4TrM5a_input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n._4TrM5a_hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n._4TrM5a_footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n._4TrM5a_failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard, ._4TrM5a_save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n._4TrM5a_discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n._4TrM5a_discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n._4TrM5a_save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n._4TrM5a_discard:disabled, ._4TrM5a_save:disabled {\n  opacity: .5;\n  cursor: default;\n}\n\n._4TrM5a_spin {\n  animation: .8s linear infinite _4TrM5a_wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes _4TrM5a_wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const tagId$0 = "@fno2010/dsh-web-search-ext/card.module.css";
+if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$0) + "]") === null) {
+	const tag = document.createElement("style");
+	tag.dataset.plugin = "@fno2010/dsh-web-search-ext";
+	tag.dataset.pluginCss = tagId$0;
+	tag.textContent = css$0;
+	document.head.appendChild(tag);
+}
+
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 let react = require("react");
+let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 //#region src/client/locales.js
 const en = {
 	title: "Web Search (ext)",
@@ -22,7 +33,8 @@ const en = {
 	discard: "Discard",
 	saving: "Saving…",
 	saved: "Saved.",
-	error: "Save failed:"
+	error: "Save failed:",
+	pending: "unsaved changes"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -41,44 +53,38 @@ const zh = {
 	discard: "放弃",
 	saving: "保存中…",
 	saved: "已保存。",
-	error: "保存失败："
+	error: "保存失败：",
+	pending: "未保存的更改"
 };
 //#endregion
-//#region src/client/styles.js
-const CSS = `
-.wsx-card{background:var(--dsw-alias-bg-module-platform,#fff);border:1px solid var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.08));border-radius:12px;margin:0 0 12px}
-.wsx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;cursor:pointer}
-.wsx-titles{min-width:0}
-.wsx-title{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary,#1a1a1a)}
-.wsx-desc{font-size:13px;color:var(--dsw-alias-label-tertiary,#9a9a9a);margin-top:2px}
-.wsx-chevron{flex:none;width:9px;height:9px;border-right:1.5px solid var(--dsw-alias-label-secondary,#666);border-bottom:1.5px solid var(--dsw-alias-label-secondary,#666);transform:rotate(-45deg);transition:transform .15s;margin-top:3px}
-.wsx-card.open .wsx-chevron{transform:rotate(45deg);margin-top:1px}
-.wsx-body{padding:2px 16px 16px;border-top:1px solid var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06))}
-.wsx-field{margin:12px 0}
-.wsx-labelrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
-.wsx-label{font-size:13px;color:var(--dsw-alias-label-secondary,#555)}
-.wsx-input,.wsx-select{width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px;color:var(--dsw-alias-label-primary,#1a1a1a);background:transparent;border:1px solid var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.14));border-radius:8px}
-.wsx-hint{font-size:12px;color:var(--dsw-alias-label-tertiary,#9a9a9a);margin-top:4px}
-.wsx-badge{font-size:11px;line-height:1;padding:3px 8px;border-radius:999px;border:1px solid var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.14));color:var(--dsw-alias-label-tertiary,#9a9a9a)}
-.wsx-badge.set{color:var(--dsw-alias-state-business-primary,#16a34a);border-color:var(--dsw-alias-state-business-primary,#16a34a)}
-.wsx-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dsw-alias-label-secondary,#555);cursor:pointer}
-.wsx-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:14px}
-.wsx-status{margin-right:auto;font-size:12px;color:var(--dsw-alias-label-tertiary,#9a9a9a)}
-.wsx-status.error{color:var(--dsw-alias-label-error,#d33)}
-.wsx-btn{font-size:13px;padding:7px 14px;border-radius:8px;border:1px solid var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.16));background:transparent;color:var(--dsw-alias-label-primary,#1a1a1a);cursor:pointer}
-.wsx-btn:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05))}
-.wsx-btn.primary{background:var(--dsw-alias-brand-primary,#3355ff);border-color:transparent;color:#fff}
-.wsx-btn:disabled{opacity:.5;cursor:default}
-`;
-const ID = "wsx-card-css";
-/** Inject the card CSS once (the shell owns no copy for third-party cards). */
-function ensureStyle(doc) {
-	if (doc.getElementById(ID)) return;
-	const el = doc.createElement("style");
-	el.id = ID;
-	el.textContent = CSS;
-	doc.head.appendChild(el);
-}
+//#region src/client/card.module.css
+var card_module_default = {
+	"badge": "_4TrM5a_badge",
+	"badgeMuted": "_4TrM5a_badgeMuted",
+	"badges": "_4TrM5a_badges",
+	"body": "_4TrM5a_body",
+	"card": "_4TrM5a_card",
+	"cardOpen": "_4TrM5a_cardOpen",
+	"check": "_4TrM5a_check",
+	"chevron": "_4TrM5a_chevron",
+	"chevronOpen": "_4TrM5a_chevronOpen",
+	"description": "_4TrM5a_description",
+	"discard": "_4TrM5a_discard",
+	"failed": "_4TrM5a_failed",
+	"field": "_4TrM5a_field",
+	"footer": "_4TrM5a_footer",
+	"head": "_4TrM5a_head",
+	"header": "_4TrM5a_header",
+	"headText": "_4TrM5a_headText",
+	"hint": "_4TrM5a_hint",
+	"input": "_4TrM5a_input",
+	"label": "_4TrM5a_label",
+	"name": "_4TrM5a_name",
+	"pending": "_4TrM5a_pending",
+	"save": "_4TrM5a_save",
+	"spin": "_4TrM5a_spin",
+	"wsx-rot": "_4TrM5a_wsx-rot"
+};
 //#endregion
 //#region src/client/index.js
 const NS = "web-search-ext";
@@ -242,71 +248,69 @@ function WebSearchExtCard(props) {
 		setDirty(false);
 	}
 	const saving = status.kind === "saving";
-	return (0, react.createElement)("div", { className: `wsx-card${open ? " open" : ""}` }, (0, react.createElement)("div", {
-		className: "wsx-head",
-		role: "button",
+	const busy = dirty || saving;
+	function keyField(labelKey, ref, value, onChange, configured) {
+		return (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t(labelKey)), (0, react.createElement)("span", { className: card_module_default.badges }, (0, react.createElement)("span", { className: configured ? card_module_default.badge : card_module_default.badgeMuted }, t(configured ? "keySet" : "keyUnset")))), (0, react.createElement)("input", {
+			className: card_module_default.input,
+			type: "password",
+			autoComplete: "off",
+			placeholder: ref,
+			value,
+			onChange: (e) => onChange(e.target.value)
+		}), (0, react.createElement)("p", { className: card_module_default.hint }, t("keyHint")));
+	}
+	function textField(labelKey, field, type, min) {
+		return (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t(labelKey))), (0, react.createElement)("input", {
+			className: card_module_default.input,
+			type,
+			min,
+			value: draft ? String(draft[field] == null ? "" : draft[field]) : "",
+			onChange: (e) => setField(field, e.target.value)
+		}));
+	}
+	return (0, react.createElement)("div", { className: `${card_module_default.card}${open ? ` ${card_module_default.cardOpen}` : ""}` }, (0, react.createElement)("button", {
+		type: "button",
+		className: card_module_default.header,
 		"aria-expanded": open,
 		onClick: () => setOpen((o) => !o)
-	}, (0, react.createElement)("div", { className: "wsx-titles" }, (0, react.createElement)("div", { className: "wsx-title" }, t("title")), (0, react.createElement)("div", { className: "wsx-desc" }, t("description"))), (0, react.createElement)("span", { className: "wsx-chevron" })), open ? (0, react.createElement)("div", { className: "wsx-body" }, (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("preferred"))), (0, react.createElement)("select", {
-		className: "wsx-select",
+	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+		className: card_module_default.input,
 		value: String(draft ? draft.preferred : "exa"),
 		onChange: (e) => setField("preferred", e.target.value)
-	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("numResults"))), (0, react.createElement)("input", {
-		className: "wsx-input",
-		type: "number",
-		min: "1",
-		value: draft ? String(draft.numResults) : "",
-		onChange: (e) => setField("numResults", e.target.value)
-	})), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("maxSnippetChars"))), (0, react.createElement)("input", {
-		className: "wsx-input",
-		type: "number",
-		min: "1",
-		value: draft ? String(draft.maxSnippetChars) : "",
-		onChange: (e) => setField("maxSnippetChars", e.target.value)
-	})), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("cooldown"))), (0, react.createElement)("input", {
-		className: "wsx-input",
-		type: "number",
-		min: "0",
-		value: draft ? String(draft.rateLimitCooldownSec) : "",
-		onChange: (e) => setField("rateLimitCooldownSec", e.target.value)
-	})), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("label", { className: "wsx-check" }, (0, react.createElement)("input", {
+	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), textField("numResults", "numResults", "number", "1"), textField("maxSnippetChars", "maxSnippetChars", "number", "1"), textField("cooldown", "rateLimitCooldownSec", "number", "0"), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("keyless")), (0, react.createElement)("input", {
 		type: "checkbox",
+		className: card_module_default.check,
 		checked: draft ? !!draft.firecrawlKeyless : true,
 		onChange: (e) => setField("firecrawlKeyless", e.target.checked)
-	}), t("keyless"))), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("exaKey")), (0, react.createElement)("span", { className: `wsx-badge${keyState.exa ? " set" : ""}` }, t(keyState.exa ? "keySet" : "keyUnset"))), (0, react.createElement)("input", {
-		className: "wsx-input",
-		type: "password",
-		autoComplete: "off",
-		placeholder: keyState.exa ? "" : EXA_REF,
-		value: keyDraft.exa,
-		onChange: (e) => setKeyDraft((k) => ({
-			...k,
-			exa: e.target.value
-		}))
-	}), (0, react.createElement)("div", { className: "wsx-hint" }, t("keyHint"))), (0, react.createElement)("div", { className: "wsx-field" }, (0, react.createElement)("div", { className: "wsx-labelrow" }, (0, react.createElement)("label", { className: "wsx-label" }, t("firecrawlKey")), (0, react.createElement)("span", { className: `wsx-badge${keyState.fc ? " set" : ""}` }, t(keyState.fc ? "keySet" : "keyUnset"))), (0, react.createElement)("input", {
-		className: "wsx-input",
-		type: "password",
-		autoComplete: "off",
-		placeholder: keyState.fc ? "" : FC_REF,
-		value: keyDraft.fc,
-		onChange: (e) => setKeyDraft((k) => ({
-			...k,
-			fc: e.target.value
-		}))
-	})), (0, react.createElement)("div", { className: "wsx-footer" }, (0, react.createElement)("span", { className: `wsx-status${status.kind === "error" ? " error" : ""}` }, status.kind === "saving" ? t("saving") : status.kind === "saved" ? t("saved") : status.kind === "error" ? (0, react.createElement)("span", null, t("error"), " ", status.msg) : ""), (0, react.createElement)("button", {
-		className: "wsx-btn",
-		disabled: saving || !dirty,
+	}))), keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKeyDraft((k) => ({
+		...k,
+		exa: v
+	})), keyState.exa), keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKeyDraft((k) => ({
+		...k,
+		fc: v
+	})), keyState.fc), (0, react.createElement)("div", { className: card_module_default.footer }, status.kind === "error" ? (0, react.createElement)("p", { className: card_module_default.failed }, t("error"), " ", status.msg) : status.kind === "saved" ? (0, react.createElement)("p", {
+		className: card_module_default.hint,
+		style: {
+			flex: 1,
+			margin: 0
+		}
+	}, t("saved")) : null, (0, react.createElement)("button", {
+		type: "button",
+		className: card_module_default.discard,
+		disabled: !busy || saving,
 		onClick: discard
 	}, t("discard")), (0, react.createElement)("button", {
-		className: "wsx-btn primary",
-		disabled: saving || !dirty,
+		type: "button",
+		className: card_module_default.save,
+		disabled: !busy || saving,
 		onClick: () => save()
-	}, t("save")))) : null);
+	}, saving ? (0, react.createElement)("span", { style: {
+		display: "inline-flex",
+		alignItems: "center",
+		gap: 6
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : null);
 }
 function apply(ctx) {
-	try {
-		ensureStyle(globalThis.document);
-	} catch (err) {}
 	ctx.effect(() => ctx.locale.register(NS, {
 		en,
 		zh
@@ -327,7 +331,7 @@ function apply(ctx) {
 		})
 	}, WebSearchExtCard));
 }
-const name = () => "web-search-ext";
+const name = "web-search-ext";
 //#endregion
 exports.apply = apply;
 exports.inject = inject;

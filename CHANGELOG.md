@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.0] - 2026-08-22
+
+### Added
+
+- **Settings card on the Web** (Settings → Plugins → Plugin configuration): edit the five config fields (`preferred`, `numResults`, `maxSnippetChars`, `rateLimitCooldownSec`, `firecrawlKeyless`) with live save/discard, and manage both API keys.
+- API-key state is **auto-discovered** from the credentials layers (live process env → `~/.dsh/.credentials.yaml` → `.env` files), refreshes on `credentials/reference-updated` (file edits update the badges live, no restart), and renders **read-only** when the live process environment supplies the key — the host rejects UI writes that an environment value would shadow.
+- Card chrome mirrors the host's `PluginCard` design language (shared design tokens, host chevron/loading icons, tsdown CSS-module injection); EN + ZH copy.
+- The client bundle registers under both install-form entry names (the scoped npm key and the unscoped link-install key), so the card loads whether the plugin was added from npm or via a local `link:` install.
+- `docs/settings-ui-plan.md`: the researched implementation plan (extension-point verdict, wire API, risks).
+
+### Changed
+
+- Attribution user-agent bumped to match the package version.
+
 ## [0.1.2] - 2026-08-21
 
 ### Fixed

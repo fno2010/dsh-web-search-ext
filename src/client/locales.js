@@ -1,0 +1,43 @@
+export const en = {
+  title: "Web Search (ext)",
+  description: "Multi-backend web_search provider: Exa + Firecrawl, automatic failover, per-backend 429 cooldowns.",
+  preferred: "Preferred backend",
+  numResults: "Default result count",
+  maxSnippetChars: "Snippet length bound (chars)",
+  cooldown: "429 cooldown (seconds, 0 disables)",
+  keyless: "Allow keyless Firecrawl requests",
+  exaKey: "Exa API key",
+  firecrawlKey: "Firecrawl API key",
+  keySet: "Configured",
+  keyUnset: "Not configured",
+  keyHint: "Leave blank to keep the stored key; enter a value to replace it.",
+  keyReadOnlyHint: "Supplied by the process environment — read-only; the host rejects UI writes that an environment value would shadow.",
+  save: "Save",
+  discard: "Discard",
+  saving: "Saving…",
+  saved: "Saved.",
+  error: "Save failed:",
+  pending: "unsaved changes"
+};
+
+export const zh = {
+  title: "Web 搜索（ext）",
+  description: "多后端 web_search 提供方：Exa + Firecrawl，自动故障切换，按后端 429 冷却。",
+  preferred: "首选后端",
+  numResults: "默认结果条数",
+  maxSnippetChars: "摘要长度上限（字符）",
+  cooldown: "429 冷却时长（秒，0 关闭）",
+  keyless: "允许无 key 的 Firecrawl 请求",
+  exaKey: "Exa API key",
+  firecrawlKey: "Firecrawl API key",
+  keySet: "已配置",
+  keyUnset: "未配置",
+  keyHint: "留空则保留已存储的 key；填入值则替换。",
+  keyReadOnlyHint: "由进程环境变量提供——只读；环境变量会遮蔽写入，宿主会拒绝 UI 写入。",
+  save: "保存",
+  discard: "放弃",
+  saving: "保存中…",
+  saved: "已保存。",
+  error: "保存失败：",
+  pending: "未保存的更改"
+};

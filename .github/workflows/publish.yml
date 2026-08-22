@@ -49,6 +49,13 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Test (Part A; Part B live smoke skipped in CI)
         run: npm test
+      # Never publish a tarball whose committed client bundle drifts from
+      # src/client/ (the tag may predate a final client/ fix).
+      - name: Verify committed client bundle is in sync
+        run: |
+          npm run build:client
+          node --check client/client.js
+          git diff --exit-code -- client/
 
   publish:
     needs: test

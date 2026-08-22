@@ -1,0 +1,40 @@
+/* 1:1 mirror of the host's PluginCard + fields module design language
+ * (extracted from the installed dsh-client-ui-settings-plugins client
+ * bundle; the third-party mirror shipped by dsh-market does the same).
+ * Same tokens, same layout — so the card reads as part of the plugin
+ * configuration page rather than a foreign widget.
+ */
+.card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}
+.card:hover{border-color:var(--dsw-alias-label-dimmed)}
+.cardOpen{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
+.header{appearance:none;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:12px;align-items:center;gap:12px;padding:14px 16px;display:flex}
+.header:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
+.headText{flex-direction:column;flex:1;gap:4px;min-width:0;display:flex}
+.name{color:var(--dsw-alias-label-primary);font-size:15px;font-weight:600;line-height:1.4}
+.description{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}
+.chevron{color:var(--dsw-alias-label-tertiary);flex:none;transition:transform .16s;display:inline-flex}
+.chevronOpen{transform:rotate(180deg)}
+.body{border-top:1px solid var(--dsw-alias-border-l2);margin:0 16px;padding-bottom:8px}
+.field{flex-direction:column;gap:6px;padding:12px 0;display:flex}
+.field+.field{border-top:1px solid var(--dsw-alias-border-l2)}
+.head{align-items:center;gap:8px;display:flex}
+.label{min-width:0;color:var(--dsw-alias-label-primary);flex:1;font-size:13px;font-weight:500;line-height:1.5}
+.badges{align-items:center;gap:8px;display:inline-flex}
+.badge{white-space:nowrap;background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:500;line-height:17px}
+.badgeMuted{white-space:nowrap;color:var(--dsw-alias-label-tertiary);border-radius:999px;padding:1px 8px;font-size:11px;line-height:17px}
+.pending{white-space:nowrap;background:var(--dsw-alias-bg-module-platform);color:var(--dsw-alias-label-secondary);border-radius:999px;flex:none;padding:1px 8px;font-size:11px;font-weight:500;line-height:17px}
+.input{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);height:34px;font:inherit;color:var(--dsw-alias-label-primary);border-radius:8px;padding:0 12px;font-size:13px;line-height:1.5}
+.input:focus-visible{border-color:var(--dsw-alias-brand-primary);outline:none}
+.input:disabled{color:var(--dsw-alias-label-tertiary);cursor:default}
+.hint{color:var(--dsw-alias-label-tertiary);margin:0;font-size:12px;line-height:1.5}
+.check{width:14px;height:14px;accent-color:var(--dsw-alias-brand-primary)}
+.footer{border-top:1px solid var(--dsw-alias-border-l2);justify-content:flex-end;align-items:center;gap:8px;padding:12px 0 4px;display:flex}
+.failed{min-width:0;color:var(--dsw-alias-label-error);flex:1;margin:0;font-size:12px;line-height:1.5}
+.discard,.save{appearance:none;font:inherit;cursor:pointer;border:1px solid #0000;border-radius:8px;padding:5px 14px;font-size:13px;line-height:1.5}
+.discard{border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);background:0 0}
+.discard:hover:not(:disabled){color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-label-dimmed)}
+.save{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-layer-3)}
+.discard:disabled,.save:disabled{opacity:.4;cursor:default}
+.discard:focus-visible,.save:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
+.spin{display:inline-flex;animation:wsx-rot .8s linear infinite}
+@keyframes wsx-rot{to{transform:rotate(360deg)}}

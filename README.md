@@ -20,6 +20,7 @@ The built-in `web_search` tool is backend-pluggable; the in-box default provider
 - **Automatic failover**: on any backend failure (429, 401/402/403, 5xx, network, malformed body) the search falls through to the next backend in preference order
 - **Per-backend 429 cooldown** (default 60 s): a saturated backend is skipped on subsequent searches; when all backends fail, the error lists every failure including cooldown state
 - **Optional keys** with per-backend precedence: settings literal → credentials service → launch environment variable
+- **Settings card on the Web**: Settings → Plugins → Plugin configuration exposes the five config fields and both API keys, with key state auto-discovered from the credentials layers
 - **No install-time scripts**: plain ESM JavaScript, no build step, no `postinstall`/`prepare`
 - **Extensible**: adding a backend is one search function + one plan entry + config fields — see [CONTRIBUTING](CONTRIBUTING.md)
 
@@ -71,8 +72,10 @@ Or select this provider without the bundle patch: `DSH_WEB_SEARCH_PROVIDER=web-s
 Any of these, in order of precedence per backend:
 
 1. Literal key in the settings section (`exaApiKey` / `firecrawlApiKey`)
-2. Credentials service: the `EXA_API_KEY` / `FIRECRAWL_API_KEY` entries in `~/.dsh/.credentials.yaml` (the Web "Models" page manages LLM provider credentials only and has no field for these — add them by editing the file; a settings-UI entry point is tracked as a feature request)
+2. Credentials service: the `EXA_API_KEY` / `FIRECRAWL_API_KEY` entries in `~/.dsh/.credentials.yaml` (or a `.env` file)
 3. Launch environment variable of the same name
+
+**Settings UI (Web)**: this plugin has a card on **Settings → Plugins → Plugin configuration** that edits the five config fields and both API keys. Key state is auto-discovered from the layers above — the configured/not-configured badges update live when `~/.dsh/.credentials.yaml` changes — and a key supplied by the live process environment is rendered read-only, because the host rejects UI writes that an environment value would shadow. (The "Models" page manages LLM provider credentials only.)
 
 No keys at all still works: Exa uses its anonymous MCP endpoint and Firecrawl is tried keyless.
 

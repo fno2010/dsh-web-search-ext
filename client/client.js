@@ -29,6 +29,7 @@ const en = {
 	keySet: "Configured",
 	keyUnset: "Not configured",
 	keyHint: "Leave blank to keep the stored key; enter a value to replace it.",
+	keyReadOnlyHint: "Supplied by the process environment — read-only; the host rejects UI writes that an environment value would shadow.",
 	save: "Save",
 	discard: "Discard",
 	saving: "Saving…",
@@ -49,6 +50,7 @@ const zh = {
 	keySet: "已配置",
 	keyUnset: "未配置",
 	keyHint: "留空则保留已存储的 key；填入值则替换。",
+	keyReadOnlyHint: "由进程环境变量提供——只读；环境变量会遮蔽写入，宿主会拒绝 UI 写入。",
 	save: "保存",
 	discard: "放弃",
 	saving: "保存中…",
@@ -128,6 +130,28 @@ function initialDraft(snap) {
 		firecrawlKeyless: v.firecrawlKeyless
 	};
 }
+/**
+* credentials.describe reports, per ref, which layer supplies it and
+* whether that layer accepts writes: { configured, source: "env" | "file"
+* | .env fallback, writable } (dsh-credentials-local). A ref supplied by
+* the live process environment is read-only: the shadowing rule rejects
+* writes that would be silently ignored, so the card renders it disabled.
+*/
+function keyStateFrom(res) {
+	const c = res && res.credentials || {};
+	const one = (ref) => {
+		const d = c[ref] || {};
+		return {
+			configured: !!d.configured,
+			writable: d.writable !== false,
+			source: d.source || ""
+		};
+	};
+	return {
+		exa: one(EXA_REF),
+		fc: one(FC_REF)
+	};
+}
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
 	const [open, setOpen] = (0, react.useState)(false);
@@ -150,13 +174,7 @@ function WebSearchExtCard(props) {
 		const s = readScope(scope);
 		setSnap(s);
 		setDraft(initialDraft(s));
-		Promise.resolve().then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] })).then((res) => {
-			const c = res && res.credentials || {};
-			setKeyState({
-				exa: !!(c[EXA_REF] && c[EXA_REF].configured),
-				fc: !!(c[FC_REF] && c[FC_REF].configured)
-			});
-		}).catch(() => {});
+		Promise.resolve().then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] })).then((res) => setKeyState(keyStateFrom(res))).catch(() => {});
 	}, [scope, api]);
 	(0, react.useEffect)(() => {
 		let off = null;
@@ -164,14 +182,18 @@ function WebSearchExtCard(props) {
 			const r = remote && remote.$on ? remote.$on("credentials/reference-updated", (ref) => {
 				if (ref !== EXA_REF && ref !== FC_REF) return;
 				Promise.resolve().then(() => api.credentials.describe({ refs: [ref] })).then((res) => {
-					const c = res && res.credentials || {};
-					const configured = !!(c[ref] && c[ref].configured);
+					const d = (res && res.credentials || {})[ref] || {};
+					const st = {
+						configured: !!d.configured,
+						writable: d.writable !== false,
+						source: d.source || ""
+					};
 					setKeyState((prev) => ref === EXA_REF ? {
 						...prev,
-						exa: configured
+						exa: st
 					} : {
 						...prev,
-						fc: configured
+						fc: st
 					});
 				}).catch(() => {});
 			}) : null;
@@ -210,19 +232,16 @@ function WebSearchExtCard(props) {
 				if (toWrite === "") await scope.unset(field);
 				else await scope.set(field, toWrite);
 			}
-			if (keyDraft.exa.trim()) await api.credentials.set({
+			if (keyDraft.exa.trim() && keyState.exa.writable !== false) await api.credentials.set({
 				ref: EXA_REF,
 				value: keyDraft.exa.trim()
 			});
-			if (keyDraft.fc.trim()) await api.credentials.set({
+			if (keyDraft.fc.trim() && keyState.fc.writable !== false) await api.credentials.set({
 				ref: FC_REF,
 				value: keyDraft.fc.trim()
 			});
 			const c = await Promise.resolve().then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] })).catch(() => null);
-			if (c && c.credentials) setKeyState({
-				exa: !!(c.credentials[EXA_REF] && c.credentials[EXA_REF].configured),
-				fc: !!(c.credentials[FC_REF] && c.credentials[FC_REF].configured)
-			});
+			if (c && c.credentials) setKeyState(keyStateFrom(c));
 			setStatus({
 				kind: "saved",
 				msg: ""
@@ -249,15 +268,17 @@ function WebSearchExtCard(props) {
 	}
 	const saving = status.kind === "saving";
 	const busy = dirty || saving;
-	function keyField(labelKey, ref, value, onChange, configured) {
-		return (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t(labelKey)), (0, react.createElement)("span", { className: card_module_default.badges }, (0, react.createElement)("span", { className: configured ? card_module_default.badge : card_module_default.badgeMuted }, t(configured ? "keySet" : "keyUnset")))), (0, react.createElement)("input", {
+	function keyField(labelKey, ref, value, onChange, state) {
+		const readOnly = state.configured && !state.writable;
+		return (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t(labelKey)), (0, react.createElement)("span", { className: card_module_default.badges }, (0, react.createElement)("span", { className: state.configured ? card_module_default.badge : card_module_default.badgeMuted }, t(state.configured ? "keySet" : "keyUnset")))), (0, react.createElement)("input", {
 			className: card_module_default.input,
 			type: "password",
 			autoComplete: "off",
-			placeholder: ref,
+			disabled: readOnly,
+			placeholder: readOnly ? `${ref} · ${state.source || "env"}` : state.configured ? "" : ref,
 			value,
 			onChange: (e) => onChange(e.target.value)
-		}), (0, react.createElement)("p", { className: card_module_default.hint }, t("keyHint")));
+		}), (0, react.createElement)("p", { className: card_module_default.hint }, t(readOnly ? "keyReadOnlyHint" : "keyHint")));
 	}
 	function textField(labelKey, field, type, min) {
 		return (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t(labelKey))), (0, react.createElement)("input", {

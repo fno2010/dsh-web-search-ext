@@ -50,6 +50,22 @@ function initialDraft(snap) {
   };
 }
 
+/**
+ * credentials.describe reports, per ref, which layer supplies it and
+ * whether that layer accepts writes: { configured, source: "env" | "file"
+ * | .env fallback, writable } (dsh-credentials-local). A ref supplied by
+ * the live process environment is read-only: the shadowing rule rejects
+ * writes that would be silently ignored, so the card renders it disabled.
+ */
+function keyStateFrom(res) {
+  const c = (res && res.credentials) || {};
+  const one = (ref) => {
+    const d = c[ref] || {};
+    return { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" };
+  };
+  return { exa: one(EXA_REF), fc: one(FC_REF) };
+}
+
 function WebSearchExtCard(props) {
   const { t, scope, api, remote } = props;
   // Collapsed by default, like the built-in plugin cards and the
@@ -69,13 +85,7 @@ function WebSearchExtCard(props) {
     setDraft(initialDraft(s));
     Promise.resolve()
       .then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] }))
-      .then((res) => {
-        const c = (res && res.credentials) || {};
-        setKeyState({
-          exa: !!(c[EXA_REF] && c[EXA_REF].configured),
-          fc: !!(c[FC_REF] && c[FC_REF].configured)
-        });
-      })
+      .then((res) => setKeyState(keyStateFrom(res)))
       .catch(() => {});
   }, [scope, api]);
 
@@ -89,9 +99,9 @@ function WebSearchExtCard(props) {
             Promise.resolve()
               .then(() => api.credentials.describe({ refs: [ref] }))
               .then((res) => {
-                const c = (res && res.credentials) || {};
-                const configured = !!(c[ref] && c[ref].configured);
-                setKeyState((prev) => (ref === EXA_REF ? { ...prev, exa: configured } : { ...prev, fc: configured }));
+                const d = ((res && res.credentials) || {})[ref] || {};
+                const st = { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" };
+                setKeyState((prev) => (ref === EXA_REF ? { ...prev, exa: st } : { ...prev, fc: st }));
               })
               .catch(() => {});
           })
@@ -129,17 +139,12 @@ function WebSearchExtCard(props) {
         if (toWrite === "") await scope.unset(field);
         else await scope.set(field, toWrite);
       }
-      if (keyDraft.exa.trim()) await api.credentials.set({ ref: EXA_REF, value: keyDraft.exa.trim() });
-      if (keyDraft.fc.trim()) await api.credentials.set({ ref: FC_REF, value: keyDraft.fc.trim() });
+      if (keyDraft.exa.trim() && keyState.exa.writable !== false) await api.credentials.set({ ref: EXA_REF, value: keyDraft.exa.trim() });
+      if (keyDraft.fc.trim() && keyState.fc.writable !== false) await api.credentials.set({ ref: FC_REF, value: keyDraft.fc.trim() });
       const c = await Promise.resolve()
         .then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] }))
         .catch(() => null);
-      if (c && c.credentials) {
-        setKeyState({
-          exa: !!(c.credentials[EXA_REF] && c.credentials[EXA_REF].configured),
-          fc: !!(c.credentials[FC_REF] && c.credentials[FC_REF].configured)
-        });
-      }
+      if (c && c.credentials) setKeyState(keyStateFrom(c));
       setStatus({ kind: "saved", msg: "" });
       setDirty(false);
     } catch (err) {
@@ -157,22 +162,27 @@ function WebSearchExtCard(props) {
   const saving = status.kind === "saving";
   const busy = dirty || saving;
 
-  function keyField(labelKey, ref, value, onChange, configured) {
+  function keyField(labelKey, ref, value, onChange, state) {
+    // Env-supplied refs are read-only (shadowing rule): the host rejects
+    // writes that the live process environment would shadow, so render the
+    // input disabled up front — exactly what describe().writable is for.
+    const readOnly = state.configured && !state.writable;
     return h("div", { className: css.field },
       h("div", { className: css.head },
         h("label", { className: css.label }, t(labelKey)),
         h("span", { className: css.badges },
-          h("span", { className: configured ? css.badge : css.badgeMuted }, t(configured ? "keySet" : "keyUnset")))
+          h("span", { className: state.configured ? css.badge : css.badgeMuted }, t(state.configured ? "keySet" : "keyUnset")))
       ),
       h("input", {
         className: css.input,
         type: "password",
         autoComplete: "off",
-        placeholder: ref,
+        disabled: readOnly,
+        placeholder: readOnly ? `${ref} · ${state.source || "env"}` : (state.configured ? "" : ref),
         value: value,
         onChange: (e) => onChange(e.target.value)
       }),
-      h("p", { className: css.hint }, t("keyHint"))
+      h("p", { className: css.hint }, t(readOnly ? "keyReadOnlyHint" : "keyHint"))
     );
   }
 

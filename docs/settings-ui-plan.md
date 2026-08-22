@@ -5,6 +5,30 @@ harness artifacts (`@deepseek-ai/dsh` 0.1.1-rc.2 under
 `node_modules/@deepseek-ai/`) unless noted; the live web profile at
 `~/.dsh/profiles/web` is cited where it disambiguates.
 
+**Spike verified live (2026-08-21, branch feat/settings-ui-spike):** the
+read-only card rendered in Settings → Plugins → configurable via the keyed
+`settings.plugin.item` slot; EN/ZH dictionaries applied; the live namespace
+snapshot was read. Answers to the open questions:
+
+- **Snapshot shape** (from the card's own diagnostic dump):
+  `{ status, value, base, user, revision, writable, mode }` — `value` is the
+  effective merged value, `revision` fences writes (0 when the user layer is
+  empty), `writable`/`mode`/`base`/`user` as expected from the layered model.
+- **Entry `id`**: `"dsh-web-search-ext"` (the profile dependency key of the
+  `link:` install) loads and dispatches correctly. The scoped npm install
+  path remains to be verified once the feature ships (users who install via
+  `@fno2010/dsh-web-search-ext` get a different dependency key).
+- **Third-party namespace i18n**: `locale.register("web-search-ext", {en, zh})`
+  accepted and resolved without any registry change.
+- **Official card chrome** (for the full card): the built-in cards are
+  expandable — `PluginCard` CSS module (`card`, `chevron`, `body`,
+  `description`, `footer`…), field rows from a `fields` CSS module
+  (`field`, `label`, `input`, `hint`, `badge`…), `clsx` class composition,
+  `aria-expanded` + a `Chevron`; the WebSearch key field uses i18n keys
+  `webSearchApiKey` / `webSearchApiKeyHint` / `webSearchApiKeySet` /
+  `webSearchApiKeyUnset` (configured/unset badge states). Card CSS is
+  injected by the bundle itself.
+
 ## Verdict
 
 **Viable.** The harness ships a documented, extension-point-grade path for

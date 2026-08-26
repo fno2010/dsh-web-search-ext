@@ -4,23 +4,24 @@ Instructions for AI coding agents working in this repository. Keep changes in th
 
 ## What this is
 
-A DSH (DeepSeek Harness) plugin: a multi-backend `web_search` provider for the built-in web search tool — Exa (keyed REST or key-free anonymous hosted MCP) and Firecrawl (v2 search API, keyed or keyless) — with automatic failover and per-backend 429 cooldowns. npm package: `@fno2010/dsh-web-search-ext`. Two halves: the host provider (one module: `lib/index.js`) and a web client half (the Settings → Plugins card: `src/client/`, built to `client/client.js`).
+A DSH (DeepSeek Harness) plugin: multi-backend `web_search` **and** `web_fetch` providers for the built-in web tools — Exa (keyed REST or key-free anonymous hosted MCP) and Firecrawl (v2 search + scrape API, keyed or keyless) — with automatic failover, per-backend 429 cooldowns, result verification (L0 liveness / L1 content) and a provenance receipt. npm package: `@fno2010/dsh-web-search-ext`. Two halves: the host provider (`lib/index.js` + `lib/verify.js`) and a web client half (the Settings → Plugins card: `src/client/`, built to `client/client.js`).
 
 ## Commands
 
-- `npm test` — full suite. **Part A**: 10 mocked failover/mapping scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
+- `npm test` — full suite. **Part A**: 39 mocked failover/mapping/verification/fetch scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
 - Host half: no build step. Plain ESM, Node >= 22, one runtime dependency (`@deepseek-ai/schemastery`).
 - Client half: `npm run build:client` (tsdown + `scripts/wrap-client.mjs`) — **the built `client/client.js` is committed and must be rebuilt + committed with every `src/client/` change** (CI rebuilds and fails on drift; the npm publish job never builds).
 - No formatter, no linter. For tight loops use `CI=true npm test` (Part A only): Part B hits shared anonymous rate limits.
 
 ## Layout
 
-- `lib/index.js` — host half, everything: `Config` schema, `resolveKey()`, the per-backend search functions, the ordered `plan` inside `search()`, failover + cooldown, the Cordis module export, and the `installSettingsSection` call.
+- `lib/index.js` — host half: `Config` schema, `resolveKey()`, the per-backend search + fetch functions, the ordered `plan` inside `search()`/`fetch()`, failover + cooldown, result-verification wiring + provenance receipt, the Cordis module export, and the `installSettingsSection` call.
+- `lib/verify.js` — local result verification: SSRF-safe URL guard, L0 liveness probes (manual redirect-following, HEAD with GET fallback), L1 snippet word-match content check, and the snippet status markers. Pure local HTTP; no vendor quota.
 - `src/client/` — client half source: `index.js` (the settings card), `locales.js` (EN/ZH), `card.module.css` (1:1 mirror of the host PluginCard/fields design tokens).
 - `client/client.js` — **committed** client bundle (`window.__ModuleLoader__.load` × 2, one per entry id; CSS inlined in the host's `data-plugin-css` pattern). Never edit by hand; rebuild via `npm run build:client`.
 - `tsdown.config.js`, `scripts/wrap-client.mjs` — the build recipe.
-- `cordis.patch.yml` — bundle patch that wires the provider into `web_search` (`web.searchProvider: web-search-ext`).
-- `test/failover.test.mjs` — `node:test` suite (Part A + Part B).
+- `cordis.patch.yml` — bundle patch that wires the provider into `web_search` and `web_fetch` (`web.searchProvider` + `web.fetchProvider`: `web-search-ext`).
+- `test/failover.test.mjs` — assert-based suite (hand-rolled `ok()` counter, no `node:test`; Part A + Part B).
 - `docs/settings-ui-plan.md` — the client-half implementation plan (extension points, wire APIs, harness churn notes; re-check its evidence greps after a harness bump).
 - `.github/workflows/ci.yml` — merge gate (push to main + every PR; includes the bundle-drift check). `.github/workflows/publish.yml` — tag-driven npm publish via trusted publishing (OIDC; no token in repo; also runs the drift check).
 - Docs: `README.md` (EN, canonical) + `README.zh.md` (ZH) — keep both in sync; `CONTRIBUTING.md` (human process); `CHANGELOG.md`.

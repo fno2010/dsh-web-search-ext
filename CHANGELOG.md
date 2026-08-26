@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.0] - 2026-08-26
+
+### Added
+
+- **Keyless `web_fetch`**: a new fetch provider is registered as the web seam's `fetchProvider`, so `web_fetch` works without any API key. It scrapes through Firecrawl (`POST {base}/scrape`; keyless requests allowed by default) and fails over to Exa's anonymous hosted MCP `web_fetch_exa` when Firecrawl is unavailable or rate-limited. Output is capped by `fetchMaxChars` (default 50 000) with `truncated` set when the cap bites. The bundle patch now pins `web.fetchProvider: web-search-ext` alongside `web.searchProvider`.
+- **Result verification (L0 liveness, on by default)**: every returned source is probed locally (HEAD first, GET on 405/501; redirects are followed manually — at most 3 hops, each hop re-validated against the SSRF guard before being followed) before the result is returned; each snippet gains a status marker — `[alive]`, `[dead 404]`, `[blocked]`, `[timeout]`, `[unreachable]`, `[skipped]` — and no result is ever dropped. Verification is purely local HTTP: no vendor quota, no keys.
+- **L1 content check (experimental, opt-in via `verifyLevel: "content"`)**: fetches the first `contentCheckBytes` of each page (body read bounded by `contentCheckTimeoutMs`) and checks that the snippet's leading words still appear; markers `[verified]` / `[verified·changed]` plus a word-match ratio. Sources with no snippet get `[unverified]` (page live, content not checked) and are counted separately in the receipt. `unsafe`/`forbidden` outcomes mark `[blocked]`.
+- **Provenance receipt**: `web_search` results now carry a one-line receipt at the top of `content` — e.g. `web-search-ext: exa-mcp · 1.2s · 5 results · liveness: 5 alive · freshness 24h not honored (keyless exa has no date filter)` — naming the backend that actually served the result and surfacing every limitation instead of hiding it.
+- **Freshness window**: `freshness` setting (`any` | `24h` | `7d` | `30d`) is sent on the wire where the backend supports it (Exa REST `startPublishedDate`, Firecrawl `tbs: qdr:d|w|m`). The keyless Exa MCP path has no date filter, so the receipt says so explicitly instead of silently ignoring the request.
+- **429 diagnostics**: a rate-limited backend's reported retry window is parsed from the standard `Retry-After` header (delta-seconds or HTTP-date) and/or structured response-body fields (`retry_after_seconds`, as number or string) and reported in human-readable form ("retry in ~22.1h"); it becomes that backend's cooldown (clamped by `maxCooldownSec`, default 24 h), and the error names the unlock path (set the corresponding API key).
+- New config fields (all optional, all defaulted): `verifyLevel`, `livenessTimeoutMs`, `contentCheckBytes`, `contentCheckMinBytes`, `contentCheckMatchWords`, `contentCheckTimeoutMs`, `freshness`, `maxCooldownSec`, `fetchMaxChars`.
+- Test suite grew from 10 to 39 mocked scenarios: L0/L1 markers, receipt shape, HEAD-405/501 fallback, verify-off zero-traffic, 429 retry-after (delta-seconds and HTTP-date headers, body fields, string values, clamp) + cooldown, freshness on the wire, fetch failover (429 and non-429), 404-as-result, SSRF guard matrix (IPv6/127-8/FQDN spellings incl. multi-dot), redirect re-validation, L0 status mapping, L1 deadlines (slow-drip, stalled mid-read, unstreamed text) + snippet-less `[unverified]`, abort during verification, dual-429, truncation, keyless-only plans.
+- `ROADMAP.md`: version plan and per-version deliverables for 0.3.0+.
+
+### Changed
+
+- Fetch-side SSRF guard: explicit URL fetches refuse non-http(s) schemes and loopback/private/link-local targets before any network traffic.
+- SSRF guard hardened (both the verification probes and `web_fetch`): IPv6 loopback/link-local/unique-local literals (including IPv4-mapped forms such as `[::ffff:127.0.0.1]`), the entire `127.0.0.0/8` loopback range, trailing-dot hostnames (`localhost.`), CGNAT and multicast ranges are all refused; addresses that cannot be confidently classified as public are refused (fail closed).
+- Firecrawl scrape requests now explicitly ask for both `markdown` and `html` formats, so the "scraped 404 is a result" path still works when markdown comes back empty.
+- 429 handling unified across all three backends (Exa REST, Exa MCP, Firecrawl): one `WEB_RATE_LIMIT` error shape with `retryAfterSec`.
+- Attribution user-agent bumped to `dsh-web-search-ext/0.3.0`.
+
 ## [0.2.0] - 2026-08-22
 
 ### Added

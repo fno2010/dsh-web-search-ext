@@ -19,7 +19,7 @@
 - **当前两个后端**：Exa（有 key 走 REST，无 key 走匿名 hosted MCP）与 Firecrawl（v2 search/scrape API，可有 key 或无 key）
 - **无 key `web_fetch`**：通过 Firecrawl scrape 抓取 URL，失败时回退到 Exa 匿名 MCP 的 `web_fetch_exa`；无需任何 API key，输出受 `fetchMaxChars` 上限约束
 - **自动故障切换**：任何后端失败（429、401/402/403、5xx、网络错误、响应体不合法）都会按顺序落到下一个后端（搜索与抓取均如此）
-- **按后端的 429 冷却**：被限流的后端在冷却期内被跳过；冷却时长优先采用后端自己报告的窗口（`retry_after`），并由 `maxCooldownSec` 封顶；全部后端都失败时，错误信息会列出每个后端的失败原因（含冷却状态）
+- **按后端的 429 冷却**：被限流的后端在冷却期内被跳过；冷却时长优先采用后端自己报告的窗口（`Retry-After` 响应头或响应体中的 `retry_after_seconds`），并由 `maxCooldownSec` 封顶；全部后端都失败时，错误信息会列出每个后端的失败原因（含冷却状态）
 - **结果校验**（L0 存活性，默认开启）：返回的每条来源都会做本地探测，摘要打上 `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` / `[skipped]` 标记——结果永远不会被丢弃；`verifyLevel: "content"` 可开启实验性 L1 内容校验（`[verified]` / `[verified·changed]` / `[unverified]`（页面存活但无摘要可比对））
 - **来源回执**：`web_search` 结果携带单行回执（`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`），标明实际应答的后端，并显式披露限制（如无 key Exa 无法执行时间窗口过滤）而非静默忽略
 - **时间窗口**：`freshness: 24h | 7d | 30d` 在后端支持时随请求发出（Exa `startPublishedDate`、Firecrawl `tbs`）；无 key Exa MCP 路径无法按日期过滤，回执会明确说明
@@ -66,7 +66,7 @@ bundle patch 通过设置 `web.searchProvider: web-search-ext` 让本插件接�
 | `contentCheckBytes` | `10240` | L1 每个页面读取的最大字节数 |
 | `contentCheckMinBytes` | `200` | L1 短于此长度视为反爬空壳页 |
 | `contentCheckMatchWords` | `5` | L1 对照摘要前 N 个词 |
-| `contentCheckTimeoutMs` | `3000` | L1 单 URL 超时 |
+| `contentCheckTimeoutMs` | `3000` | L1：请求与正文读取各一个超时预算 |
 | `freshness` | `any` | 时间窗口：`any` \| `24h` \| `7d` \| `30d`（后端支持时随请求发出；无 key Exa MCP 无法过滤，回执会说明） |
 | `maxCooldownSec` | `86400` | 采用后端报告的 `retry_after` 冷却时的上限；`0` = 完全采用报告值 |
 | `fetchMaxChars` | `50000` | `web_fetch` 输出字符上限 |
@@ -94,7 +94,7 @@ web-search-ext:
 
 ## 故障切换机制
 
-每次搜索（及每次抓取）按"当前 key 情况下可用的后端"构建有序计划——搜索时首选后端在前；抓取时优先 Firecrawl scrape（markdown 更完整），无 key 的 Exa MCP 抓取作回退。只有当后续所有后端都失败时，才把第一个失败的后端作为整体错误报出——429 额外触发该后端的冷却，冷却时长优先采用后端自己报告的窗口（`retry_after` / `retry_after_seconds`，由 `maxCooldownSec` 封顶），窗口内后续调用会跳过它。
+每次搜索（及每次抓取）按"当前 key 情况下可用的后端"构建有序计划——搜索时首选后端在前；抓取时优先 Firecrawl scrape（markdown 更完整），无 key 的 Exa MCP 抓取作回退。只有当后续所有后端都失败时，才把第一个失败的后端作为整体错误报出——429 额外触发该后端的冷却，冷却时长优先采用后端自己报告的窗口（`Retry-After` 响应头，或响应体中的 `retry_after_seconds`；由 `maxCooldownSec` 封顶），窗口内后续调用会跳过它。
 
 `web_search` 结果还携带单行来源回执（`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`）：哪个后端实际应答、时间窗口或校验层级是否被实际执行。不会有任何东西被静默丢弃。
 
@@ -115,7 +115,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # 然后重启 dsh
 
 ## 开发
 
-- 测试：`npm test`——37 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
+- 测试：`npm test`——39 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
 - 添加后端、分支/PR 规范、发版流程：[CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证

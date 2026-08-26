@@ -610,6 +610,7 @@ function fetchProviderWith(options) {
 		"http://[0:0:0:0:0:0:0:1]/",
 		"http://127.0.0.2/", "http://127.1.2.3/", "http://0.0.0.0:80/",
 		"http://localhost./admin", "http://sub.localhost/x",
+		"http://localhost../x", "http://127.0.0.1../x", "http://sub.localhost../x",
 		"http://10.1.2.3/", "http://172.31.255.255/", "http://169.254.1.1/",
 		"http://192.168.1.1/", "http://100.64.0.1/", "http://224.0.0.1/",
 		"http://2130706433/", "http://0x7f000001/",
@@ -814,8 +815,30 @@ function fetchProviderWith(options) {
 		(error) => /exa \(in rate-limit cooldown, retry in 90s\)/.test(error.message)
 	);
 	assert.equal(calls, 0);
+	// HTTP-date form (RFC 7231): a future date is honored; a past date
+	// falls back to the configured flat cooldown.
+	const futureDate = new Date(Date.now() + 120_000).toUTCString();
+	const pastDate = new Date(Date.now() - 120_000).toUTCString();
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return header429(futureDate);
+		return jsonResponse(429, "");
+	});
+	const p2 = providerWith(DEFAULTS);
+	await assert.rejects(
+		() => p2.search({ query: "hello" }),
+		(error) => /exa \(rate limited\).*retry in ~120s/u.test(error.message)
+	);
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return header429(pastDate);
+		return jsonResponse(429, "");
+	});
+	const p3 = providerWith(DEFAULTS);
+	await assert.rejects(
+		() => p3.search({ query: "hello" }),
+		(error) => /exa \(rate limited\).*backing off 60s/u.test(error.message)
+	);
 	restoreFetch();
-	ok("Retry-After header alone drives the reported window + cooldown");
+	ok("Retry-After header alone drives the reported window + cooldown (delta-seconds and HTTP-date)");
 }
 
 // 34. retry_after_seconds reported as a numeric string is still parsed.
@@ -885,16 +908,23 @@ function fetchProviderWith(options) {
 }
 
 // 37. abort during verification → WEB_ABORTED, like an abort mid-search.
+// Deterministic: the L0 probe settles only when the caller's signal aborts
+// (as a real fetch would reject), so no wall-clock margin decides the outcome.
 {
-	mockFetch(async (url) => {
+	const controller = new AbortController();
+	mockFetch(async (url, init) => {
 		if (url.startsWith("https://mcp.exa.ai")) {
 			await new Promise((r) => setTimeout(r, 20)); // let #finalize start
 			return jsonResponse(200, EXA_MCP_SINGLE);
 		}
-		await new Promise((r) => setTimeout(r, 200)); // outlive the abort
-		return jsonResponse(200, "");
+		return new Promise((resolve) => {
+			const settle = () => resolve(jsonResponse(200, ""));
+			if (init.signal?.aborted === true) return settle();
+			init.signal.addEventListener("abort", settle, { once: true });
+			const safety = setTimeout(settle, 2000); // never hangs the suite
+			safety.unref?.();
+		});
 	});
-	const controller = new AbortController();
 	const p = providerWith(DEFAULTS);
 	const searchPromise = p.search({ query: "hello" }, controller.signal);
 	setTimeout(() => controller.abort(), 60);
@@ -903,7 +933,62 @@ function fetchProviderWith(options) {
 	ok("abort during verification → WEB_ABORTED");
 }
 
-console.log(`\nPart A: ${passed}/37 scenarios passed`);
+// 38. L1: a body that stalls mid-read (headers sent, then silence) is cut
+//     off by contentCheckTimeoutMs even while the read() is still in flight.
+{
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		// Real-fetch semantics: the pending read rejects when the request is
+		// aborted — which is exactly what the module's own deadline timer does.
+		return {
+			status: 200,
+			ok: true,
+			headers: { get: () => null },
+			body: {
+				getReader: () => ({
+					read: () =>
+						new Promise((_, reject) => {
+							if (init.signal?.aborted === true) return reject(new Error("aborted"));
+							init.signal?.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+						}),
+					cancel: async () => {}
+				})
+			},
+			text: async () => "should never be read"
+		};
+	});
+	const p = providerWith({ ...DEFAULTS, verifyLevel: "content", contentCheckTimeoutMs: 400 });
+	const t0 = Date.now();
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[timeout\]/);
+	assert.ok(Date.now() - t0 < 5000, "bounded by the content deadline, not by undici's default");
+	restoreFetch();
+	ok("L1 stalled body read cut off by contentCheckTimeoutMs");
+}
+
+// 39. L1: a response without a readable stream whose text() never settles
+//     is still bounded by the deadline race.
+{
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		return {
+			status: 200,
+			ok: true,
+			headers: { get: () => null },
+			body: undefined,
+			text: () => new Promise(() => {}) // never settles
+		};
+	});
+	const p = providerWith({ ...DEFAULTS, verifyLevel: "content", contentCheckTimeoutMs: 400 });
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[timeout\]/);
+	restoreFetch();
+	ok("L1 never-settling text() bounded by the deadline race");
+}
+
+console.log(`\nPart A: ${passed}/39 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

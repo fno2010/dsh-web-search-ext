@@ -19,7 +19,7 @@ The built-in `web_search` tool is backend-pluggable; the in-box default provider
 - **Two backends today**: Exa (REST with key, anonymous hosted MCP without) and Firecrawl (v2 search + scrape API, keyed or keyless)
 - **Keyless `web_fetch`**: fetch a URL through Firecrawl scrape, falling back to Exa's anonymous MCP `web_fetch_exa`; no API key required, output capped by `fetchMaxChars`
 - **Automatic failover**: on any backend failure (429, 401/402/403, 5xx, network, malformed body) the search — and the fetch — falls through to the next backend in order
-- **Per-backend 429 cooldown**: a saturated backend is skipped on subsequent calls; the cooldown honors the window the backend itself reports (`retry_after`), clamped by `maxCooldownSec`; when all backends fail, the error lists every failure including cooldown state
+- **Per-backend 429 cooldown**: a saturated backend is skipped on subsequent calls; the cooldown honors the window the backend itself reports (`Retry-After` header or `retry_after_seconds` in the body), clamped by `maxCooldownSec`; when all backends fail, the error lists every failure including cooldown state
 - **Result verification** (L0 liveness, on by default): every returned source is probed locally and each snippet tagged `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` / `[skipped]` — no result is ever dropped; experimental L1 content check via `verifyLevel: "content"` adds `[verified]` / `[verified·changed]` / `[unverified]` (page live but no snippet to compare)
 - **Provenance receipt**: `web_search` results carry a one-line receipt (`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`), naming the backend that actually served the result and surfacing limitations (e.g. keyless Exa cannot honor a freshness window) instead of hiding them
 - **Freshness window**: `freshness: 24h | 7d | 30d` is sent on the wire where the backend supports it (Exa `startPublishedDate`, Firecrawl `tbs`); the keyless Exa MCP path says so in the receipt
@@ -66,7 +66,7 @@ Settings namespace `web-search-ext` in `~/.dsh/settings.yaml` (hot-reloaded):
 | `contentCheckBytes` | `10240` | L1: max bytes read from each page |
 | `contentCheckMinBytes` | `200` | L1: pages shorter than this count as bot-blocks |
 | `contentCheckMatchWords` | `5` | L1: leading snippet words checked against the page |
-| `contentCheckTimeoutMs` | `3000` | L1: per-URL timeout |
+| `contentCheckTimeoutMs` | `3000` | L1: timeout per request and body-read phase |
 | `freshness` | `any` | Recency window: `any` \| `24h` \| `7d` \| `30d` (sent on the wire where the backend supports it; keyless Exa MCP cannot filter and says so in the receipt) |
 | `maxCooldownSec` | `86400` | Cap on 429 cooldowns taken from a backend's reported `retry_after`; `0` = always honor the reported value |
 | `fetchMaxChars` | `50000` | Character cap for `web_fetch` provider output |
@@ -94,7 +94,7 @@ No keys at all still works: Exa uses its anonymous MCP endpoint and Firecrawl is
 
 ## How failover works
 
-Each search (and each fetch) builds an ordered plan from the backends that are available under the current key situation — preferred backend first for search; Firecrawl scrape first for fetch (richer markdown), with the keyless Exa MCP fetch as fallback. The first backend whose request fails is reported as the failure only if every later backend also fails — a 429 additionally starts that backend's cooldown, sized by the window the backend itself reports (`retry_after` / `retry_after_seconds`, clamped by `maxCooldownSec`), so it is skipped on subsequent calls until the window expires.
+Each search (and each fetch) builds an ordered plan from the backends that are available under the current key situation — preferred backend first for search; Firecrawl scrape first for fetch (richer markdown), with the keyless Exa MCP fetch as fallback. The first backend whose request fails is reported as the failure only if every later backend also fails — a 429 additionally starts that backend's cooldown, sized by the window the backend itself reports (`Retry-After` header, or `retry_after_seconds` in the response body; clamped by `maxCooldownSec`), so it is skipped on subsequent calls until the window expires.
 
 `web_search` results also carry a one-line provenance receipt (`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`): which backend actually answered, and whether the freshness window or verification tier was honored or had to be skipped. Nothing is silently dropped.
 
@@ -115,7 +115,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh
 
 ## Development
 
-- Tests: `npm test` — 37 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
+- Tests: `npm test` — 39 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
 - Adding a backend, branch/PR conventions, and the release process: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

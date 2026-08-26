@@ -8,7 +8,7 @@ A DSH (DeepSeek Harness) plugin: multi-backend `web_search` **and** `web_fetch` 
 
 ## Commands
 
-- `npm test` — full suite. **Part A**: 37 mocked failover/mapping/verification/fetch scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
+- `npm test` — full suite. **Part A**: 39 mocked failover/mapping/verification/fetch scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
 - Host half: no build step. Plain ESM, Node >= 22, one runtime dependency (`@deepseek-ai/schemastery`).
 - Client half: `npm run build:client` (tsdown + `scripts/wrap-client.mjs`) — **the built `client/client.js` is committed and must be rebuilt + committed with every `src/client/` change** (CI rebuilds and fails on drift; the npm publish job never builds).
 - No formatter, no linter. For tight loops use `CI=true npm test` (Part A only): Part B hits shared anonymous rate limits.

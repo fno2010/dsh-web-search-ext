@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.0] - 2026-08-26
+
+### Added
+
+- **Keyless `web_fetch`**: a new fetch provider is registered as the web seam's `fetchProvider`, so `web_fetch` works without any API key. It scrapes through Firecrawl (`POST {base}/scrape`; keyless requests allowed by default) and fails over to Exa's anonymous hosted MCP `web_fetch_exa` when Firecrawl is unavailable or rate-limited. Output is capped by `fetchMaxChars` (default 50 000) with `truncated` set when the cap bites. The bundle patch now pins `web.fetchProvider: web-search-ext` alongside `web.searchProvider`.
+- **Result verification (L0 liveness, on by default)**: every returned source is probed locally (HEAD first, GET on 405/501) before the result is returned; each snippet gains a status marker — `[alive]`, `[dead 404]`, `[blocked]`, `[timeout]`, `[unreachable]`, `[skipped]` — and no result is ever dropped. Verification is purely local HTTP: no vendor quota, no keys.
+- **L1 content check (experimental, opt-in via `verifyLevel: "content"`)**: fetches the first `contentCheckBytes` of each page and checks that the snippet's leading words still appear; markers `[verified]` / `[verified·changed]` plus a word-match ratio. `unsafe`/`forbidden` outcomes mark `[blocked]`.
+- **Provenance receipt**: `web_search` results now carry a one-line receipt at the top of `content` — e.g. `web-search-ext: exa-mcp · 1.2s · 5 results · liveness: 5 alive · freshness 24h not honored (keyless exa has no date filter)` — naming the backend that actually served the result and surfacing every limitation instead of hiding it.
+- **Freshness window**: `freshness` setting (`any` | `24h` | `7d` | `30d`) is sent on the wire where the backend supports it (Exa REST `startPublishedDate`, Firecrawl `tbs: qdr:d|w|m`). The keyless Exa MCP path has no date filter, so the receipt says so explicitly instead of silently ignoring the request.
+- **429 diagnostics**: a rate-limited backend's own `retry_after_seconds` / `Retry-After` is parsed and reported in human-readable form ("retry in ~22.1h"), used as that backend's cooldown (clamped by `maxCooldownSec`, default 24 h), and the error names the unlock path (set the corresponding API key).
+- New config fields (all optional, all defaulted): `verifyLevel`, `livenessTimeoutMs`, `contentCheckBytes`, `contentCheckMinBytes`, `contentCheckMatchWords`, `contentCheckTimeoutMs`, `freshness`, `maxCooldownSec`, `fetchMaxChars`.
+- Test suite grew from 10 to 25 mocked scenarios: L0/L1 markers, receipt shape, HEAD-405 fallback, verify-off zero-traffic, 429 retry-after + cooldown, freshness on the wire, fetch failover, 404-as-result, fetch SSRF guard, dual-429, truncation, keyless-only plans.
+- `ROADMAP.md`: version plan and per-version deliverables for 0.3.0+.
+
+### Changed
+
+- Fetch-side SSRF guard: explicit URL fetches refuse non-http(s) schemes and loopback/private/link-local targets before any network traffic.
+- 429 handling unified across all three backends (Exa REST, Exa MCP, Firecrawl): one `WEB_RATE_LIMIT` error shape with `retryAfterSec`.
+- Attribution user-agent bumped to `dsh-web-search-ext/0.3.0`.
+
 ## [0.2.0] - 2026-08-22
 
 ### Added

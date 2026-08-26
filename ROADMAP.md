@@ -3,16 +3,21 @@
 Versioning plan for this plugin. Shipped changes are recorded in
 [CHANGELOG](CHANGELOG.md); this file describes what comes next and why.
 
-## Current state (0.2.x)
+## Current state (0.3.0)
 
-- Dual-backend `web_search` provider (Exa REST/MCP + Firecrawl v2) with
-  automatic failover and per-backend 429 cooldowns
+- Multi-backend `web_search` and keyless `web_fetch` providers
+  (Exa REST/MCP + Firecrawl v2) with automatic failover and per-backend 429
+  cooldowns that honor backend-reported retry windows
+- Result verification: L0 liveness markers on by default, experimental L1
+  content check; provenance receipt on every search result
 - Works with no API keys (Exa anonymous MCP + keyless Firecrawl); optional
   keys raise limits
 - Settings card (Settings → Plugins) with key discovery, backend preference,
   and result limits
 
 ## 0.3.0 — verifiable, current search
+
+Status: implemented on this branch; the table below is the delivered spec.
 
 Goal: each search result carries a machine- and human-readable trust signal,
 and `web_fetch` works keyless.

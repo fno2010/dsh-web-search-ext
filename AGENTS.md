@@ -8,7 +8,7 @@ A DSH (DeepSeek Harness) plugin: multi-backend `web_search` **and** `web_fetch` 
 
 ## Commands
 
-- `npm test` — full suite. **Part A**: 25 mocked failover/mapping/verification/fetch scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
+- `npm test` — full suite. **Part A**: 37 mocked failover/mapping/verification/fetch scenarios (no network). **Part B**: 3 live keyless smoke tests, skipped when `CI` is set.
 - Host half: no build step. Plain ESM, Node >= 22, one runtime dependency (`@deepseek-ai/schemastery`).
 - Client half: `npm run build:client` (tsdown + `scripts/wrap-client.mjs`) — **the built `client/client.js` is committed and must be rebuilt + committed with every `src/client/` change** (CI rebuilds and fails on drift; the npm publish job never builds).
 - No formatter, no linter. For tight loops use `CI=true npm test` (Part A only): Part B hits shared anonymous rate limits.
@@ -21,7 +21,7 @@ A DSH (DeepSeek Harness) plugin: multi-backend `web_search` **and** `web_fetch` 
 - `client/client.js` — **committed** client bundle (`window.__ModuleLoader__.load` × 2, one per entry id; CSS inlined in the host's `data-plugin-css` pattern). Never edit by hand; rebuild via `npm run build:client`.
 - `tsdown.config.js`, `scripts/wrap-client.mjs` — the build recipe.
 - `cordis.patch.yml` — bundle patch that wires the provider into `web_search` and `web_fetch` (`web.searchProvider` + `web.fetchProvider`: `web-search-ext`).
-- `test/failover.test.mjs` — `node:test` suite (Part A + Part B).
+- `test/failover.test.mjs` — assert-based suite (hand-rolled `ok()` counter, no `node:test`; Part A + Part B).
 - `docs/settings-ui-plan.md` — the client-half implementation plan (extension points, wire APIs, harness churn notes; re-check its evidence greps after a harness bump).
 - `.github/workflows/ci.yml` — merge gate (push to main + every PR; includes the bundle-drift check). `.github/workflows/publish.yml` — tag-driven npm publish via trusted publishing (OIDC; no token in repo; also runs the drift check).
 - Docs: `README.md` (EN, canonical) + `README.zh.md` (ZH) — keep both in sync; `CONTRIBUTING.md` (human process); `CHANGELOG.md`.

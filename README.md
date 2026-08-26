@@ -20,11 +20,11 @@ The built-in `web_search` tool is backend-pluggable; the in-box default provider
 - **Keyless `web_fetch`**: fetch a URL through Firecrawl scrape, falling back to Exa's anonymous MCP `web_fetch_exa`; no API key required, output capped by `fetchMaxChars`
 - **Automatic failover**: on any backend failure (429, 401/402/403, 5xx, network, malformed body) the search — and the fetch — falls through to the next backend in order
 - **Per-backend 429 cooldown**: a saturated backend is skipped on subsequent calls; the cooldown honors the window the backend itself reports (`retry_after`), clamped by `maxCooldownSec`; when all backends fail, the error lists every failure including cooldown state
-- **Result verification** (L0 liveness, on by default): every returned source is probed locally and each snippet tagged `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` — no result is ever dropped; experimental L1 content check via `verifyLevel: "content"` adds `[verified]` / `[verified·changed]`
+- **Result verification** (L0 liveness, on by default): every returned source is probed locally and each snippet tagged `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` / `[skipped]` — no result is ever dropped; experimental L1 content check via `verifyLevel: "content"` adds `[verified]` / `[verified·changed]` / `[unverified]` (page live but no snippet to compare)
 - **Provenance receipt**: `web_search` results carry a one-line receipt (`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`), naming the backend that actually served the result and surfacing limitations (e.g. keyless Exa cannot honor a freshness window) instead of hiding them
 - **Freshness window**: `freshness: 24h | 7d | 30d` is sent on the wire where the backend supports it (Exa `startPublishedDate`, Firecrawl `tbs`); the keyless Exa MCP path says so in the receipt
 - **Optional keys** with per-backend precedence: settings literal → credentials service → launch environment variable
-- **Settings card on the Web**: Settings → Plugins → Plugin configuration exposes the config fields and both API keys, with key state auto-discovered from the credentials layers
+- **Settings card on the Web**: Settings → Plugins → Plugin configuration exposes the five core config fields and both API keys, with key state auto-discovered from the credentials layers (the 0.3.0 verification/freshness fields are `settings.yaml`-only for now; the card gains them in 0.3.1)
 - **No install-time scripts**: plain ESM JavaScript, no build step, no `postinstall`/`prepare`
 - **Extensible**: adding a backend is one search function + one plan entry + config fields — see [CONTRIBUTING](CONTRIBUTING.md)
 
@@ -110,12 +110,12 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh
 - API keys travel only in the `authorization` header of their own backend's requests — never in bodies, never to the other backend, never in error messages.
 - No install-time scripts: plain ESM JavaScript, no build step, no `postinstall`/`prepare`.
 - Snippets are bounded (`maxSnippetChars`) and Firecrawl's page-markdown descriptions are stripped of image links before entering model context.
-- Verification probes (L0/L1) only fetch URLs that appear in backend results, with bounded bytes/timeouts; redirects are followed manually and every hop is re-validated against the same SSRF rules (public http(s) only; loopback, private, and link-local ranges are refused).
+- Verification probes (L0/L1) only fetch URLs that appear in backend results, with bounded bytes/timeouts; redirects are followed manually and every hop is re-validated against the same SSRF rules (public http(s) only; loopback, private, link-local, and CGNAT ranges are refused — including IPv6 literal and trailing-dot spellings; addresses that cannot be confidently classified are refused, fail closed).
 - The `web_fetch` provider refuses non-public targets (non-http(s) schemes, loopback, private, link-local) before sending the URL to any scraping backend.
 
 ## Development
 
-- Tests: `npm test` — 25 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
+- Tests: `npm test` — 37 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
 - Adding a backend, branch/PR conventions, and the release process: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

@@ -20,11 +20,11 @@
 - **无 key `web_fetch`**：通过 Firecrawl scrape 抓取 URL，失败时回退到 Exa 匿名 MCP 的 `web_fetch_exa`；无需任何 API key，输出受 `fetchMaxChars` 上限约束
 - **自动故障切换**：任何后端失败（429、401/402/403、5xx、网络错误、响应体不合法）都会按顺序落到下一个后端（搜索与抓取均如此）
 - **按后端的 429 冷却**：被限流的后端在冷却期内被跳过；冷却时长优先采用后端自己报告的窗口（`retry_after`），并由 `maxCooldownSec` 封顶；全部后端都失败时，错误信息会列出每个后端的失败原因（含冷却状态）
-- **结果校验**（L0 存活性，默认开启）：返回的每条来源都会做本地探测，摘要打上 `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` 标记——结果永远不会被丢弃；`verifyLevel: "content"` 可开启实验性 L1 内容校验（`[verified]` / `[verified·changed]`）
+- **结果校验**（L0 存活性，默认开启）：返回的每条来源都会做本地探测，摘要打上 `[alive]` / `[dead 404]` / `[blocked]` / `[timeout]` / `[unreachable]` / `[skipped]` 标记——结果永远不会被丢弃；`verifyLevel: "content"` 可开启实验性 L1 内容校验（`[verified]` / `[verified·changed]` / `[unverified]`（页面存活但无摘要可比对））
 - **来源回执**：`web_search` 结果携带单行回执（`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`），标明实际应答的后端，并显式披露限制（如无 key Exa 无法执行时间窗口过滤）而非静默忽略
 - **时间窗口**：`freshness: 24h | 7d | 30d` 在后端支持时随请求发出（Exa `startPublishedDate`、Firecrawl `tbs`）；无 key Exa MCP 路径无法按日期过滤，回执会明确说明
 - **可选 key**，按后端独立解析，优先级：设置明文 → 凭证服务 → 启动环境变量
-- **Web 端设置卡片**：设置 → 插件 → 插件配置 中可编辑配置字段和两个 API key，key 状态自动发现自凭证各层
+- **Web 端设置卡片**：设置 → 插件 → 插件配置 中可编辑五个核心配置字段和两个 API key，key 状态自动发现自凭证各层（0.3.0 的校验/时间字段暂只在 `settings.yaml`；卡片将在 0.3.1 跟上）
 - **无安装期脚本**：纯 ESM JavaScript，无构建步骤，无 `postinstall`/`prepare`
 - **可扩展**：加一个后端 = 一个搜索函数 + 一个 plan 条目 + 配置字段，见 [CONTRIBUTING](CONTRIBUTING.md)
 
@@ -110,12 +110,12 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # 然后重启 dsh
 - API key 只出现在其后端请求的 `authorization` 头里——不进请求体、不发往另一个后端、不出现在错误信息中。
 - 无安装期脚本：纯 ESM JavaScript，无构建步骤，无 `postinstall`/`prepare`。
 - 摘要有长度上限（`maxSnippetChars`）；Firecrawl 的页面 markdown 描述在进入模型上下文前会剥掉图片链接。
-- 校验探测（L0/L1）只抓取后端结果中出现的 URL，字节数与超时均有界；重定向逐跳手动跟随，每一跳都按同一套 SSRF 规则重新校验（仅允许公共 http(s)；环回、内网、链路本地地址一律拒绝）。
+- 校验探测（L0/L1）只抓取后端结果中出现的 URL，字节数与超时均有界；重定向逐跳手动跟随，每一跳都按同一套 SSRF 规则重新校验（仅允许公共 http(s)；环回、内网、链路本地、CGNAT 地址一律拒绝——包括 IPv6 字面量与末尾点号拼写；无法确定是公共地址的一律拒绝，fail closed）。
 - `web_fetch` 提供方在把 URL 交给任何抓取后端之前，拒绝非公共目标（非 http(s) 协议、环回、内网、链路本地地址）。
 
 ## 开发
 
-- 测试：`npm test`——25 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
+- 测试：`npm test`——37 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
 - 添加后端、分支/PR 规范、发版流程：[CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证

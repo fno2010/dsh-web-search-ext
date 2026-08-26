@@ -2,13 +2,17 @@
  * Failover and mapping tests for dsh-web-search-ext.
  * Run: node test/failover.test.mjs (Part B live smoke is skipped when CI is set)
  *
- * Part A: mocked fetch — failover order, 429 cooldown, combined errors, abort,
- *         L0/L1 verification markers, provenance receipt, freshness params.
+ * Part A: mocked fetch — failover order, 429 cooldown (+Retry-After header,
+ *         string windows, maxCooldownSec clamp), combined errors, abort,
+ *         L0/L1 verification markers (incl. redirect re-validation, status
+ *         mapping, slow-drip body deadline), SSRF guard matrix, provenance
+ *         receipt, freshness params, fetch backends.
  * Part B: live smoke — one real keyless call per backend (Exa anonymous MCP,
  *          Firecrawl v2 keyless), asserting the provider maps real payloads.
  */
 import assert from "node:assert/strict";
 import { MultiBackendSearchProvider, MultiBackendFetchProvider, Config, PROVIDER_ID } from "../lib/index.js";
+import { isSafeUrl } from "../lib/verify.js";
 
 const DEFAULTS = {
 	preferred: "exa",
@@ -75,6 +79,18 @@ const EXA_MCP_OK = JSON.stringify({
 					"Title: First result\nURL: https://a.example/1\nPublished: N/A\nAuthor: N/A\nHighlights:\nFirst highlight sentence.\n\n---\n\nTitle: Second result\nURL: https://a.example/2\nPublished: 2026-01-02\nAuthor: N/A\nHighlights:\nSecond highlight sentence."
 			}
 		]
+	}
+});
+
+// Single-source MCP payload for redirect / L1 / abort scenarios.
+const EXA_MCP_SINGLE = JSON.stringify({
+	jsonrpc: "2.0",
+	id: "x",
+	result: {
+		content: [{
+			type: "text",
+			text: "Title: R\nURL: https://r.example/old\nHighlights:\nRedirect target check."
+		}]
 	}
 });
 
@@ -583,7 +599,311 @@ function fetchProviderWith(options) {
 	ok("pre-aborted fetch throws WEB_ABORTED before any request");
 }
 
-console.log(`\nPart A: ${passed}/25 scenarios passed`);
+// 26. SSRF guard (isSafeUrl) direct coverage: IPv6 literals, the full 127/8,
+//     FQDN/localhost spellings, canonical numeric forms — refused; public
+//     addresses allowed. This matrix is what findings B1-3 stayed green without.
+{
+	const blocked = [
+		"http://[::1]:3080/admin", "http://[::1]/", "http://[::]:8080/",
+		"http://[fe80::1]/", "http://[fd00::1]/", "http://[fc00::abcd]/",
+		"http://[::ffff:127.0.0.1]/", "http://[::ffff:7f00:1]/",
+		"http://[0:0:0:0:0:0:0:1]/",
+		"http://127.0.0.2/", "http://127.1.2.3/", "http://0.0.0.0:80/",
+		"http://localhost./admin", "http://sub.localhost/x",
+		"http://10.1.2.3/", "http://172.31.255.255/", "http://169.254.1.1/",
+		"http://192.168.1.1/", "http://100.64.0.1/", "http://224.0.0.1/",
+		"http://2130706433/", "http://0x7f000001/",
+		"file:///etc/passwd", "ftp://x.example/"
+	];
+	for (const url of blocked) assert.equal(isSafeUrl(url), false, `must block: ${url}`);
+	const allowed = ["https://example.com/x", "https://8.8.8.8/", "https://[2001:db8::1]/", "https://LOCALHOST.com/x"];
+	for (const url of allowed) assert.equal(isSafeUrl(url), true, `must allow: ${url}`);
+	ok("SSRF guard: IPv6/127-8/FQDN/canonical spellings refused; public allowed");
+}
+
+// 27. L0 follows redirects manually and re-validates every hop: a public hop
+//     chain resolves to [alive]; a hop to loopback is refused with no request
+//     to the internal address.
+{
+	const redirectResponse = (status, location) => ({
+		status,
+		ok: false,
+		headers: { get: (n) => (n.toLowerCase() === "location" ? location : null) },
+		json: async () => { throw new Error("no json"); },
+		text: async () => ""
+	});
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (url.startsWith("https://r.example/old")) return redirectResponse(301, "https://r.example/final");
+		assert.equal(url, "https://r.example/final", "second hop must be the re-validated target");
+		return jsonResponse(200, "");
+	});
+	const p = providerWith(DEFAULTS);
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources[0].snippet, "[alive] Redirect target check.");
+	restoreFetch();
+
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (url.startsWith("https://r.example/old")) return redirectResponse(302, "http://127.0.0.2:9/internal");
+		throw new Error(`must not reach the internal address: ${url}`);
+	});
+	const p2 = providerWith(DEFAULTS);
+	const result2 = await p2.search({ query: "hello" });
+	assert.match(result2.sources[0].snippet, /^\[blocked\]/, "loopback redirect target refused pre-network");
+	restoreFetch();
+	ok("L0 redirect: public hop followed to [alive]; loopback hop refused without a request");
+}
+
+// 28. broken redirects: 3xx without Location and a redirect loop both surface
+//     as [unreachable] instead of hanging.
+{
+	const locationless = {
+		status: 302,
+		ok: false,
+		headers: { get: () => null },
+		json: async () => { throw new Error("no json"); },
+		text: async () => ""
+	};
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		return locationless;
+	});
+	const p = providerWith(DEFAULTS);
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[unreachable\]/, "302 without Location is an error");
+	restoreFetch();
+	ok("redirect without Location → [unreachable], no hang");
+}
+
+// 29. L0 status mapping: 403 → [blocked]; HEAD 501 → GET retry → [alive];
+//     500 → [unreachable]; a probe that outlives livenessTimeoutMs → [timeout].
+{
+	const EXA_MCP_4 = JSON.stringify({
+		jsonrpc: "2.0",
+		id: "x",
+		result: {
+			content: [{
+				type: "text",
+				text:
+					"Title: M1\nURL: https://m.example/1\nHighlights:\nOne.\n\n---\n\n" +
+					"Title: M2\nURL: https://m.example/2\nHighlights:\nTwo.\n\n---\n\n" +
+					"Title: M3\nURL: https://m.example/3\nHighlights:\nThree.\n\n---\n\n" +
+					"Title: M4\nURL: https://m.example/4\nHighlights:\nFour."
+			}]
+		}
+	});
+	const untilAbortOrMs = async (init, ms) => {
+		if (init.signal?.aborted === true) throw new Error("aborted");
+		await new Promise((resolve, reject) => {
+			const t = setTimeout(resolve, ms);
+			init.signal?.addEventListener("abort", () => {
+				clearTimeout(t);
+				reject(new Error("aborted"));
+			}, { once: true });
+		});
+	};
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_4);
+		if (url.startsWith("https://m.example/1")) return jsonResponse(403, "");
+		if (url.startsWith("https://m.example/2") && init.method === "HEAD") return jsonResponse(501, "");
+		if (url.startsWith("https://m.example/2")) {
+			assert.equal(init.method, "GET", "501 retry uses GET");
+			return jsonResponse(200, "");
+		}
+		if (url.startsWith("https://m.example/3")) return jsonResponse(500, "");
+		await untilAbortOrMs(init, 5000); // outlive the 150ms probe deadline
+		return jsonResponse(200, "");
+	});
+	const p = providerWith({ ...DEFAULTS, livenessTimeoutMs: 150 });
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[blocked\]/);
+	assert.match(result.sources[1].snippet, /^\[alive\]/);
+	assert.match(result.sources[2].snippet, /^\[unreachable\]/);
+	assert.match(result.sources[3].snippet, /^\[timeout\]/);
+	restoreFetch();
+	ok("L0 mapping: 403 [blocked], 501→GET [alive], 500 [unreachable], deadline [timeout]");
+}
+
+// 30. L1 page below minContentBytes → [blocked] (bot-block / empty shell).
+{
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		return jsonResponse(200, "too short"); // < contentCheckMinBytes (200)
+	});
+	const p = providerWith({ ...DEFAULTS, verifyLevel: "content" });
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[blocked\]/);
+	restoreFetch();
+	ok("L1 below-min-bytes page → [blocked]");
+}
+
+// 31. L1 source without a snippet: the page is live but its content was NOT
+//     checked — [unverified], counted separately in the receipt.
+{
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, { success: true, data: { web: [
+				{ url: "https://f.example/1", title: "F1", description: "First highlight sentence." },
+				{ url: "https://f.example/2", title: "F2" } // no description → no snippet
+			] } });
+		}
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		return jsonResponse(200, PAGE_MATCHING);
+	});
+	const p = providerWith({ ...DEFAULTS, verifyLevel: "content", preferred: "firecrawl" });
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[verified\]/);
+	assert.match(result.sources[1].snippet, /^\[unverified\]/);
+	assert.match(result.content, /content: 1 verified, 1 unverified/);
+	restoreFetch();
+	ok("L1 snippet-less source → [unverified], receipt counts it separately");
+}
+
+// 32. maxCooldownSec clamps a huge reported window to the configured cap.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) {
+			return jsonResponse(429, JSON.stringify({ error: { reason: "rate_limited", retry_after_seconds: 999999 } }));
+		}
+		return jsonResponse(429, "");
+	});
+	const p = providerWith({ ...DEFAULTS, maxCooldownSec: 3600 });
+	await assert.rejects(() => p.search({ query: "hello" })); // first pass: both 429
+	let calls = 0;
+	mockFetch(async () => {
+		calls++;
+		return jsonResponse(429, "");
+	});
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => /exa \(in rate-limit cooldown, retry in 3600s\)/.test(error.message)
+	);
+	assert.equal(calls, 0, "clamped window still cools the backend");
+	restoreFetch();
+	ok("maxCooldownSec clamps a 999999s report to the 3600s cap");
+}
+
+// 33. 429 carrying ONLY the standard Retry-After header (no body field):
+//     the header window is honored.
+{
+	const header429 = (value) => ({
+		status: 429,
+		ok: false,
+		headers: { get: (n) => (n.toLowerCase() === "retry-after" ? value : null) },
+		json: async () => { throw new Error("no json"); },
+		text: async () => "rate limited"
+	});
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return header429("90");
+		return jsonResponse(429, "");
+	});
+	const p = providerWith(DEFAULTS);
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => /exa \(rate limited\).*retry in ~90s/u.test(error.message)
+	);
+	let calls = 0;
+	mockFetch(async () => {
+		calls++;
+		return jsonResponse(429, "");
+	});
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => /exa \(in rate-limit cooldown, retry in 90s\)/.test(error.message)
+	);
+	assert.equal(calls, 0);
+	restoreFetch();
+	ok("Retry-After header alone drives the reported window + cooldown");
+}
+
+// 34. retry_after_seconds reported as a numeric string is still parsed.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) {
+			return jsonResponse(429, JSON.stringify({ retry_after_seconds: "45" }));
+		}
+		return jsonResponse(429, "");
+	});
+	const p = providerWith(DEFAULTS);
+	await assert.rejects(
+		() => p.search({ query: "hello" }),
+		(error) => /retry in ~45s/.test(error.message)
+	);
+	restoreFetch();
+	ok("string retry_after_seconds parsed as a window");
+}
+
+// 35. L1 body read is bounded by contentCheckTimeoutMs: a slow-drip server
+//     (headers then trickle) cannot stall the search indefinitely.
+{
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		let i = 0;
+		return {
+			status: 200,
+			ok: true,
+			headers: { get: () => null },
+			body: {
+				getReader: () => ({
+					read: async () => {
+						await new Promise((r) => setTimeout(r, 400)); // far past the 300ms deadline
+						i += 1;
+						return i <= 50 ? { value: Buffer.from("b".repeat(100)) } : { done: true };
+					},
+					cancel: async () => {}
+				})
+			},
+			text: async () => "b".repeat(5000)
+		};
+	});
+	const p = providerWith({ ...DEFAULTS, verifyLevel: "content", contentCheckTimeoutMs: 300 });
+	const t0 = Date.now();
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[timeout\]/);
+	assert.ok(Date.now() - t0 < 5000, "search stays bounded despite the drip");
+	restoreFetch();
+	ok("L1 slow-drip body: contentCheckTimeoutMs bounds the read → [timeout]");
+}
+
+// 36. fetch failover on a NON-429 scrape failure (success:false envelope).
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, { success: false, error: "scrape failed: internal error" });
+		}
+		assert.ok(url.startsWith("https://mcp.exa.ai"), "must fall through to exa-mcp fetch");
+		return jsonResponse(200, EXA_MCP_FETCH_OK);
+	});
+	const p = fetchProviderWith(DEFAULTS);
+	const result = await p.fetch({ url: "https://p.example/a" });
+	assert.equal(result.body.content, "Fetched page body from exa.");
+	restoreFetch();
+	ok("fetch failover on success:false scrape envelope");
+}
+
+// 37. abort during verification → WEB_ABORTED, like an abort mid-search.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) {
+			await new Promise((r) => setTimeout(r, 20)); // let #finalize start
+			return jsonResponse(200, EXA_MCP_SINGLE);
+		}
+		await new Promise((r) => setTimeout(r, 200)); // outlive the abort
+		return jsonResponse(200, "");
+	});
+	const controller = new AbortController();
+	const p = providerWith(DEFAULTS);
+	const searchPromise = p.search({ query: "hello" }, controller.signal);
+	setTimeout(() => controller.abort(), 60);
+	await assert.rejects(searchPromise, (error) => error.code === "WEB_ABORTED");
+	restoreFetch();
+	ok("abort during verification → WEB_ABORTED");
+}
+
+console.log(`\nPart A: ${passed}/37 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

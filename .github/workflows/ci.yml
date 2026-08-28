@@ -44,7 +44,11 @@ jobs:
   #       (upstream decision, asserted honestly — the 0.3.1 false green was
   #       a fixture that omitted this layer and asserted a row the host
   #       never composes enabled);
-  #   (c) our provider row is mounted and enabled.
+  #   (c) our provider row is mounted and enabled;
+  #   (d) a REAL boot of `dsh web` on a free port succeeds with the plugin
+  #       tree fully loaded (dump-config only composes YAML — it never
+  #       imports the plugin JS, so a broken install form or missing
+  #       dependency can only be caught by an actual boot).
   # The model-facing web_fetch registration (plugin apply-time, via
   # dsh-tool-web's applyWebFetchTool) is covered by test/tool-registration.test.mjs;
   # the actual model→tool call is covered by the release-time live smoke
@@ -90,3 +94,40 @@ jobs:
             echo "e2e-host: FAILED — a patch entry was skipped"; exit 1
           fi
           echo "e2e-host: composed config OK (web pinned to web-search-ext, provider enabled, tool-web disabled as the web profile composes it)"
+      # Real boot: dump-config above proves the YAML composition only. A boot
+      # of the web host proves the plugin module actually imports (its static
+      # peer imports included) and apply() completes on the real host — the
+      # path the 0.3.1 false green never exercised. The plugin is a link:
+      # install, so its own imports resolve from THIS checkout: install its
+      # dependencies first.
+      - name: Install this plugin's own dependencies (link-install target)
+        run: npm install --no-audit --no-fund
+      - name: Boot the web host for real and verify the plugin tree loads
+        run: |
+          log="$(mktemp)"
+          dsh web --port 0 --no-open >"$log" 2>&1 &
+          pid=$!
+          # Boot prints `dsh web: http://127.0.0.1:<port>` when the server is up.
+          url=""
+          for _ in $(seq 1 90); do
+            url="$(grep -o 'http://127.0.0.1:[0-9]*' "$log" | head -1 || true)"
+            [ -n "$url" ] && break
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 1
+          done
+          # Give a delayed plugin-init rejection (fail-loud path) a moment to
+          # fire, then stop the host.
+          sleep 5
+          kill "$pid" 2>/dev/null || true
+          wait "$pid" 2>/dev/null || true
+          echo "--- boot log ---"
+          cat "$log"
+          echo "----------------"
+          # A failed plugin import or plugin-init rejection names the entry.
+          if grep -E "failed to (import|load) loader entry|Cannot find package|plugin\(s\) failed to load" "$log"; then
+            echo "e2e-host: FAILED — the plugin tree did not load"
+            exit 1
+          fi
+          [ -n "$url" ] || { echo "e2e-host: FAILED — boot never reached the server"; exit 1; }
+          curl -fsS -o /dev/null "$url" || { echo "e2e-host: FAILED — server not responding"; exit 1; }
+          echo "e2e-host: boot OK ($url) — plugin tree loaded, no import/load failures"

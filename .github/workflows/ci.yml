@@ -107,8 +107,8 @@ jobs:
           log="$(mktemp)"
           dsh web --port 0 --no-open >"$log" 2>&1 &
           pid=$!
-          # These lines assert the plugin tree loaded. `--dump-config` above
-          # cannot prove this (it never imports plugin JS); the boot can.
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          # Boot prints `dsh web: http://127.0.0.1:<port>` when the server is up.
           url=""
           for _ in $(seq 1 90); do
             url="$(grep '^dsh web: http://127.0.0.1:' "$log" | grep -o 'http://127.0.0.1:[0-9]*' | head -1 || true)"
@@ -117,10 +117,8 @@ jobs:
             sleep 1
           done
           # Give a delayed plugin-init rejection (fail-loud path) a moment to
-          # fire, then stop the host.
+          # fire while the server is still up, then probe the live server.
           sleep 5
-          kill "$pid" 2>/dev/null || true
-          wait "$pid" 2>/dev/null || true
           echo "--- boot log ---"
           cat "$log"
           echo "----------------"

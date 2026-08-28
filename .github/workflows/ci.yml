@@ -35,3 +35,105 @@ jobs:
           npm run build:client
           node --check client/client.js
           git diff --exit-code -- client/
+  # Host-wiring end-to-end: install the REAL harness from npm, add this plugin
+  # to a fresh web profile exactly the way the README instructs
+  # (`dsh plugin --profile web add <path>`), then dump the composed host
+  # config and verify the REAL composed state:
+  #   (a) our provider is pinned on the web seam for search AND fetch;
+  #   (b) the profile-layer tool-web row is DISABLED by the web profile
+  #       (upstream decision, asserted honestly — the 0.3.1 false green was
+  #       a fixture that omitted this layer and asserted a row the host
+  #       never composes enabled);
+  #   (c) our provider row is mounted and enabled;
+  #   (d) a REAL boot of `dsh web` on a free port succeeds with the plugin
+  #       tree fully loaded (dump-config only composes YAML — it never
+  #       imports the plugin JS, so a broken install form or missing
+  #       dependency can only be caught by an actual boot).
+  # The model-facing web_fetch registration (plugin apply-time, via
+  # dsh-tool-web's applyWebFetchTool) is covered by test/tool-registration.test.mjs;
+  # the actual model→tool call is covered by the release-time live smoke
+  # (AGENTS.md, Releasing step 1).
+  #
+  # Pinned to the harness line the composition test fixture mirrors
+  # (dsh-base 0.1.1-rc.2). Bump both together when the harness moves.
+  e2e-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install the harness (pinned)
+        run: npm install -g --no-audit --no-fund @deepseek-ai/dsh@0.1.1-rc.2
+      - name: Ensure pnpm (profile install uses it)
+        run: pnpm --version || npm install -g pnpm
+      - name: Install this plugin into a fresh web profile (README path)
+        run: dsh plugin --profile web add "$GITHUB_WORKSPACE"
+      - name: Verify the composed host config
+        run: |
+          dump="$(dsh web --dump-config 2>&1)" || { echo "$dump"; exit 1; }
+          echo "$dump"
+          # Print one `- id: <name>` row (up to the next `- id:` line).
+          row() { awk -v id="- id: $1" '/^- id: /{inrow=($0==id)} inrow{print}' <<<"$dump"; }
+          set -e
+          web_row="$(row web)"
+          grep -q "searchProvider: web-search-ext" <<<"$web_row"
+          grep -q "fetchProvider: web-search-ext" <<<"$web_row"
+          # Honest assertion (the 0.3.1 false green asserted `fetch: true`
+          # here): in the web profile the composed tool-web row is DISABLED
+          # by the web profile, with the base config intact under the flag.
+          tw_row="$(row tool-web)"
+          grep -q "disabled: true" <<<"$tw_row"
+          grep -q "fetch: false" <<<"$tw_row"
+          # Our provider row is mounted and not disabled.
+          ws_row="$(row web-search-ext)"
+          [ -n "$ws_row" ]
+          ! grep -q "disabled: true" <<<"$ws_row"
+          # A healthy composition applies every patch entry of ours.
+          if grep -E "patch: .*not found|name mismatch" <<<"$dump"; then
+            echo "e2e-host: FAILED — a patch entry was skipped"; exit 1
+          fi
+          echo "e2e-host: composed config OK (web pinned to web-search-ext, provider enabled, tool-web disabled as the web profile composes it)"
+      # Real boot: dump-config above proves the YAML composition only. A boot
+      # of the web host proves the plugin module actually imports (its static
+      # peer imports included) and apply() completes on the real host — the
+      # path the 0.3.1 false green never exercised. The plugin is a link:
+      # install, so its own imports resolve from THIS checkout: install its
+      # dependencies first.
+      - name: Install this plugin's own dependencies (link-install target)
+        run: npm install --no-audit --no-fund
+      - name: Boot the web host for real and verify the plugin tree loads
+        run: |
+          log="$(mktemp)"
+          dsh web --port 0 --no-open >"$log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          # Boot prints `dsh web: http://127.0.0.1:<port>` when the server is up.
+          url=""
+          for _ in $(seq 1 90); do
+            url="$(grep '^dsh web: http://127.0.0.1:' "$log" | grep -o 'http://127.0.0.1:[0-9]*' | head -1 || true)"
+            [ -n "$url" ] && break
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 1
+          done
+          # Give a delayed plugin-init rejection (fail-loud path) a moment to
+          # fire while the server is still up, then probe the live server.
+          sleep 5
+          echo "--- boot log ---"
+          cat "$log"
+          echo "----------------"
+          # A failed plugin import, a plugin-init rejection, or any error line
+          # naming our plugin id / the web_fetch tool (e.g. an apply-time
+          # duplicate-registration rejection) fails the boot check. A healthy
+          # boot log contains no such lines at all.
+          if grep -E "failed to (import|load) loader entry|Cannot find package|plugin\(s\) failed to load" "$log"; then
+            echo "e2e-host: FAILED — the plugin tree did not load"
+            exit 1
+          fi
+          if grep -Ei "error|failed" "$log" | grep -Ei "web-search-ext|web_fetch"; then
+            echo "e2e-host: FAILED — plugin error in the boot log"
+            exit 1
+          fi
+          [ -n "$url" ] || { echo "e2e-host: FAILED — boot never reached the server"; exit 1; }
+          curl -fsS -o /dev/null "$url" || { echo "e2e-host: FAILED — server not responding"; exit 1; }
+          echo "e2e-host: boot OK ($url) — plugin tree loaded, no import/load failures"

@@ -47,6 +47,8 @@ Installing a plugin requires restarting the running `dsh web` process (the profi
 
 The bundle patch selects this provider for the `web_search` tool (`web.searchProvider: web-search-ext`) and for `web_fetch` (`web.fetchProvider: web-search-ext`). The official `deepseek-official` provider stays registered but unused; the explicit selection also prevents `WEB_PROVIDER_AMBIGUOUS`.
 
+The plugin also makes the model-facing `web_fetch` tool available out of the box. The stock tool is normally registered by the agent-preset layer (`tool-web`), but every shipped preset ships that row with `fetch: false`, and the `dsh web` profile additionally disables the profile-layer `tool-web` row — so no stock composition registers `web_fetch`, and the model gets `unknown tool "web_fetch"` even with a working fetch provider installed. This plugin closes the gap at apply time: when `web_fetch` is not already registered, it registers the stock tool by reusing `@deepseek-ai/dsh-tool-web`'s own `applyWebFetchTool` (same schema, prompt, and presentation as the harness). The tool's execution routes through `ctx.web.fetch` — the seam pinned to this provider — whose fetch path is guarded by a fail-closed SSRF check (public http(s) targets only; the base's reason for disabling the tool). A preset that enables `tool-web.fetch` registers its own agent-scoped tool, which takes precedence; if the tool is already registered, this plugin's step is a no-op. To keep `web_fetch` off entirely, uninstall the plugin.
+
 ## Configuration
 
 Settings namespace `web-search-ext` in `~/.dsh/settings.yaml` (hot-reloaded):

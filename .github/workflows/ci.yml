@@ -107,10 +107,11 @@ jobs:
           log="$(mktemp)"
           dsh web --port 0 --no-open >"$log" 2>&1 &
           pid=$!
-          # Boot prints `dsh web: http://127.0.0.1:<port>` when the server is up.
+          # These lines assert the plugin tree loaded. `--dump-config` above
+          # cannot prove this (it never imports plugin JS); the boot can.
           url=""
           for _ in $(seq 1 90); do
-            url="$(grep -o 'http://127.0.0.1:[0-9]*' "$log" | head -1 || true)"
+            url="$(grep '^dsh web: http://127.0.0.1:' "$log" | grep -o 'http://127.0.0.1:[0-9]*' | head -1 || true)"
             [ -n "$url" ] && break
             kill -0 "$pid" 2>/dev/null || break
             sleep 1
@@ -123,9 +124,16 @@ jobs:
           echo "--- boot log ---"
           cat "$log"
           echo "----------------"
-          # A failed plugin import or plugin-init rejection names the entry.
+          # A failed plugin import, a plugin-init rejection, or any error line
+          # naming our plugin id / the web_fetch tool (e.g. an apply-time
+          # duplicate-registration rejection) fails the boot check. A healthy
+          # boot log contains no such lines at all.
           if grep -E "failed to (import|load) loader entry|Cannot find package|plugin\(s\) failed to load" "$log"; then
             echo "e2e-host: FAILED — the plugin tree did not load"
+            exit 1
+          fi
+          if grep -Ei "error|failed" "$log" | grep -Ei "web-search-ext|web_fetch"; then
+            echo "e2e-host: FAILED — plugin error in the boot log"
             exit 1
           fi
           [ -n "$url" ] || { echo "e2e-host: FAILED — boot never reached the server"; exit 1; }

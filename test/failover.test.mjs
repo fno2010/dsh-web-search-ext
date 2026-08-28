@@ -295,7 +295,7 @@ function ok(label) {
 	assert.equal(roles.filter((role) => role === "secret").length, 2, "both key literals declared secret");
 	const moduleExports = await import("../lib/index.js");
 	assert.equal(moduleExports.name, "dsh-web-search-ext");
-	assert.deepEqual(moduleExports.inject, ["web"]);
+	assert.deepEqual(moduleExports.inject, ["web", "tools", "systemPrompt"]);
 	assert.equal(typeof moduleExports.apply, "function");
 	ok("Config schema graph markers + plugin exports match the contract");
 }

@@ -2,7 +2,15 @@
 #
 # Mounts the multi-backend web providers (Exa + Firecrawl today, with
 # failover; the architecture admits further backends such as SearXNG) and
-# selects them as the web seam's search AND fetch providers. The official
+# selects them as the web seam's search AND fetch providers.
+#
+# This patch deliberately does NOT touch the `tool-web` row. Model-facing
+# tools are owned by the agent-preset layer (every shipped preset ships
+# tool-web with `fetch: false`), and the `dsh web` profile disables the
+# profile-layer tool-web row — so a patch row here cannot enable web_fetch.
+# Instead, the plugin registers the stock web_fetch tool itself at apply()
+# time (lib/index.js → registerWebFetchToolIfAbsent), routing it through the
+# SSRF-guarded fetch provider pinned below. The official
 # `deepseek-official` provider may remain registered; with explicit
 # `searchProvider` / `fetchProvider` the seam never reports
 # WEB_PROVIDER_AMBIGUOUS.
@@ -20,7 +28,10 @@
 
 - insert:
     - id: web-search-ext
-      name: 'dsh-web-search-ext'
+      # `name` is the loader's import specifier and must be the scoped npm
+      # registry name: `dsh plugin add` installs under that key, and an
+      # unscoped specifier cannot resolve on a fresh host.
+      name: '@fno2010/dsh-web-search-ext'
 
 - id: web
   name: '@deepseek-ai/dsh-web'

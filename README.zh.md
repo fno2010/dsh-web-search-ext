@@ -47,6 +47,8 @@ dsh plugin --profile web add ./path/to/dsh-web-search-ext
 
 bundle patch 通过设置 `web.searchProvider: web-search-ext` 让本插件接管内置 `web_search` 工具，并设置 `web.fetchProvider: web-search-ext` 接管 `web_fetch`。官方 `deepseek-official` 提供方保持注册但不使用；显式选择同时避免了 `WEB_PROVIDER_AMBIGUOUS`。
 
+插件还会让模型侧的 `web_fetch` 工具开箱即用。该工具正常情况下由 agent-preset 层（`tool-web`）注册，但所有出厂 preset 中该行都是 `fetch: false`，且 `dsh web` profile 还会禁用 profile 层的 `tool-web` 行——因此没有任何出厂组合路径会注册 `web_fetch`，即使 fetch provider 已装好，模型调用也会报 `unknown tool "web_fetch"`。本插件在 apply 阶段补齐这一缺口：当 `web_fetch` 尚未注册时，复用 `@deepseek-ai/dsh-tool-web` 自己的 `applyWebFetchTool` 注册出厂工具（schema、提示词、呈现与 harness 完全一致）。工具的执行路径走 `ctx.web.fetch`——即 pin 到本插件的 web 缝——其抓取路径有 fail-closed 的 SSRF 检查（仅允许公共 http(s) 目标，这正是 base 禁用该工具的原因）。若某个 preset 启用了 `tool-web.fetch`，它注册的 agent 层工具优先于本插件的注册；若工具已存在，本插件的注册步骤自动跳过。要彻底关闭 `web_fetch`，卸载本插件即可。
+
 ## 配置
 
 设置命名空间 `web-search-ext`，位于 `~/.dsh/settings.yaml`（热加载）：

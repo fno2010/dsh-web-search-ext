@@ -1380,8 +1380,29 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	assert.equal(r.backends.find((b) => b.name === "exa").detail, "timeout");
 	assert.equal(r.backends.find((b) => b.name === "firecrawl").detail, "timeout");
 	assert.ok(r.backends.every((b) => b.status === "error"), "timeout is an error status");
+
+	// Key resolution runs INSIDE the per-backend try: a rejecting
+	// credentials layer classifies onto that backend's row instead of
+	// rejecting the whole probe (the never-rejects contract).
 	restoreFetch();
-	ok("G3: probe failure matrix — auth/network/error/timeout/disabled, no request for disabled");
+	{
+		const failingCtx = {
+			get: (key) =>
+				key === "credentials"
+					? { resolve: async () => { throw new Error("credentials store unreadable"); } }
+					: undefined
+		};
+		mockFetch(async () => jsonResponse(200, EXA_MCP_OK));
+		r = await probeBackends(failingCtx, { ...DEFAULTS });
+		assert.equal(r.backends.length, 2, "both backends still reported");
+		for (const b of r.backends) {
+			assert.equal(b.status, "error");
+			assert.equal(b.detail, "error", "a local rejection is not transport");
+			assert.equal(b.label, b.name, "variant unknown → plan name");
+		}
+		assert.doesNotMatch(JSON.stringify(r), /credentials store unreadable/, "raw error text stays out of the payload");
+	}
+	ok("G3: probe failure matrix — auth/network/error/timeout/disabled/credentials, no request for disabled");
 }
 
 // Single source of truth for Part A coverage: the suite FAILS on scenario

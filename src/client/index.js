@@ -386,6 +386,17 @@ function HealthTab({ t, panelId }) {
   const [reload, setReload] = useState(0);
   const [probe, setProbe] = useState({ testing: false, error: "" });
 
+  // G3: unmount flag for runProbe — a probe that outlives the tab must not
+  // set state on an unmounted component (same discipline as the GET
+  // effect's `cancelled`).
+  const live = useRef(true);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setState({ phase: "loading", data: null, error: "" });
@@ -435,12 +446,14 @@ function HealthTab({ t, panelId }) {
         return res.json();
       })
       .then((payload) => {
+        if (!live.current) return;
         const model = parseHealth(payload);
         if (model === null) throw new Error("unparsable payload");
         setState((s) => (s.phase === "error" ? { phase: "ready", data: model, error: "" } : { ...s, data: model }));
         setProbe({ testing: false, error: "" });
       })
       .catch((err) => {
+        if (!live.current) return;
         setProbe({ testing: false, error: String((err && err.message) || err) });
       });
   }

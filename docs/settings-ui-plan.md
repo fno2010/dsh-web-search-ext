@@ -439,19 +439,26 @@ the CURRENT options (settings edits apply immediately, no restart), stores
 the result on the shared health state (`storeProbe`), and answers with the
 FULL health wire JSON — so the client's existing `parseHealth` path
 updates counters and probe in one round trip. Concurrent POSTs coalesce
-onto a single in-flight probe. `probeBackends` never rejects (every
-per-backend failure is classified), so the handler's only error path is
-the defensive "probe failed: <reason>" 500 — failure never silent.
+onto a single in-flight probe. `probeBackends` never rejects — key
+resolution runs INSIDE each per-backend try, so even a broken credentials
+layer (the most likely first-install damage) classifies into the closed
+set instead of escaping — and the handler's only error path is a
+defensive 500 with a CLOSED body (`{ "error": "probe failed" }`, no raw
+reason echo) — failure never silent.
 
 Probe mechanics: reuses the SAME backend functions `search()` runs —
 exa serves as keyed REST (`exa-rest`) or anonymous hosted MCP (`exa-mcp`)
 depending on `resolveKey`; firecrawl serves as keyed or keyless. The probe
 request is a minimal one-result search; each backend gets its own
-`AbortSignal.timeout`. No failover: a probe reports per backend, it never
-substitutes one for another. Firecrawl with no key AND `firecrawlKeyless`
-off is reported as `disabled` — and never requested. Probes are
-diagnostics, not searches: they never touch the health counters or the
-cooldown state.
+`AbortSignal.timeout`. Key resolution happens inside each per-backend try,
+so a credentials-layer rejection (a fresh install is where that layer is
+most likely broken) lands on that backend's row as `error` (label falls
+back to the plan name — the serving variant is unknown) instead of
+rejecting the whole probe. No failover: a probe reports per backend, it
+never substitutes one for another. Firecrawl with no key AND
+`firecrawlKeyless` off is reported as `disabled` — and never requested.
+Probes are diagnostics, not searches: they never touch the health
+counters or the cooldown state.
 
 Secret-free invariant (extends C2's, same load-bearing argument — the
 route sits outside the `/api` fence and the web server's bind address is
@@ -466,8 +473,8 @@ via the `probe.*` keys:
 | HTTP 429 (`WEB_RATE_LIMIT`) | `rate-limited` |
 | HTTP 401/402/403 (embedded in the backend's WebError message as `(HTTP 40x)`) | `auth` |
 | the probe's own timeout (abort surfaced as `WEB_ABORTED`) | `timeout` |
-| wrapped fetch transport failure (`…request failed:`) | `network` |
-| any other vendor WebError | `error` |
+| wrapped fetch transport failure (`…request failed:` — checked before any vendor status text, so a proxy error carrying an HTTP code stays `network`) | `network` |
+| any other failure (other vendor WebErrors, or a non-WebError rejection such as a credentials-layer failure inside key resolution; the row's label falls back to the plan name) | `error` |
 | firecrawl absent from the plan | `disabled` |
 
 No vendor messages, URLs, or keys ever appear in the payload.

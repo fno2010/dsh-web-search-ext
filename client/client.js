@@ -1075,6 +1075,13 @@ function HealthTab({ t, panelId }) {
 		testing: false,
 		error: ""
 	});
+	const live = (0, react.useRef)(true);
+	(0, react.useEffect)(() => {
+		live.current = true;
+		return () => {
+			live.current = false;
+		};
+	}, []);
 	(0, react.useEffect)(() => {
 		let cancelled = false;
 		setState({
@@ -1130,6 +1137,7 @@ function HealthTab({ t, panelId }) {
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			return res.json();
 		}).then((payload) => {
+			if (!live.current) return;
 			const model = parseHealth(payload);
 			if (model === null) throw new Error("unparsable payload");
 			setState((s) => s.phase === "error" ? {
@@ -1145,6 +1153,7 @@ function HealthTab({ t, panelId }) {
 				error: ""
 			});
 		}).catch((err) => {
+			if (!live.current) return;
 			setProbe({
 				testing: false,
 				error: String(err && err.message || err)
@@ -2329,6 +2338,13 @@ function HealthTab({ t, panelId }) {
 		testing: false,
 		error: ""
 	});
+	const live = (0, react.useRef)(true);
+	(0, react.useEffect)(() => {
+		live.current = true;
+		return () => {
+			live.current = false;
+		};
+	}, []);
 	(0, react.useEffect)(() => {
 		let cancelled = false;
 		setState({
@@ -2384,6 +2400,7 @@ function HealthTab({ t, panelId }) {
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			return res.json();
 		}).then((payload) => {
+			if (!live.current) return;
 			const model = parseHealth(payload);
 			if (model === null) throw new Error("unparsable payload");
 			setState((s) => s.phase === "error" ? {
@@ -2399,6 +2416,7 @@ function HealthTab({ t, panelId }) {
 				error: ""
 			});
 		}).catch((err) => {
+			if (!live.current) return;
 			setProbe({
 				testing: false,
 				error: String(err && err.message || err)

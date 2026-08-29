@@ -1049,9 +1049,9 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	description: `Snippet ${i + 1} for the context budget.`
 })) } };
 
-// 41. G5 context budget: backend over-delivers 10 for a numResults of 8 →
-//     clamped before verification; receipt + structured flag announce it;
-//     L0 probes only the kept results.
+// 41. G5 context budget: caller asks above the budget and the vendor
+//     over-delivers → clamped to numResults; receipt + structured flag
+//     announce the cap; L0 probes only the kept results.
 {
 	const seen = new Set();
 	mockFetch(async (url, init) => {
@@ -1063,7 +1063,7 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 		return jsonResponse(200, "");
 	});
 	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
-	const result = await p.search({ query: "hello" });
+	const result = await p.search({ query: "hello", maxResults: 50 });
 	assert.equal(result.sources.length, 8, "clamped to numResults");
 	assert.equal(result.truncated, true, "structured truncated flag set on clamp");
 	assert.match(result.content, /web-search-ext: firecrawl · [\d.]+s · 8 of 10 results \(numResults cap\) · liveness: 8 alive/);
@@ -1071,11 +1071,11 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	assert.ok(!seen.has("https://many.example/9"), "dropped result not probed");
 	assert.ok(!seen.has("https://many.example/10"), "dropped result not probed");
 	restoreFetch();
-	ok("G5 budget: 10 → 8 clamped; receipt + truncated flag say so; L0 skips dropped results");
+	ok("G5: ask 50 > cap 8, vendor over-delivers → '8 of 10 results (numResults cap)'; L0 skips dropped");
 }
 
-// 42. G5 context budget: a caller maxResults above numResults is clamped
-//     before the vendor request (limit param), not just after.
+// 42. G5: the vendor request itself is clamped to the budget (limit param),
+//     not just the result list.
 {
 	let postedLimit;
 	mockFetch(async (url, init) => {
@@ -1087,34 +1087,37 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	});
 	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
 	const result = await p.search({ query: "hello", maxResults: 12 });
-	assert.equal(postedLimit, 8, "vendor request clamped to numResults");
+	assert.equal(postedLimit, 8, "vendor asked for the cap, not the raw ask");
 	assert.equal(result.sources.length, 8);
 	assert.equal(result.truncated, true);
 	assert.match(result.content, /8 of 10 results \(numResults cap\)/);
 	restoreFetch();
-	ok("G5 budget: request.maxResults above numResults clamped at the vendor request");
+	ok("G5: request.maxResults above numResults clamped at the vendor request (limit param)");
 }
 
-// 43. G5 context budget: a request below the budget passes through
-//     untouched — no clamp notice.
+// 43. G5: a below-budget ask passes through untouched — the vendor is
+//     asked for exactly the ask, no cap notice.
 {
-	mockFetch(async (url) => {
+	let postedLimit;
+	mockFetch(async (url, init) => {
 		if (url.startsWith("https://api.firecrawl.dev")) {
+			postedLimit = JSON.parse(init.body).limit;
 			return jsonResponse(200, { success: true, data: { web: FIRECRAWL_V2_TEN.data.web.slice(0, 3) } });
 		}
 		return jsonResponse(200, ""); // L0
 	});
 	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
 	const result = await p.search({ query: "hello", maxResults: 3 });
+	assert.equal(postedLimit, 3, "below-budget ask passes through to the vendor");
 	assert.equal(result.sources.length, 3);
 	assert.equal(result.truncated, false);
 	assert.match(result.content, /^web-search-ext: firecrawl · [\d.]+s · 3 results · liveness: 3 alive\n$/);
-	assert.doesNotMatch(result.content, /numResults cap/);
 	restoreFetch();
-	ok("G5 budget: below-budget request untruncated, no notice");
+	ok("G5: below-budget ask (3 < 8) passes through, no cap notice");
 }
 
-// 44. G5 context budget: backend returns exactly the budget → no notice.
+// 44. G5: no explicit ask, vendor returns exactly the default → plain
+//     receipt, no cap notice.
 {
 	mockFetch(async (url) => {
 		if (url.startsWith("https://api.firecrawl.dev")) {
@@ -1128,14 +1131,75 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	assert.equal(result.truncated, false);
 	assert.doesNotMatch(result.content, /numResults cap/);
 	restoreFetch();
-	ok("G5 budget: at-budget result set passes without a notice");
+	ok("G5: default ask, compliant vendor → no cap notice");
+}
+
+// 45. G5: the mainstream clamp — caller asks above the budget, the vendor
+//     COMPLIES (returns exactly the cap). The clamp must still be visible:
+//     receipt suffix + structured flag (the host then shows its "Showing
+//     the first N sources" notice).
+{
+	let postedLimit;
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			postedLimit = JSON.parse(init.body).limit;
+			return jsonResponse(200, { success: true, data: { web: FIRECRAWL_V2_TEN.data.web.slice(0, 8) } });
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello", maxResults: 50 });
+	assert.equal(postedLimit, 8);
+	assert.equal(result.sources.length, 8);
+	assert.equal(result.truncated, true, "flag set even when the vendor complies");
+	assert.match(result.content, /· 8 results \(numResults cap\) · liveness: 8 alive/);
+	restoreFetch();
+	ok("G5: over-budget ask + compliant vendor → '8 results (numResults cap)' + truncated flag");
+}
+
+// 46. G5: a below-budget ask is never raised — the vendor over-delivering
+//     10 for an ask of 3 returns 3, quietly (the caller's own at-most
+//     contract was honored; no cap notice, no flag).
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, FIRECRAWL_V2_TEN); // vendor ignores the ask
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello", maxResults: 3 });
+	assert.equal(result.sources.length, 3, "never more than the caller's own ask");
+	assert.equal(result.truncated, false, "the caller's at-most ask was honored — no notice");
+	assert.doesNotMatch(result.content, /numResults cap/);
+	restoreFetch();
+	ok("G5: below-budget ask + vendor over-delivery → exactly the ask, no notice");
+}
+
+// 47. G5: no explicit ask, vendor over-delivers → the default cap still
+//     bounds the result list, but the caller's ask was not exceeded, so no
+//     cap notice.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, FIRECRAWL_V2_TEN);
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources.length, 8, "default numResults still bounds the result list");
+	assert.equal(result.truncated, false);
+	assert.match(result.content, /^web-search-ext: firecrawl · [\d.]+s · 8 results · liveness: 8 alive\n$/);
+	restoreFetch();
+	ok("G5: no ask + over-delivery → bounded to numResults, no cap notice");
 }
 
 // Single source of truth for Part A coverage: the suite FAILS on scenario
 // drift (an accidental deletion or a skip that stopped calling ok())
 // instead of silently printing a lower count. Bump this when adding a
 // scenario — no doc anywhere else restates the number on purpose.
-const PART_A_SCENARIOS = 44;
+const PART_A_SCENARIOS = 47;
 assert.equal(passed, PART_A_SCENARIOS, `Part A scenario drift: ${passed} ok() of ${PART_A_SCENARIOS}`);
 console.log(`\nPart A: ${passed}/${PART_A_SCENARIOS} scenarios passed`);
 

@@ -111,7 +111,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh
 - The only outbound requests are to the configured Exa and Firecrawl endpoints (plus the local verification probes described below); nothing else is contacted.
 - API keys travel only in the `authorization` header of their own backend's requests — never in bodies, never to the other backend, never in error messages.
 - No install-time scripts: plain ESM JavaScript, no build step, no `postinstall`/`prepare`.
-- One search's context is bounded: results are clamped to `numResults` (the receipt announces `N of M results (numResults cap)` when a backend over-delivers) and snippets are bounded to `maxSnippetChars`; Firecrawl's page-markdown descriptions are stripped of image links before entering model context.
+- One search's context is bounded: results are clamped to `numResults` (when a request's `maxResults` exceeds it, the receipt carries the `(numResults cap)` marker — `N of M results` when the backend also over-delivered) and snippets are bounded to `maxSnippetChars`; Firecrawl's page-markdown descriptions are stripped of image links before entering model context.
 - Verification probes (L0/L1) only fetch URLs that appear in backend results, with bounded bytes/timeouts; redirects are followed manually and every hop is re-validated against the same SSRF rules (public http(s) only; loopback, private, link-local, and CGNAT ranges are refused — including IPv6 literal and trailing-dot spellings; addresses that cannot be confidently classified are refused, fail closed).
 - The `web_fetch` provider refuses non-public targets (non-http(s) schemes, loopback, private, link-local) before sending the URL to any scraping backend.
 

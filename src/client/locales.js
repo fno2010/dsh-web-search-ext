@@ -35,7 +35,27 @@ export const en = {
   "row.drill.toggle": "Expand details",
   "row.drill.unknown": "unknown",
   "row.drill.verification": "Verification",
-  "row.drill.notVerified": "not verified"
+  "row.drill.notVerified": "not verified",
+
+  // settings card Health tab (C2)
+  "health.settings": "Settings",
+  "health.tab": "Health",
+  "health.loading": "Loading…",
+  "health.error": "Health unavailable:",
+  "health.session": "Session",
+  "health.uptime": "Uptime",
+  "health.searches": "{count} searches",
+  "health.fetches": "{count} fetches",
+  "health.results": "{count} results",
+  "health.last": "last",
+  "health.never": "never",
+  "health.ok": "ok",
+  "health.failed": "failed",
+  "health.cooldowns": "Cooldowns",
+  "health.remaining": "{count}s remaining",
+  "health.none": "none",
+  "health.noActivity": "No backend activity this session yet.",
+  "health.refresh": "Refresh"
 };
 
 export const zh = {
@@ -75,5 +95,25 @@ export const zh = {
   "row.drill.toggle": "展开详情",
   "row.drill.unknown": "未知",
   "row.drill.verification": "校验状态",
-  "row.drill.notVerified": "未校验"
+  "row.drill.notVerified": "未校验",
+
+  // settings card Health tab (C2)
+  "health.settings": "设置",
+  "health.tab": "健康",
+  "health.loading": "加载中…",
+  "health.error": "健康状态不可用：",
+  "health.session": "会话",
+  "health.uptime": "运行时长",
+  "health.searches": "{count} 次搜索",
+  "health.fetches": "{count} 次抓取",
+  "health.results": "{count} 条结果",
+  "health.last": "最近",
+  "health.never": "从未",
+  "health.ok": "成功",
+  "health.failed": "失败",
+  "health.cooldowns": "冷却中",
+  "health.remaining": "剩余 {count}s",
+  "health.none": "无",
+  "health.noActivity": "本会话尚无后端活动。",
+  "health.refresh": "刷新"
 };

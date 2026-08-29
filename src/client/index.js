@@ -23,6 +23,7 @@ import { createElement as h, useState, useEffect, useRef } from "react";
 import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
 import { WebSearchRow } from "./row.js";
+import { HEALTH_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
 import css from "./card.module.css";
 
 const NS = "web-search-ext";
@@ -83,6 +84,8 @@ function WebSearchExtCard(props) {
   // Collapsed by default, like the built-in plugin cards and the
   // third-party mirror shipped by dsh-market.
   const [open, setOpen] = useState(false);
+  // Settings/Health tabs (C2); the settings form is the default pane.
+  const [tab, setTab] = useState("settings");
   const [snap, setSnap] = useState(null);
   const [draft, setDraft] = useState(null);
   const [keyDraft, setKeyDraft] = useState({ exa: "", fc: "" });
@@ -280,59 +283,201 @@ function WebSearchExtCard(props) {
     ),
     open
       ? h("div", { className: css.body },
-          h("div", { className: css.field },
-            h("div", { className: css.head },
-              h("label", { className: css.label }, t("preferred"))
-            ),
-            h("select", {
-              className: css.input,
-              disabled: ro,
-              value: String(draft?.preferred ?? "exa"),
-              onChange: (e) => setField("preferred", e.target.value)
-            },
-              h("option", { value: "exa" }, "exa"),
-              h("option", { value: "firecrawl" }, "firecrawl"))
-          ),
-          textField("numResults", "numResults", "number", "1"),
-          textField("maxSnippetChars", "maxSnippetChars", "number", "1"),
-          textField("cooldown", "rateLimitCooldownSec", "number", "0"),
-          h("div", { className: css.field },
-            h("div", { className: css.head },
-              h("label", { className: css.label }, t("keyless")),
-              h("input", {
-                type: "checkbox",
-                className: css.check,
-                disabled: ro,
-                checked: draft ? !!draft.firecrawlKeyless : true,
-                onChange: (e) => setField("firecrawlKeyless", e.target.checked)
-              })
-            )
-          ),
-          keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKey("exa", v), keyState.exa),
-          keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKey("fc", v), keyState.fc),
-          h("div", { className: css.footer },
-            status.kind === "error"
-              ? h("p", { className: css.failed }, t("error"), " ", status.msg)
-              : status.kind === "saved"
-                ? h("p", { className: css.hint, style: { flex: 1, margin: 0 } }, t("saved"))
-                : null,
+          h("div", { className: css.tabs, role: "tablist" },
             h("button", {
               type: "button",
-              className: css.discard,
-              disabled: !busy || saving || ro,
-              onClick: discard
-            }, t("discard")),
+              role: "tab",
+              id: "dsw-websearch-tab-settings",
+              "aria-controls": "dsw-websearch-panel-settings",
+              className: tab === "settings" ? `${css.tab} ${css.tabActive}` : css.tab,
+              "aria-selected": tab === "settings",
+              onClick: () => setTab("settings")
+            }, t("health.settings")),
             h("button", {
               type: "button",
-              className: css.save,
-              disabled: !busy || saving || ro,
-              onClick: () => save()
-            }, saving ? h("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
-              h("span", { className: css.spin }, h(IconLoadingOutline16, { size: 16 })),
-              t("saving")) : t("save"))
-          )
+              role: "tab",
+              id: "dsw-websearch-tab-health",
+              "aria-controls": "dsw-websearch-panel-health",
+              className: tab === "health" ? `${css.tab} ${css.tabActive}` : css.tab,
+              "aria-selected": tab === "health",
+              onClick: () => setTab("health")
+            }, t("health.tab"))
+          ),
+          tab === "settings"
+            ? h("div", {
+                className: css.settingsPane,
+                role: "tabpanel",
+                id: "dsw-websearch-panel-settings"
+              },
+                h("div", { className: css.field },
+                  h("div", { className: css.head },
+                    h("label", { className: css.label }, t("preferred"))
+                  ),
+                  h("select", {
+                    className: css.input,
+                    disabled: ro,
+                    value: String(draft?.preferred ?? "exa"),
+                    onChange: (e) => setField("preferred", e.target.value)
+                  },
+                    h("option", { value: "exa" }, "exa"),
+                    h("option", { value: "firecrawl" }, "firecrawl"))
+                ),
+                textField("numResults", "numResults", "number", "1"),
+                textField("maxSnippetChars", "maxSnippetChars", "number", "1"),
+                textField("cooldown", "rateLimitCooldownSec", "number", "0"),
+                h("div", { className: css.field },
+                  h("div", { className: css.head },
+                    h("label", { className: css.label }, t("keyless")),
+                    h("input", {
+                      type: "checkbox",
+                      className: css.check,
+                      disabled: ro,
+                      checked: draft ? !!draft.firecrawlKeyless : true,
+                      onChange: (e) => setField("firecrawlKeyless", e.target.checked)
+                    })
+                  )
+                ),
+                keyField("exaKey", EXA_REF, keyDraft.exa, (v) => setKey("exa", v), keyState.exa),
+                keyField("firecrawlKey", FC_REF, keyDraft.fc, (v) => setKey("fc", v), keyState.fc),
+                h("div", { className: css.footer },
+                  status.kind === "error"
+                    ? h("p", { className: css.failed }, t("error"), " ", status.msg)
+                    : status.kind === "saved"
+                      ? h("p", { className: css.hint, style: { flex: 1, margin: 0 } }, t("saved"))
+                      : null,
+                  h("button", {
+                    type: "button",
+                    className: css.discard,
+                    disabled: !busy || saving || ro,
+                    onClick: discard
+                  }, t("discard")),
+                  h("button", {
+                    type: "button",
+                    className: css.save,
+                    disabled: !busy || saving || ro,
+                    onClick: () => save()
+                  }, saving ? h("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
+                    h("span", { className: css.spin }, h(IconLoadingOutline16, { size: 16 })),
+                    t("saving")) : t("save"))
+                )
+              )
+            : h(HealthTab, { t, panelId: "dsw-websearch-panel-health" })
         )
       : null
+  );
+}
+
+/**
+ * Health tab (C2): fetches the session telemetry from the host's
+ * same-origin GET /web-search-ext/health route on mount and on refresh.
+ * A fetch/parse failure surfaces as an explicit unavailable line with a
+ * retry — the tab never renders a silently empty state.
+ */
+function HealthTab({ t, panelId }) {
+  const [state, setState] = useState({ phase: "loading", data: null, error: "" });
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ phase: "loading", data: null, error: "" });
+    fetch(HEALTH_ROUTE, { headers: { accept: "application/json" } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        const model = parseHealth(payload);
+        if (model === null) throw new Error("unparsable payload");
+        setState({ phase: "ready", data: model, error: "" });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setState({ phase: "error", data: null, error: String((err && err.message) || err) });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reload]);
+
+  function refreshButton() {
+    return h("button", {
+      type: "button",
+      className: css.discard,
+      onClick: () => setReload((n) => n + 1)
+    }, t("health.refresh"));
+  }
+
+  function section(title, headExtra, ...rows) {
+    return h("div", { className: css.healthSection },
+      h("div", { className: css.healthSectionHead },
+        h("div", { className: css.healthSectionTitle }, title),
+        headExtra
+      ),
+      ...rows);
+  }
+
+  function row(label, value) {
+    return h("div", { className: css.healthRow },
+      h("div", { className: css.healthLabel }, label),
+      h("div", { className: css.healthValue }, value));
+  }
+
+  function valueRow(value) {
+    return h("div", { className: css.healthRow },
+      h("div", { className: css.healthValue }, value));
+  }
+
+  if (state.phase === "loading") {
+    return h("div", { className: css.health, role: "tabpanel", id: panelId },
+      h("p", { className: css.hint }, t("health.loading")));
+  }
+
+  if (state.phase === "error") {
+    return h("div", { className: css.health, role: "tabpanel", id: panelId },
+      h("p", { className: css.failed }, t("health.error"), " ", state.error),
+      h("div", { className: css.healthSectionHead }, refreshButton()));
+  }
+
+  const data = state.data;
+  const now = Date.now();
+  const searchRows = data.backends.filter((b) => b.provider === "search");
+  const fetchRows = data.backends.filter((b) => b.provider === "fetch");
+  const cooled = data.backends.filter((b) => b.cooldownRemainingMs > 0);
+
+  function backendLine(b) {
+    const counts = `${b.ok} ${t("health.ok")} · ${b.failed} ${t("health.failed")}`;
+    if (b.lastCallAt === null) return `${counts} · ${t("health.never")}`;
+    const age = ageOf(b.lastCallAt, now);
+    const stateWord = b.lastOk ? t("health.ok") : t("health.failed");
+    const ms = b.lastCallMs === null ? "" : ` · ${b.lastCallMs}ms`;
+    return `${counts} · ${t("health.last")} ${age} ${stateWord}${ms}`;
+  }
+
+  function backendSection(provider, rows) {
+    if (rows.length === 0) return null;
+    return section(provider, null, ...rows.map((b) => row(b.label, backendLine(b))));
+  }
+
+  const sessionLine = [
+    `${t("health.uptime")} ${formatDuration(data.uptimeMs)}`,
+    t("health.searches", { count: data.searchCalls }),
+    t("health.fetches", { count: data.fetchCalls }),
+    ...(data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })])
+  ].join(" · ");
+
+  const cooldownRows = cooled.length === 0
+    ? [valueRow(t("health.none"))]
+    : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1000) })));
+
+  return h("div", { className: css.health, role: "tabpanel", id: panelId },
+    section(t("health.session"), refreshButton(), valueRow(sessionLine)),
+    data.backends.length === 0
+      ? h("p", { className: css.hint }, t("health.noActivity"))
+      : null,
+    backendSection("search", searchRows),
+    backendSection("fetch", fetchRows),
+    section(t("health.cooldowns"), null, ...cooldownRows)
   );
 }
 

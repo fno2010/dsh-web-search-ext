@@ -2,7 +2,7 @@ try {
 window.__ModuleLoader__.load({ id: "dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__drillToggle {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-caption);\n  text-align: center;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  flex: none;\n  padding: 0;\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.row-module__drillToggle:hover, .row-module__drillToggle[aria-expanded=\"true\"] {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__drill {\n  border-top: 1px dashed var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 2px;\n  margin-top: 4px;\n  padding-top: 4px;\n  display: flex;\n}\n\n.row-module__drillRow {\n  gap: 8px;\n  min-width: 0;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__drillLabel {\n  color: var(--dsw-alias-label-caption);\n  flex: none;\n  width: 72px;\n}\n\n.row-module__drillValue {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  min-width: 0;\n}\n\n.row-module__drillValue_ok {\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.row-module__drillValue_warn {\n  color: var(--dsw-alias-state-warn-primary);\n}\n\n.row-module__drillValue_error {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__drillValue_muted {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__drillToggle {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-caption);\n  text-align: center;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  flex: none;\n  padding: 0;\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.row-module__drillToggle:hover, .row-module__drillToggle[aria-expanded=\"true\"] {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__drill {\n  border-top: 1px dashed var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 2px;\n  margin-top: 4px;\n  padding-top: 4px;\n  display: flex;\n}\n\n.row-module__drillRow {\n  gap: 8px;\n  min-width: 0;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__drillLabel {\n  color: var(--dsw-alias-label-caption);\n  flex: none;\n  width: 72px;\n}\n\n.row-module__drillValue {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  min-width: 0;\n}\n\n.row-module__drillValue_ok {\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.row-module__drillValue_warn {\n  color: var(--dsw-alias-state-warn-primary);\n}\n\n.row-module__drillValue_error {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__drillValue_muted {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n.card-module__tabs {\n  gap: 4px;\n  padding: 12px 0 8px;\n  display: flex;\n}\n\n.card-module__tab {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  color: var(--dsw-alias-label-tertiary);\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 999px;\n  padding: 3px 12px;\n  font-size: 12px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__tab:hover:not(.card-module__tabActive) {\n  color: var(--dsw-alias-label-primary);\n}\n\n.card-module__tabActive {\n  color: var(--dsw-alias-label-primary);\n  background: var(--dsw-alias-bg-module-platform);\n}\n\n.card-module__tab:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__settingsPane {\n  flex-direction: column;\n  display: flex;\n}\n\n.card-module__health {\n  gap: 4px;\n  padding: 2px 0 8px;\n  display: flex;\n}\n\n.card-module__healthSection {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  gap: 6px;\n  padding: 10px 0;\n  display: flex;\n}\n\n.card-module__healthSectionHead {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__healthSectionTitle {\n  color: var(--dsw-alias-label-tertiary);\n  letter-spacing: .04em;\n  text-transform: uppercase;\n  font-size: 11px;\n  font-weight: 600;\n}\n\n.card-module__healthRow {\n  justify-content: baseline;\n  align-items: baseline;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__healthLabel {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: none;\n  min-width: 0;\n  max-width: 160px;\n  font-size: 13px;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.card-module__healthValue {\n  color: var(--dsw-alias-label-secondary);\n  flex: 1;\n  min-width: 0;\n  font-size: 13px;\n  line-height: 1.5;\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -49,7 +49,25 @@ const en = {
 	"row.drill.toggle": "Expand details",
 	"row.drill.unknown": "unknown",
 	"row.drill.verification": "Verification",
-	"row.drill.notVerified": "not verified"
+	"row.drill.notVerified": "not verified",
+	"health.settings": "Settings",
+	"health.tab": "Health",
+	"health.loading": "Loading…",
+	"health.error": "Health unavailable:",
+	"health.session": "Session",
+	"health.uptime": "Uptime",
+	"health.searches": "{count} searches",
+	"health.fetches": "{count} fetches",
+	"health.results": "{count} results",
+	"health.last": "last",
+	"health.never": "never",
+	"health.ok": "ok",
+	"health.failed": "failed",
+	"health.cooldowns": "Cooldowns",
+	"health.remaining": "{count}s remaining",
+	"health.none": "none",
+	"health.noActivity": "No backend activity this session yet.",
+	"health.refresh": "Refresh"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -84,7 +102,25 @@ const zh = {
 	"row.drill.toggle": "展开详情",
 	"row.drill.unknown": "未知",
 	"row.drill.verification": "校验状态",
-	"row.drill.notVerified": "未校验"
+	"row.drill.notVerified": "未校验",
+	"health.settings": "设置",
+	"health.tab": "健康",
+	"health.loading": "加载中…",
+	"health.error": "健康状态不可用：",
+	"health.session": "会话",
+	"health.uptime": "运行时长",
+	"health.searches": "{count} 次搜索",
+	"health.fetches": "{count} 次抓取",
+	"health.results": "{count} 条结果",
+	"health.last": "最近",
+	"health.never": "从未",
+	"health.ok": "成功",
+	"health.failed": "失败",
+	"health.cooldowns": "冷却中",
+	"health.remaining": "剩余 {count}s",
+	"health.none": "无",
+	"health.noActivity": "本会话尚无后端活动。",
+	"health.refresh": "刷新"
 };
 //#endregion
 //#region src/client/model.js
@@ -495,6 +531,98 @@ function WebSearchRow({ block, inspect, t }) {
 	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
 }
 //#endregion
+//#region src/client/health.js
+/** Same-origin route the Health tab fetches (host lib/health.js). */
+const HEALTH_ROUTE = "/web-search-ext/health";
+function isFiniteNumber(v) {
+	return typeof v === "number" && Number.isFinite(v);
+}
+/**
+* Normalize the wire payload into the display model, or null when any
+* required field is malformed (a shape change must surface as the
+* unavailable line, never as a silently wrong number).
+*
+* Display model:
+*   { startedAt: number, uptimeMs: number, searchCalls: number,
+*     fetchCalls: number, resultsReturned: number | null,
+*     backends: [{ provider: string, name: string, label: string,
+*       attempts: number, ok: number, failed: number,
+*       lastCallAt: number | null, lastCallMs: number | null,
+*       lastOk: boolean | null, cooldownRemainingMs: number }] }
+*/
+function parseHealth(payload) {
+	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
+	const p = payload;
+	if (!isFiniteNumber(p.startedAt) || p.startedAt < 0) return null;
+	if (!isFiniteNumber(p.uptimeMs) || p.uptimeMs < 0) return null;
+	if (!isFiniteNumber(p.searchCalls) || p.searchCalls < 0) return null;
+	if (!isFiniteNumber(p.fetchCalls) || p.fetchCalls < 0) return null;
+	if (p.resultsReturned !== void 0 && p.resultsReturned !== null && (!isFiniteNumber(p.resultsReturned) || p.resultsReturned < 0)) return null;
+	if (!Array.isArray(p.backends)) return null;
+	const backends = [];
+	for (const row of p.backends) {
+		if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
+		if (typeof row.provider !== "string" || row.provider === "") return null;
+		if (typeof row.name !== "string" || row.name === "") return null;
+		if (!isFiniteNumber(row.attempts) || row.attempts < 0) return null;
+		if (!isFiniteNumber(row.ok) || row.ok < 0) return null;
+		if (!isFiniteNumber(row.failed) || row.failed < 0) return null;
+		const lastCallAt = row.lastCallAt === void 0 ? null : row.lastCallAt;
+		const lastCallMs = row.lastCallMs === void 0 ? null : row.lastCallMs;
+		const lastOk = row.lastOk === void 0 ? null : row.lastOk;
+		if (lastCallAt !== null && !isFiniteNumber(lastCallAt)) return null;
+		if (lastCallMs !== null && !isFiniteNumber(lastCallMs)) return null;
+		if (lastOk !== null && typeof lastOk !== "boolean") return null;
+		const cooldown = row.cooldownRemainingMs === void 0 || row.cooldownRemainingMs === null ? 0 : row.cooldownRemainingMs;
+		if (!isFiniteNumber(cooldown) || cooldown < 0) return null;
+		backends.push({
+			provider: row.provider,
+			name: row.name,
+			label: typeof row.label === "string" && row.label !== "" ? row.label : row.name,
+			attempts: row.attempts,
+			ok: row.ok,
+			failed: row.failed,
+			lastCallAt,
+			lastCallMs,
+			lastOk,
+			cooldownRemainingMs: cooldown
+		});
+	}
+	return {
+		startedAt: p.startedAt,
+		uptimeMs: p.uptimeMs,
+		searchCalls: p.searchCalls,
+		fetchCalls: p.fetchCalls,
+		resultsReturned: p.resultsReturned === void 0 ? null : p.resultsReturned,
+		backends
+	};
+}
+/**
+* Human duration from milliseconds: "12s" / "2m 3s" / "1h 1m" / "3d 2h".
+* Two units at most (the leading unit + the next smaller one); negatives
+* and non-finite values clamp to "0s" — the card must never render a
+* negative age or NaN.
+*/
+function formatDuration(ms) {
+	if (typeof ms !== "number" || !Number.isFinite(ms) || ms < 0) return "0s";
+	const s = Math.floor(ms / 1e3);
+	if (s < 60) return `${s}s`;
+	const m = Math.floor(s / 60);
+	if (m < 60) return `${m}m ${s % 60}s`;
+	const h = Math.floor(m / 60);
+	if (h < 24) return `${h}h ${m % 60}m`;
+	return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
+/**
+* "How long ago": null when the event is unknown (never called), else the
+* clamped age between `then` and `now` (defaults to Date.now()).
+*/
+function ageOf(then, now = Date.now()) {
+	if (!isFiniteNumber(then)) return null;
+	if (!isFiniteNumber(now)) return null;
+	return formatDuration(Math.max(0, now - then));
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -514,13 +642,24 @@ var card_module_default = {
 	"head": "card-module__head",
 	"header": "card-module__header",
 	"headText": "card-module__headText",
+	"health": "card-module__health",
+	"healthLabel": "card-module__healthLabel",
+	"healthRow": "card-module__healthRow",
+	"healthSection": "card-module__healthSection",
+	"healthSectionHead": "card-module__healthSectionHead",
+	"healthSectionTitle": "card-module__healthSectionTitle",
+	"healthValue": "card-module__healthValue",
 	"hint": "card-module__hint",
 	"input": "card-module__input",
 	"label": "card-module__label",
 	"name": "card-module__name",
 	"pending": "card-module__pending",
 	"save": "card-module__save",
+	"settingsPane": "card-module__settingsPane",
 	"spin": "card-module__spin",
+	"tab": "card-module__tab",
+	"tabActive": "card-module__tabActive",
+	"tabs": "card-module__tabs",
 	"wsx-rot": "card-module__wsx-rot"
 };
 //#endregion
@@ -598,6 +737,7 @@ function keyStateFrom(res) {
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
 	const [open, setOpen] = (0, react.useState)(false);
+	const [tab, setTab] = (0, react.useState)("settings");
 	const [snap, setSnap] = (0, react.useState)(null);
 	const [draft, setDraft] = (0, react.useState)(null);
 	const [keyDraft, setKeyDraft] = (0, react.useState)({
@@ -772,7 +912,30 @@ function WebSearchExtCard(props) {
 		className: card_module_default.header,
 		"aria-expanded": open,
 		onClick: () => setOpen((o) => !o)
-	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
+		className: card_module_default.tabs,
+		role: "tablist"
+	}, (0, react.createElement)("button", {
+		type: "button",
+		role: "tab",
+		id: "dsw-websearch-tab-settings",
+		"aria-controls": "dsw-websearch-panel-settings",
+		className: tab === "settings" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
+		"aria-selected": tab === "settings",
+		onClick: () => setTab("settings")
+	}, t("health.settings")), (0, react.createElement)("button", {
+		type: "button",
+		role: "tab",
+		id: "dsw-websearch-tab-health",
+		"aria-controls": "dsw-websearch-panel-health",
+		className: tab === "health" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
+		"aria-selected": tab === "health",
+		onClick: () => setTab("health")
+	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", {
+		className: card_module_default.settingsPane,
+		role: "tabpanel",
+		id: "dsw-websearch-panel-settings"
+	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -803,7 +966,110 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : null);
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+		t,
+		panelId: "dsw-websearch-panel-health"
+	})) : null);
+}
+/**
+* Health tab (C2): fetches the session telemetry from the host's
+* same-origin GET /web-search-ext/health route on mount and on refresh.
+* A fetch/parse failure surfaces as an explicit unavailable line with a
+* retry — the tab never renders a silently empty state.
+*/
+function HealthTab({ t, panelId }) {
+	const [state, setState] = (0, react.useState)({
+		phase: "loading",
+		data: null,
+		error: ""
+	});
+	const [reload, setReload] = (0, react.useState)(0);
+	(0, react.useEffect)(() => {
+		let cancelled = false;
+		setState({
+			phase: "loading",
+			data: null,
+			error: ""
+		});
+		fetch(HEALTH_ROUTE, { headers: { accept: "application/json" } }).then((res) => {
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			return res.json();
+		}).then((payload) => {
+			if (cancelled) return;
+			const model = parseHealth(payload);
+			if (model === null) throw new Error("unparsable payload");
+			setState({
+				phase: "ready",
+				data: model,
+				error: ""
+			});
+		}).catch((err) => {
+			if (cancelled) return;
+			setState({
+				phase: "error",
+				data: null,
+				error: String(err && err.message || err)
+			});
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [reload]);
+	function refreshButton() {
+		return (0, react.createElement)("button", {
+			type: "button",
+			className: card_module_default.discard,
+			onClick: () => setReload((n) => n + 1)
+		}, t("health.refresh"));
+	}
+	function section(title, headExtra, ...rows) {
+		return (0, react.createElement)("div", { className: card_module_default.healthSection }, (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, (0, react.createElement)("div", { className: card_module_default.healthSectionTitle }, title), headExtra), ...rows);
+	}
+	function row(label, value) {
+		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthLabel }, label), (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
+	}
+	function valueRow(value) {
+		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
+	}
+	if (state.phase === "loading") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
+	if (state.phase === "error") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
+	const data = state.data;
+	const now = Date.now();
+	const searchRows = data.backends.filter((b) => b.provider === "search");
+	const fetchRows = data.backends.filter((b) => b.provider === "fetch");
+	const cooled = data.backends.filter((b) => b.cooldownRemainingMs > 0);
+	function backendLine(b) {
+		const counts = `${b.ok} ${t("health.ok")} · ${b.failed} ${t("health.failed")}`;
+		if (b.lastCallAt === null) return `${counts} · ${t("health.never")}`;
+		const age = ageOf(b.lastCallAt, now);
+		const stateWord = b.lastOk ? t("health.ok") : t("health.failed");
+		const ms = b.lastCallMs === null ? "" : ` · ${b.lastCallMs}ms`;
+		return `${counts} · ${t("health.last")} ${age} ${stateWord}${ms}`;
+	}
+	function backendSection(provider, rows) {
+		if (rows.length === 0) return null;
+		return section(provider, null, ...rows.map((b) => row(b.label, backendLine(b))));
+	}
+	const sessionLine = [
+		`${t("health.uptime")} ${formatDuration(data.uptimeMs)}`,
+		t("health.searches", { count: data.searchCalls }),
+		t("health.fetches", { count: data.fetchCalls }),
+		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
+	].join(" · ");
+	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
+	return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {
@@ -848,7 +1114,7 @@ try {
 window.__ModuleLoader__.load({ id: "@fno2010/dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__drillToggle {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-caption);\n  text-align: center;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  flex: none;\n  padding: 0;\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.row-module__drillToggle:hover, .row-module__drillToggle[aria-expanded=\"true\"] {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__drill {\n  border-top: 1px dashed var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 2px;\n  margin-top: 4px;\n  padding-top: 4px;\n  display: flex;\n}\n\n.row-module__drillRow {\n  gap: 8px;\n  min-width: 0;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__drillLabel {\n  color: var(--dsw-alias-label-caption);\n  flex: none;\n  width: 72px;\n}\n\n.row-module__drillValue {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  min-width: 0;\n}\n\n.row-module__drillValue_ok {\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.row-module__drillValue_warn {\n  color: var(--dsw-alias-state-warn-primary);\n}\n\n.row-module__drillValue_error {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__drillValue_muted {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__drillToggle {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-caption);\n  text-align: center;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  flex: none;\n  padding: 0;\n  font-family: inherit;\n  font-size: 12px;\n  line-height: 16px;\n}\n\n.row-module__drillToggle:hover, .row-module__drillToggle[aria-expanded=\"true\"] {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__drill {\n  border-top: 1px dashed var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 2px;\n  margin-top: 4px;\n  padding-top: 4px;\n  display: flex;\n}\n\n.row-module__drillRow {\n  gap: 8px;\n  min-width: 0;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__drillLabel {\n  color: var(--dsw-alias-label-caption);\n  flex: none;\n  width: 72px;\n}\n\n.row-module__drillValue {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  min-width: 0;\n}\n\n.row-module__drillValue_ok {\n  color: var(--dsw-alias-state-success-primary);\n}\n\n.row-module__drillValue_warn {\n  color: var(--dsw-alias-state-warn-primary);\n}\n\n.row-module__drillValue_error {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__drillValue_muted {\n  color: var(--dsw-alias-label-tertiary);\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText {\n  color: var(--dsw-alias-label-secondary);\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n.card-module__tabs {\n  gap: 4px;\n  padding: 12px 0 8px;\n  display: flex;\n}\n\n.card-module__tab {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  color: var(--dsw-alias-label-tertiary);\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 999px;\n  padding: 3px 12px;\n  font-size: 12px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__tab:hover:not(.card-module__tabActive) {\n  color: var(--dsw-alias-label-primary);\n}\n\n.card-module__tabActive {\n  color: var(--dsw-alias-label-primary);\n  background: var(--dsw-alias-bg-module-platform);\n}\n\n.card-module__tab:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__settingsPane {\n  flex-direction: column;\n  display: flex;\n}\n\n.card-module__health {\n  gap: 4px;\n  padding: 2px 0 8px;\n  display: flex;\n}\n\n.card-module__healthSection {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  gap: 6px;\n  padding: 10px 0;\n  display: flex;\n}\n\n.card-module__healthSectionHead {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__healthSectionTitle {\n  color: var(--dsw-alias-label-tertiary);\n  letter-spacing: .04em;\n  text-transform: uppercase;\n  font-size: 11px;\n  font-weight: 600;\n}\n\n.card-module__healthRow {\n  justify-content: baseline;\n  align-items: baseline;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__healthLabel {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  flex: none;\n  min-width: 0;\n  max-width: 160px;\n  font-size: 13px;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.card-module__healthValue {\n  color: var(--dsw-alias-label-secondary);\n  flex: 1;\n  min-width: 0;\n  font-size: 13px;\n  line-height: 1.5;\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -895,7 +1161,25 @@ const en = {
 	"row.drill.toggle": "Expand details",
 	"row.drill.unknown": "unknown",
 	"row.drill.verification": "Verification",
-	"row.drill.notVerified": "not verified"
+	"row.drill.notVerified": "not verified",
+	"health.settings": "Settings",
+	"health.tab": "Health",
+	"health.loading": "Loading…",
+	"health.error": "Health unavailable:",
+	"health.session": "Session",
+	"health.uptime": "Uptime",
+	"health.searches": "{count} searches",
+	"health.fetches": "{count} fetches",
+	"health.results": "{count} results",
+	"health.last": "last",
+	"health.never": "never",
+	"health.ok": "ok",
+	"health.failed": "failed",
+	"health.cooldowns": "Cooldowns",
+	"health.remaining": "{count}s remaining",
+	"health.none": "none",
+	"health.noActivity": "No backend activity this session yet.",
+	"health.refresh": "Refresh"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -930,7 +1214,25 @@ const zh = {
 	"row.drill.toggle": "展开详情",
 	"row.drill.unknown": "未知",
 	"row.drill.verification": "校验状态",
-	"row.drill.notVerified": "未校验"
+	"row.drill.notVerified": "未校验",
+	"health.settings": "设置",
+	"health.tab": "健康",
+	"health.loading": "加载中…",
+	"health.error": "健康状态不可用：",
+	"health.session": "会话",
+	"health.uptime": "运行时长",
+	"health.searches": "{count} 次搜索",
+	"health.fetches": "{count} 次抓取",
+	"health.results": "{count} 条结果",
+	"health.last": "最近",
+	"health.never": "从未",
+	"health.ok": "成功",
+	"health.failed": "失败",
+	"health.cooldowns": "冷却中",
+	"health.remaining": "剩余 {count}s",
+	"health.none": "无",
+	"health.noActivity": "本会话尚无后端活动。",
+	"health.refresh": "刷新"
 };
 //#endregion
 //#region src/client/model.js
@@ -1341,6 +1643,98 @@ function WebSearchRow({ block, inspect, t }) {
 	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
 }
 //#endregion
+//#region src/client/health.js
+/** Same-origin route the Health tab fetches (host lib/health.js). */
+const HEALTH_ROUTE = "/web-search-ext/health";
+function isFiniteNumber(v) {
+	return typeof v === "number" && Number.isFinite(v);
+}
+/**
+* Normalize the wire payload into the display model, or null when any
+* required field is malformed (a shape change must surface as the
+* unavailable line, never as a silently wrong number).
+*
+* Display model:
+*   { startedAt: number, uptimeMs: number, searchCalls: number,
+*     fetchCalls: number, resultsReturned: number | null,
+*     backends: [{ provider: string, name: string, label: string,
+*       attempts: number, ok: number, failed: number,
+*       lastCallAt: number | null, lastCallMs: number | null,
+*       lastOk: boolean | null, cooldownRemainingMs: number }] }
+*/
+function parseHealth(payload) {
+	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
+	const p = payload;
+	if (!isFiniteNumber(p.startedAt) || p.startedAt < 0) return null;
+	if (!isFiniteNumber(p.uptimeMs) || p.uptimeMs < 0) return null;
+	if (!isFiniteNumber(p.searchCalls) || p.searchCalls < 0) return null;
+	if (!isFiniteNumber(p.fetchCalls) || p.fetchCalls < 0) return null;
+	if (p.resultsReturned !== void 0 && p.resultsReturned !== null && (!isFiniteNumber(p.resultsReturned) || p.resultsReturned < 0)) return null;
+	if (!Array.isArray(p.backends)) return null;
+	const backends = [];
+	for (const row of p.backends) {
+		if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
+		if (typeof row.provider !== "string" || row.provider === "") return null;
+		if (typeof row.name !== "string" || row.name === "") return null;
+		if (!isFiniteNumber(row.attempts) || row.attempts < 0) return null;
+		if (!isFiniteNumber(row.ok) || row.ok < 0) return null;
+		if (!isFiniteNumber(row.failed) || row.failed < 0) return null;
+		const lastCallAt = row.lastCallAt === void 0 ? null : row.lastCallAt;
+		const lastCallMs = row.lastCallMs === void 0 ? null : row.lastCallMs;
+		const lastOk = row.lastOk === void 0 ? null : row.lastOk;
+		if (lastCallAt !== null && !isFiniteNumber(lastCallAt)) return null;
+		if (lastCallMs !== null && !isFiniteNumber(lastCallMs)) return null;
+		if (lastOk !== null && typeof lastOk !== "boolean") return null;
+		const cooldown = row.cooldownRemainingMs === void 0 || row.cooldownRemainingMs === null ? 0 : row.cooldownRemainingMs;
+		if (!isFiniteNumber(cooldown) || cooldown < 0) return null;
+		backends.push({
+			provider: row.provider,
+			name: row.name,
+			label: typeof row.label === "string" && row.label !== "" ? row.label : row.name,
+			attempts: row.attempts,
+			ok: row.ok,
+			failed: row.failed,
+			lastCallAt,
+			lastCallMs,
+			lastOk,
+			cooldownRemainingMs: cooldown
+		});
+	}
+	return {
+		startedAt: p.startedAt,
+		uptimeMs: p.uptimeMs,
+		searchCalls: p.searchCalls,
+		fetchCalls: p.fetchCalls,
+		resultsReturned: p.resultsReturned === void 0 ? null : p.resultsReturned,
+		backends
+	};
+}
+/**
+* Human duration from milliseconds: "12s" / "2m 3s" / "1h 1m" / "3d 2h".
+* Two units at most (the leading unit + the next smaller one); negatives
+* and non-finite values clamp to "0s" — the card must never render a
+* negative age or NaN.
+*/
+function formatDuration(ms) {
+	if (typeof ms !== "number" || !Number.isFinite(ms) || ms < 0) return "0s";
+	const s = Math.floor(ms / 1e3);
+	if (s < 60) return `${s}s`;
+	const m = Math.floor(s / 60);
+	if (m < 60) return `${m}m ${s % 60}s`;
+	const h = Math.floor(m / 60);
+	if (h < 24) return `${h}h ${m % 60}m`;
+	return `${Math.floor(h / 24)}d ${h % 24}h`;
+}
+/**
+* "How long ago": null when the event is unknown (never called), else the
+* clamped age between `then` and `now` (defaults to Date.now()).
+*/
+function ageOf(then, now = Date.now()) {
+	if (!isFiniteNumber(then)) return null;
+	if (!isFiniteNumber(now)) return null;
+	return formatDuration(Math.max(0, now - then));
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -1360,13 +1754,24 @@ var card_module_default = {
 	"head": "card-module__head",
 	"header": "card-module__header",
 	"headText": "card-module__headText",
+	"health": "card-module__health",
+	"healthLabel": "card-module__healthLabel",
+	"healthRow": "card-module__healthRow",
+	"healthSection": "card-module__healthSection",
+	"healthSectionHead": "card-module__healthSectionHead",
+	"healthSectionTitle": "card-module__healthSectionTitle",
+	"healthValue": "card-module__healthValue",
 	"hint": "card-module__hint",
 	"input": "card-module__input",
 	"label": "card-module__label",
 	"name": "card-module__name",
 	"pending": "card-module__pending",
 	"save": "card-module__save",
+	"settingsPane": "card-module__settingsPane",
 	"spin": "card-module__spin",
+	"tab": "card-module__tab",
+	"tabActive": "card-module__tabActive",
+	"tabs": "card-module__tabs",
 	"wsx-rot": "card-module__wsx-rot"
 };
 //#endregion
@@ -1444,6 +1849,7 @@ function keyStateFrom(res) {
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
 	const [open, setOpen] = (0, react.useState)(false);
+	const [tab, setTab] = (0, react.useState)("settings");
 	const [snap, setSnap] = (0, react.useState)(null);
 	const [draft, setDraft] = (0, react.useState)(null);
 	const [keyDraft, setKeyDraft] = (0, react.useState)({
@@ -1618,7 +2024,30 @@ function WebSearchExtCard(props) {
 		className: card_module_default.header,
 		"aria-expanded": open,
 		onClick: () => setOpen((o) => !o)
-	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
+		className: card_module_default.tabs,
+		role: "tablist"
+	}, (0, react.createElement)("button", {
+		type: "button",
+		role: "tab",
+		id: "dsw-websearch-tab-settings",
+		"aria-controls": "dsw-websearch-panel-settings",
+		className: tab === "settings" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
+		"aria-selected": tab === "settings",
+		onClick: () => setTab("settings")
+	}, t("health.settings")), (0, react.createElement)("button", {
+		type: "button",
+		role: "tab",
+		id: "dsw-websearch-tab-health",
+		"aria-controls": "dsw-websearch-panel-health",
+		className: tab === "health" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
+		"aria-selected": tab === "health",
+		onClick: () => setTab("health")
+	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", {
+		className: card_module_default.settingsPane,
+		role: "tabpanel",
+		id: "dsw-websearch-panel-settings"
+	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -1649,7 +2078,110 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : null);
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+		t,
+		panelId: "dsw-websearch-panel-health"
+	})) : null);
+}
+/**
+* Health tab (C2): fetches the session telemetry from the host's
+* same-origin GET /web-search-ext/health route on mount and on refresh.
+* A fetch/parse failure surfaces as an explicit unavailable line with a
+* retry — the tab never renders a silently empty state.
+*/
+function HealthTab({ t, panelId }) {
+	const [state, setState] = (0, react.useState)({
+		phase: "loading",
+		data: null,
+		error: ""
+	});
+	const [reload, setReload] = (0, react.useState)(0);
+	(0, react.useEffect)(() => {
+		let cancelled = false;
+		setState({
+			phase: "loading",
+			data: null,
+			error: ""
+		});
+		fetch(HEALTH_ROUTE, { headers: { accept: "application/json" } }).then((res) => {
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			return res.json();
+		}).then((payload) => {
+			if (cancelled) return;
+			const model = parseHealth(payload);
+			if (model === null) throw new Error("unparsable payload");
+			setState({
+				phase: "ready",
+				data: model,
+				error: ""
+			});
+		}).catch((err) => {
+			if (cancelled) return;
+			setState({
+				phase: "error",
+				data: null,
+				error: String(err && err.message || err)
+			});
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [reload]);
+	function refreshButton() {
+		return (0, react.createElement)("button", {
+			type: "button",
+			className: card_module_default.discard,
+			onClick: () => setReload((n) => n + 1)
+		}, t("health.refresh"));
+	}
+	function section(title, headExtra, ...rows) {
+		return (0, react.createElement)("div", { className: card_module_default.healthSection }, (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, (0, react.createElement)("div", { className: card_module_default.healthSectionTitle }, title), headExtra), ...rows);
+	}
+	function row(label, value) {
+		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthLabel }, label), (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
+	}
+	function valueRow(value) {
+		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
+	}
+	if (state.phase === "loading") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
+	if (state.phase === "error") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
+	const data = state.data;
+	const now = Date.now();
+	const searchRows = data.backends.filter((b) => b.provider === "search");
+	const fetchRows = data.backends.filter((b) => b.provider === "fetch");
+	const cooled = data.backends.filter((b) => b.cooldownRemainingMs > 0);
+	function backendLine(b) {
+		const counts = `${b.ok} ${t("health.ok")} · ${b.failed} ${t("health.failed")}`;
+		if (b.lastCallAt === null) return `${counts} · ${t("health.never")}`;
+		const age = ageOf(b.lastCallAt, now);
+		const stateWord = b.lastOk ? t("health.ok") : t("health.failed");
+		const ms = b.lastCallMs === null ? "" : ` · ${b.lastCallMs}ms`;
+		return `${counts} · ${t("health.last")} ${age} ${stateWord}${ms}`;
+	}
+	function backendSection(provider, rows) {
+		if (rows.length === 0) return null;
+		return section(provider, null, ...rows.map((b) => row(b.label, backendLine(b))));
+	}
+	const sessionLine = [
+		`${t("health.uptime")} ${formatDuration(data.uptimeMs)}`,
+		t("health.searches", { count: data.searchCalls }),
+		t("health.fetches", { count: data.fetchCalls }),
+		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
+	].join(" · ");
+	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
+	return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {

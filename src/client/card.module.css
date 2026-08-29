@@ -38,3 +38,17 @@
 .discard:focus-visible,.save:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
 .spin{display:inline-flex;animation:wsx-rot .8s linear infinite}
 @keyframes wsx-rot{to{transform:rotate(360deg)}}
+/* C2: Settings/Health tabs + health panel */
+.tabs{gap:4px;padding:12px 0 8px;display:flex}
+.tab{appearance:none;font:inherit;cursor:pointer;color:var(--dsw-alias-label-tertiary);background:0 0;border:1px solid #0000;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:500;line-height:17px}
+.tab:hover:not(.tabActive){color:var(--dsw-alias-label-primary)}
+.tabActive{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-module-platform)}
+.tab:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
+.settingsPane{flex-direction:column;display:flex}
+.health{gap:4px;padding:2px 0 8px;display:flex}
+.healthSection{border-top:1px solid var(--dsw-alias-border-l2);gap:6px;padding:10px 0;display:flex}
+.healthSectionHead{justify-content:space-between;align-items:center;gap:8px;display:flex}
+.healthSectionTitle{color:var(--dsw-alias-label-tertiary);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.healthRow{justify-content:baseline;align-items:baseline;gap:8px;display:flex}
+.healthLabel{color:var(--dsw-alias-label-primary);flex:none;font-size:13px;font-weight:500;max-width:160px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.healthValue{color:var(--dsw-alias-label-secondary);flex:1;min-width:0;font-size:13px;line-height:1.5}

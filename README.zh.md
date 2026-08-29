@@ -25,7 +25,7 @@
 - **时间窗口**：`freshness: 24h | 7d | 30d` 在后端支持时随请求发出（Exa `startPublishedDate`、Firecrawl `tbs`）；无 key Exa MCP 路径无法按日期过滤，回执会明确说明
 - **可选 key**，按后端独立解析，优先级：设置明文 → 凭证服务 → 启动环境变量
 - **Web 端设置卡片**：设置 → 插件 → 插件配置 中可编辑五个核心配置字段和两个 API key，key 状态自动发现自凭证各层（0.3.0 的校验/时间字段暂只在 `settings.yaml`；卡片将在 0.3.1 跟上）
-- **Web 端 `web_search` 卡片**：对话中的 `web_search` 行接管宿主的内置 web 卡片，额外显示来源回执行、按来源的校验徽章（按状态着色：`alive`、`verified`、`dead 404` 等）以及截断提示；当 web seam 未固定到本插件时优雅降级（不冒领回执、不虚构徽章），不会把别人后端的结果显示成 web-search-ext 的结果
+- **Web 端 `web_search` 卡片**：对话中的 `web_search` 行接管宿主的内置 web 卡片，额外显示来源回执行、按来源的校验徽章（按状态着色：`alive`、`verified`、`dead 404` 等）、截断提示，以及逐条下钻（点击来源可查看其服务后端、新鲜度与校验状态）；当 web seam 未固定到本插件时优雅降级（不冒领回执、不虚构徽章、不声称后端），不会把别人后端的结果显示成 web-search-ext 的结果
 - **无安装期脚本**：纯 ESM JavaScript，无构建步骤，无 `postinstall`/`prepare`
 - **可扩展**：加一个后端 = 一个搜索函数 + 一个 plan 条目 + 配置字段，见 [CONTRIBUTING](CONTRIBUTING.md)
 

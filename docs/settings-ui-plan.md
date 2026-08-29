@@ -330,6 +330,43 @@ Data path for the `web_search` toolview card (`src/client/row.js` + `model.js`):
   is the host's generic tool-result treatment, and error text must never be
   re-interpreted as markdown.
 
+## C4 per-result drill-down — design evidence (2026-08-29)
+
+Wire constraint that shapes the whole feature (verified in installed
+`dsh-tool-web/lib/index.js`): `projectSource` projects a seam source to
+exactly `{ url, title?, snippet?, publishedAt? }` and `isWebSource` accepts
+only those string fields — no structured per-source field (backend,
+verification) can survive to `resultView`. Therefore:
+
+- **Serving backend is receipt-derived, not per-source.** One `web_search`
+  call is answered by exactly one backend (failover is per-call, not
+  per-result; lib/index.js `plan`), so `model.backends` is the deduplicated
+  union of `receiptBackend()` labels parsed from claimed receipt lines
+  (`web-search-ext: <label> · …`; real labels `exa-rest` / `exa-mcp` /
+  `firecrawl`). A multi-backend merge (429 failover mid-flight across
+  sub-queries) cannot attribute a source to a section — the host's
+  `mergeSearchResults` round-robins the source arrays with URL dedup and no
+  section markers — so the drill-down shows the honest union plus a
+  "(merged across sub-queries)" note. No receipt (non-pinned provider) → no
+  backend line at all.
+- **Freshness is the wire's `publishedAt`** (vendor-supplied; rendered as
+  "unknown" when absent).
+- **Verification state re-surfaces the C1 badge** (marker label + optional
+  detail such as "8/9 words" or "fetch failed"); "not verified" when the
+  snippet carries no marker (verifyLevel off, or non-pinned provider).
+- **Interaction is client-side only**: the source head is a
+  mouse-convenience toggle zone (plain div — no `role="button"` wrapper,
+  which would swallow the nested title anchor's key events and hide it from
+  screen readers); keyboard activation is a dedicated chevron
+  `<button type="button">` carrying `aria-expanded` / `aria-controls` (the
+  drill region's `id`) / `aria-label`, and clicking the title anchor still
+  just opens the link (event stopPropagation). One expanded at a time; the
+  open index resets when the row is reused for a different call. No wire,
+  host, or provider changes — the whole feature is `src/client/` +
+  scenarios in `test/toolview.test.mjs` (backend parsing, dedupe/union,
+  multi-backend merge, non-pinned empty backends; scenario count asserted
+  in-test only, not in docs).
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

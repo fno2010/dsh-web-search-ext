@@ -26,7 +26,16 @@ export const en = {
   "row.stopped": "Search stopped",
   "row.truncated": "Showing the first {count} sources. Refine the query for more.",
   "row.noResults": "No results found.",
-  "row.inspect": "Inspect"
+  "row.inspect": "Inspect",
+
+  // web_search toolview drill-down (C4)
+  "row.drill.backend": "Backend",
+  "row.drill.merged": " (merged across sub-queries)",
+  "row.drill.published": "Published",
+  "row.drill.toggle": "Expand details",
+  "row.drill.unknown": "unknown",
+  "row.drill.verification": "Verification",
+  "row.drill.notVerified": "not verified"
 };
 
 export const zh = {
@@ -57,5 +66,14 @@ export const zh = {
   "row.stopped": "搜索已中止",
   "row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",
   "row.noResults": "未找到结果。",
-  "row.inspect": "查看"
+  "row.inspect": "查看",
+
+  // web_search toolview drill-down (C4)
+  "row.drill.backend": "来源后端",
+  "row.drill.merged": "（跨子查询合并）",
+  "row.drill.published": "发布时间",
+  "row.drill.toggle": "展开详情",
+  "row.drill.unknown": "未知",
+  "row.drill.verification": "校验状态",
+  "row.drill.notVerified": "未校验"
 };

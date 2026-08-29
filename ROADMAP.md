@@ -17,7 +17,8 @@ Versioning plan for this plugin. Shipped changes are recorded in
 
 ## 0.3.0 — verifiable, current search
 
-Status: implemented on this branch; the table below is the delivered spec.
+Status: shipped in 0.3.0 (PR #8, main `260fe44`, tag `v0.3.0`); the table
+below is the delivered spec.
 
 Goal: each search result carries a machine- and human-readable trust signal,
 and `web_fetch` works keyless.

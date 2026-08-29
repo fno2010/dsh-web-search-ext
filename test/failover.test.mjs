@@ -816,7 +816,10 @@ function fetchProviderWith(options) {
 	);
 	assert.equal(calls, 0);
 	// HTTP-date form (RFC 7231): a future date is honored; a past date
-	// falls back to the configured flat cooldown.
+	// falls back to the configured flat cooldown. toUTCString() has second
+	// precision and parsing runs a few ms after the date was built, so the
+	// ceiling of (date - now) can land on 119, 120, or 121 — assert the
+	// 2-minute band, not an exact second.
 	const futureDate = new Date(Date.now() + 120_000).toUTCString();
 	const pastDate = new Date(Date.now() - 120_000).toUTCString();
 	mockFetch(async (url) => {
@@ -826,7 +829,7 @@ function fetchProviderWith(options) {
 	const p2 = providerWith(DEFAULTS);
 	await assert.rejects(
 		() => p2.search({ query: "hello" }),
-		(error) => /exa \(rate limited\).*retry in ~120s/u.test(error.message)
+		(error) => /exa \(rate limited\).*retry in ~1(19|20|21)s/u.test(error.message)
 	);
 	mockFetch(async (url) => {
 		if (url.startsWith("https://mcp.exa.ai")) return header429(pastDate);
@@ -921,7 +924,7 @@ function fetchProviderWith(options) {
 			const settle = () => resolve(jsonResponse(200, ""));
 			if (init.signal?.aborted === true) return settle();
 			init.signal.addEventListener("abort", settle, { once: true });
-			const safety = setTimeout(settle, 2000); // never hangs the suite
+			const safety = setTimeout(settle, 500); // backstop: the abort settles at ~60ms; a stuck path costs 0.5s, not 2s
 			safety.unref?.();
 		});
 	});
@@ -988,7 +991,55 @@ function fetchProviderWith(options) {
 	ok("L1 never-settling text() bounded by the deadline race");
 }
 
-console.log(`\nPart A: ${passed}/39 scenarios passed`);
+// 40. L1: a single chunk that alone exceeds the byte cap keeps the capped
+//     prefix instead of dropping the whole chunk. Pre-fix, when the first
+//     chunk exceeded contentCheckBytes the entire chunk was discarded:
+//     `text` stayed empty while `length` reported the cap, so the
+//     min-content-bytes gate passed on bytes that were never retained and
+//     word-matching ran against "" — every page read [verified·changed]
+//     even when its content was consistent.
+{
+	const capBytes = 500;
+	// Opening words = the snippet's leading words, then ~1.5 KB of padding so
+	// the single chunk is well over the cap.
+	const page =
+		"<html><body><p>Redirect target check. " + "padding ".repeat(200) + "</p></body></html>";
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_SINGLE);
+		if (init.method === "HEAD") return jsonResponse(200, "");
+		// Stream delivering the whole page in one chunk (byteLength > capBytes).
+		return {
+			status: 200,
+			ok: true,
+			headers: { get: () => null },
+			body: {
+				getReader: () => {
+					let sent = false;
+					return {
+						read: () =>
+							sent
+								? Promise.resolve({ done: true })
+								: (sent = true, Promise.resolve({ done: false, value: Buffer.from(page, "utf8") })),
+						cancel: async () => {}
+					};
+				},
+				cancel: async () => {}
+			}
+		};
+	});
+	const p = providerWith({
+		...DEFAULTS,
+		verifyLevel: "content",
+		contentCheckBytes: capBytes,
+		contentCheckMinBytes: 200
+	});
+	const result = await p.search({ query: "hello" });
+	assert.match(result.sources[0].snippet, /^\[verified\] Redirect target check\.$/);
+	restoreFetch();
+	ok("L1 cap-crossing chunk: capped prefix retained, matching words found → [verified]");
+}
+
+console.log(`\nPart A: ${passed}/40 scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

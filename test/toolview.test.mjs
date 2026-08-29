@@ -517,11 +517,17 @@ const tEcho = (key, params) =>
 // registration here: the host `web-toolview` entry owns key "web_search" at
 // priority 0, and the registry renders the LOWEST-priority entry per key —
 // our registration must pin an explicit priority below 0 to shadow it.
-// The registration appears once per entry id (link + npm install form).
+// The options object is captured whole, so the check does not depend
+// on property order; the registration appears once per entry id
+// (link + npm install form).
 {
 	const bundle = readFileSync(new URL("../client/client.js", import.meta.url), "utf8");
-	const re = /name:\s*"tool\.call\.toolview",\s*key:\s*"web_search",\s*([^}]*)\},\s*WebSearchRow/g;
-	const hits = [...bundle.matchAll(re)];
+	// Every ctx.slots.register call anchored on the WebSearchRow
+	// component (flat options object: no nested braces), then keep the
+	// web_search toolview registrations.
+	const regRe = /ctx\.slots\.register\(\s*\{([^{}]*)\}\s*,\s*WebSearchRow\)/g;
+	const hits = [...bundle.matchAll(regRe)].filter(([, opts]) =>
+		/name:\s*"tool\.call\.toolview"/.test(opts) && /key:\s*"web_search"/.test(opts));
 	assert.equal(hits.length, 2, "bundle registers the web_search toolview under both entry ids");
 	for (const [i, hit] of hits.entries()) {
 		const p = hit[1].match(/priority:\s*(-?\d+)/);

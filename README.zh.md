@@ -56,7 +56,7 @@ bundle patch 通过设置 `web.searchProvider: web-search-ext` 让本插件接�
 | 字段 | 默认值 | 说明 |
 |---|---|---|
 | `preferred` | `exa` | 首选后端：`exa` \| `firecrawl` |
-| `numResults` | `8` | 工具未限制条数时的默认结果数 |
+| `numResults` | `8` | 请求的结果条数；同时是返回条数的硬上限（上下文预算）——更大的 `maxResults` 请求会被钳制到它，回执中会注明 |
 | `maxSnippetChars` | `500` | 摘要长度上限 |
 | `rateLimitCooldownSec` | `60` | 后端未报告窗口时的兜底 429 冷却（秒）；`0` 关闭 |
 | `firecrawlKeyless` | `true` | 允许无 key 的 Firecrawl 请求（搜索与抓取） |
@@ -111,7 +111,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # 然后重启 dsh
 - 出站请求只发往所配置的 Exa 与 Firecrawl 端点（另有下文所述的本地校验探测），不接触任何其它服务。
 - API key 只出现在其后端请求的 `authorization` 头里——不进请求体、不发往另一个后端、不出现在错误信息中。
 - 无安装期脚本：纯 ESM JavaScript，无构建步骤，无 `postinstall`/`prepare`。
-- 摘要有长度上限（`maxSnippetChars`）；Firecrawl 的页面 markdown 描述在进入模型上下文前会剥掉图片链接。
+- 单次搜索的上下文有界：结果条数钳制在 `numResults`（请求的 `maxResults` 超过它时回执带 `(numResults cap)` 标记；后端又超量返回时为 `N of M results` 形式），摘要有长度上限（`maxSnippetChars`）；Firecrawl 的页面 markdown 描述在进入模型上下文前会剥掉图片链接。
 - 校验探测（L0/L1）只抓取后端结果中出现的 URL，字节数与超时均有界；重定向逐跳手动跟随，每一跳都按同一套 SSRF 规则重新校验（仅允许公共 http(s)；环回、内网、链路本地、CGNAT 地址一律拒绝——包括 IPv6 字面量与末尾点号拼写；无法确定是公共地址的一律拒绝，fail closed）。
 - `web_fetch` 提供方在把 URL 交给任何抓取后端之前，拒绝非公共目标（非 http(s) 协议、环回、内网、链路本地地址）。
 

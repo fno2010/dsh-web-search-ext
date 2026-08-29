@@ -35,7 +35,7 @@ The provider is deliberately small and uniform; a backend is:
 2. one entry pushed onto `plan` in `search()` when its availability condition holds (key present, or keyless mode allowed);
 3. its config fields in the `Config` schema and key resolution in `resolveKey()`.
 
-No other code changes: failover, cooldown, abort handling, and snippet bounding all apply automatically. A self-hosted [SearXNG](https://docs.searxng.org/) instance (JSON API) is the natural next candidate — no key, no rate limit of your own, fully local.
+No other code changes: failover, cooldown, abort handling, snippet bounding, and the `numResults` result-count cap (G5 context budget) all apply automatically. A self-hosted [SearXNG](https://docs.searxng.org/) instance (JSON API) is the natural next candidate — no key, no rate limit of your own, fully local.
 
 Afterwards update the READMEs (backend table, defaults table) and the `CHANGELOG.md` entry.
 

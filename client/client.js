@@ -23,6 +23,8 @@ const en = {
 	numResults: "Default result count",
 	maxSnippetChars: "Snippet length bound (chars)",
 	cooldown: "429 cooldown (seconds, 0 disables)",
+	verifyLevel: "Verification tier",
+	verifyLevelHint: "off: no verification · liveness: HEAD-check every source · content: also verify snippet text on the live page (experimental)",
 	keyless: "Allow keyless Firecrawl requests",
 	exaKey: "Exa API key",
 	firecrawlKey: "Firecrawl API key",
@@ -108,6 +110,8 @@ const zh = {
 	numResults: "默认结果条数",
 	maxSnippetChars: "摘要长度上限（字符）",
 	cooldown: "429 冷却时长（秒，0 关闭）",
+	verifyLevel: "校验层级",
+	verifyLevelHint: "off：不校验 · liveness：对每个来源做 HEAD 存活检查 · content：额外校验摘要文本仍出现在活页面上（实验性）",
 	keyless: "允许无 key 的 Firecrawl 请求",
 	exaKey: "Exa API key",
 	firecrawlKey: "Firecrawl API key",
@@ -869,6 +873,28 @@ function commandOptions({ t, preferred, exaKey, fcKey, fcKeyless, health }) {
 	];
 }
 //#endregion
+//#region src/client/settings-model.js
+/** The closed set of host-accepted verification tiers, in card display order. */
+const VERIFY_LEVELS = Object.freeze([
+	"off",
+	"liveness",
+	"content"
+]);
+/** The host schema's default tier (lib/index.js Config schema). */
+const VERIFY_LEVEL_DEFAULT = "liveness";
+/**
+* The tier the settings-card select should display for a stored value:
+* one of the three schema tiers, or the schema default when the value is
+* unset or unrecognized. A hand-edited settings.yaml may hold anything;
+* the host would reject a write of an unrecognized tier, so the card
+* normalizes it to the default instead of echoing it back.
+* @param {unknown} stored - raw document value (undefined when unset).
+* @returns {"off" | "liveness" | "content"}
+*/
+function effectiveVerifyLevel(stored) {
+	return VERIFY_LEVELS.includes(stored) ? stored : VERIFY_LEVEL_DEFAULT;
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -920,6 +946,7 @@ const NUMERIC = [
 ];
 const FIELDS = [
 	"preferred",
+	"verifyLevel",
 	...NUMERIC,
 	"firecrawlKeyless"
 ];
@@ -958,6 +985,7 @@ function effectiveValue(snap, field) {
 function initialDraft(snap) {
 	return {
 		preferred: effectiveValue(snap, "preferred"),
+		verifyLevel: effectiveVerifyLevel(effectiveValue(snap, "verifyLevel")),
 		numResults: effectiveValue(snap, "numResults"),
 		maxSnippetChars: effectiveValue(snap, "maxSnippetChars"),
 		rateLimitCooldownSec: effectiveValue(snap, "rateLimitCooldownSec"),
@@ -1201,7 +1229,12 @@ function WebSearchExtCard(props) {
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
 		onChange: (e) => setField("preferred", e.target.value)
-	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), textField("numResults", "numResults", "number", "1"), textField("maxSnippetChars", "maxSnippetChars", "number", "1"), textField("cooldown", "rateLimitCooldownSec", "number", "0"), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("keyless")), (0, react.createElement)("input", {
+	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("verifyLevel"))), (0, react.createElement)("select", {
+		className: card_module_default.input,
+		disabled: ro,
+		value: effectiveVerifyLevel(draft?.verifyLevel),
+		onChange: (e) => setField("verifyLevel", e.target.value)
+	}, ...VERIFY_LEVELS.map((level) => (0, react.createElement)("option", { value: level }, level))), (0, react.createElement)("p", { className: card_module_default.hint }, t("verifyLevelHint"))), textField("numResults", "numResults", "number", "1"), textField("maxSnippetChars", "maxSnippetChars", "number", "1"), textField("cooldown", "rateLimitCooldownSec", "number", "0"), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("keyless")), (0, react.createElement)("input", {
 		type: "checkbox",
 		className: card_module_default.check,
 		disabled: ro,
@@ -1536,6 +1569,8 @@ const en = {
 	numResults: "Default result count",
 	maxSnippetChars: "Snippet length bound (chars)",
 	cooldown: "429 cooldown (seconds, 0 disables)",
+	verifyLevel: "Verification tier",
+	verifyLevelHint: "off: no verification · liveness: HEAD-check every source · content: also verify snippet text on the live page (experimental)",
 	keyless: "Allow keyless Firecrawl requests",
 	exaKey: "Exa API key",
 	firecrawlKey: "Firecrawl API key",
@@ -1621,6 +1656,8 @@ const zh = {
 	numResults: "默认结果条数",
 	maxSnippetChars: "摘要长度上限（字符）",
 	cooldown: "429 冷却时长（秒，0 关闭）",
+	verifyLevel: "校验层级",
+	verifyLevelHint: "off：不校验 · liveness：对每个来源做 HEAD 存活检查 · content：额外校验摘要文本仍出现在活页面上（实验性）",
 	keyless: "允许无 key 的 Firecrawl 请求",
 	exaKey: "Exa API key",
 	firecrawlKey: "Firecrawl API key",
@@ -2382,6 +2419,28 @@ function commandOptions({ t, preferred, exaKey, fcKey, fcKeyless, health }) {
 	];
 }
 //#endregion
+//#region src/client/settings-model.js
+/** The closed set of host-accepted verification tiers, in card display order. */
+const VERIFY_LEVELS = Object.freeze([
+	"off",
+	"liveness",
+	"content"
+]);
+/** The host schema's default tier (lib/index.js Config schema). */
+const VERIFY_LEVEL_DEFAULT = "liveness";
+/**
+* The tier the settings-card select should display for a stored value:
+* one of the three schema tiers, or the schema default when the value is
+* unset or unrecognized. A hand-edited settings.yaml may hold anything;
+* the host would reject a write of an unrecognized tier, so the card
+* normalizes it to the default instead of echoing it back.
+* @param {unknown} stored - raw document value (undefined when unset).
+* @returns {"off" | "liveness" | "content"}
+*/
+function effectiveVerifyLevel(stored) {
+	return VERIFY_LEVELS.includes(stored) ? stored : VERIFY_LEVEL_DEFAULT;
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -2433,6 +2492,7 @@ const NUMERIC = [
 ];
 const FIELDS = [
 	"preferred",
+	"verifyLevel",
 	...NUMERIC,
 	"firecrawlKeyless"
 ];
@@ -2471,6 +2531,7 @@ function effectiveValue(snap, field) {
 function initialDraft(snap) {
 	return {
 		preferred: effectiveValue(snap, "preferred"),
+		verifyLevel: effectiveVerifyLevel(effectiveValue(snap, "verifyLevel")),
 		numResults: effectiveValue(snap, "numResults"),
 		maxSnippetChars: effectiveValue(snap, "maxSnippetChars"),
 		rateLimitCooldownSec: effectiveValue(snap, "rateLimitCooldownSec"),
@@ -2714,7 +2775,12 @@ function WebSearchExtCard(props) {
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
 		onChange: (e) => setField("preferred", e.target.value)
-	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), textField("numResults", "numResults", "number", "1"), textField("maxSnippetChars", "maxSnippetChars", "number", "1"), textField("cooldown", "rateLimitCooldownSec", "number", "0"), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("keyless")), (0, react.createElement)("input", {
+	}, (0, react.createElement)("option", { value: "exa" }, "exa"), (0, react.createElement)("option", { value: "firecrawl" }, "firecrawl"))), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("verifyLevel"))), (0, react.createElement)("select", {
+		className: card_module_default.input,
+		disabled: ro,
+		value: effectiveVerifyLevel(draft?.verifyLevel),
+		onChange: (e) => setField("verifyLevel", e.target.value)
+	}, ...VERIFY_LEVELS.map((level) => (0, react.createElement)("option", { value: level }, level))), (0, react.createElement)("p", { className: card_module_default.hint }, t("verifyLevelHint"))), textField("numResults", "numResults", "number", "1"), textField("maxSnippetChars", "maxSnippetChars", "number", "1"), textField("cooldown", "rateLimitCooldownSec", "number", "0"), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("keyless")), (0, react.createElement)("input", {
 		type: "checkbox",
 		className: card_module_default.check,
 		disabled: ro,

@@ -622,6 +622,47 @@ registers the contribution in `apply()` (feature-guarded on
 none did) as the first hint line of the settings pane — failure never
 silent.
 
+## C6 verification-tier selector — design evidence (2026-08-30)
+
+In-card control for `verifyLevel` (issue #21). The host half already
+carries the tier (the 0.3.0 verification wiring); C6 exposes it in the
+settings card and proves the write path is hot:
+
+1. **Closed set comes from the schema.** `lib/index.js:249` —
+   `verifyLevel: z.union(["off", "liveness", "content"]).default("liveness")`.
+   The card offers exactly this set, so the client mirrors it as a pure
+   model (`src/client/settings-model.js`): `VERIFY_LEVELS` (frozen closed
+   set) and `VERIFY_LEVEL_DEFAULT` (the schema default) — the select is
+   built from the model, not from string literals.
+2. **Hot update, no host-side change.** The host's `apply()` installs the
+   section with `setSource: (source) => { current = source }`
+   (`lib/index.js:1456-1460`) and both providers resolve their config
+   per call (`() => current()`). `dsh-settings` `installSettingsSection`
+   (`dsh-settings/lib/index.js:618`) answers with
+   `hooks.setSource(() => scope.get())` (:624) — a live-resolved document,
+   not a snapshot. So `scope.set("verifyLevel", …)` from the card takes
+   effect from the next `web_search`/`web_fetch` onward; no reload, no
+   host change.
+3. **Garbage never echoes back.** `initialDraft` normalizes the stored
+   value through `effectiveVerifyLevel(effectiveValue(snap, "verifyLevel"))`
+   before the select renders, so a hand-edited `settings.yaml` carrying a
+   dead tier (wrong case, whitespace, stale value) shows the schema
+   default instead of a broken option — and saving writes the
+   schema-valid value back. `effectiveVerifyLevel` is pure:
+   `VERIFY_LEVELS.includes(stored) ? stored : VERIFY_LEVEL_DEFAULT`.
+4. **Generic save loop, no per-field wiring.** `verifyLevel` joins the
+   card's `FIELDS` list; the existing save loop's non-numeric branch
+   (`if (value === base) continue; await scope.set(field, value)`)
+   handles it — the tier is the first non-numeric, non-key field the
+   card saves.
+5. **Freshness stays `settings.yaml`-only.** The 0.3.1 umbrella (#12)
+   carries no freshness subissue (subissues #13–#22), so the freshness
+   window is deliberately not in the card — unchanged from before C6.
+6. **Pure model + suite.** `test/settings.test.mjs` (node-runnable, no
+   React, no network) covers the closed tier set and the
+   `effectiveVerifyLevel` unset/garbage matrix; scenario count is
+   asserted in-test (sentinel), not in docs.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

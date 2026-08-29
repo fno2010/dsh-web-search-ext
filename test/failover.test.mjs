@@ -11,7 +11,15 @@
  *          Firecrawl v2 keyless), asserting the provider maps real payloads.
  */
 import assert from "node:assert/strict";
-import { MultiBackendSearchProvider, MultiBackendFetchProvider, Config, PROVIDER_ID } from "../lib/index.js";
+import {
+	MultiBackendSearchProvider,
+	MultiBackendFetchProvider,
+	Config,
+	PROVIDER_ID,
+	createHealthState,
+	activeCooldowns,
+	buildHealthJson
+} from "../lib/index.js";
 import { isSafeUrl } from "../lib/verify.js";
 
 const DEFAULTS = {
@@ -46,9 +54,9 @@ function makeCtx() {
 // A provider whose options can be mutated between calls; the real class
 // snapshots options per search through the injected thunk, so mutating the
 // box re-shapes the next search exactly as a live settings commit would.
-function providerWith(options) {
+function providerWith(options, health = null) {
 	const box = { ...options };
-	return new MultiBackendSearchProvider(makeCtx(), () => box);
+	return new MultiBackendSearchProvider(makeCtx(), () => box, health);
 }
 
 function jsonResponse(status, body) {
@@ -452,9 +460,9 @@ const FIRECRAWL_SCRAPE_OK = { success: true, data: {
 	metadata: { url: "https://p.example/final", statusCode: 200 }
 } };
 
-function fetchProviderWith(options) {
+function fetchProviderWith(options, health = null) {
 	const box = { ...options };
-	return new MultiBackendFetchProvider(makeCtx(), () => box);
+	return new MultiBackendFetchProvider(makeCtx(), () => box, health);
 }
 
 // 18. firecrawl scrape happy path: markdown mapped, final URL from metadata.
@@ -1195,11 +1203,86 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	ok("G5: no ask + over-delivery → bounded to numResults, no cap notice");
 }
 
+// 48. C2: shared session health state — both providers record per-backend
+//     counters and last-call facts into the state that GET
+//     /web-search-ext/health serves; the wire JSON merges only ACTIVE
+//     cooldowns onto the matching backend rows.
+{
+	const health = createHealthState();
+	const p = providerWith({ ...DEFAULTS }, health);
+	const f = fetchProviderWith({ ...DEFAULTS }, health);
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(429, ""); // exa 429
+		if (url.startsWith("https://f.example/")) return jsonResponse(200, ""); // L0
+		assert.ok(url.startsWith("https://api.firecrawl.dev"), `unexpected url ${url}`);
+		return jsonResponse(200, FIRECRAWL_V2_OK);
+	});
+	await p.search({ query: "hello" });
+	assert.equal(health.searchCalls, 1);
+	assert.equal(health.fetchCalls, 0);
+	assert.equal(health.resultsReturned, 2, "FIRECRAWL_V2_OK carries two sources");
+	const exaEntry = health.backends.get("search:exa");
+	assert.equal(exaEntry.label, "exa-mcp", "keyless exa serves as exa-mcp");
+	assert.equal(exaEntry.attempts, 1);
+	assert.equal(exaEntry.ok, 0);
+	assert.equal(exaEntry.failed, 1);
+	assert.equal(exaEntry.lastOk, false);
+	assert.equal(typeof exaEntry.lastCallAt, "number");
+	assert.ok(exaEntry.lastCallMs >= 0, "lastCallMs non-negative");
+	const fcEntry = health.backends.get("search:firecrawl");
+	assert.equal(fcEntry.label, "firecrawl");
+	assert.equal(fcEntry.ok, 1);
+	assert.equal(fcEntry.failed, 0);
+	assert.equal(fcEntry.lastOk, true);
+	const active = activeCooldowns(p.cooldownEntries());
+	assert.equal(active.length, 1, "only the 429 backend is cooling");
+	assert.equal(active[0].name, "exa");
+	assert.ok(active[0].remainingMs > 0 && active[0].remainingMs <= 60_000, "within the 60s window");
+
+	// fetch on the same shared state: firecrawl 429 → exa-mcp fallback.
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) return jsonResponse(429, "");
+		assert.ok(url.startsWith("https://mcp.exa.ai"), `unexpected url ${url}`);
+		return jsonResponse(200, EXA_MCP_FETCH_OK);
+	});
+	await f.fetch({ url: "https://p.example/a" });
+	assert.equal(health.fetchCalls, 1);
+	const fetchExa = health.backends.get("fetch:exa-mcp");
+	assert.equal(fetchExa.label, "exa-mcp");
+	assert.equal(fetchExa.ok, 1);
+	assert.equal(fetchExa.failed, 0);
+
+	// wire JSON: 4 rows, provider tags, cooldown merged onto search:exa only.
+	const now = Date.now();
+	const json = buildHealthJson(
+		health,
+		{ searchCooldowns: p.cooldownEntries(), fetchCooldowns: f.cooldownEntries() },
+		now
+	);
+	assert.equal(json.startedAt, health.startedAt);
+	assert.ok(json.uptimeMs >= 0);
+	assert.equal(json.searchCalls, 1);
+	assert.equal(json.fetchCalls, 1);
+	assert.equal(json.resultsReturned, 2);
+	assert.equal(json.backends.length, 4);
+	const wireExa = json.backends.find((b) => b.provider === "search" && b.name === "exa");
+	assert.equal(wireExa.label, "exa-mcp");
+	assert.ok(wireExa.cooldownRemainingMs > 0, "active cooldown merged onto the wire row");
+	const wireFc = json.backends.find((b) => b.provider === "search" && b.name === "firecrawl");
+	assert.equal(wireFc.cooldownRemainingMs, 0, "no cooldown on the healthy backend");
+	const wireFetchExa = json.backends.find((b) => b.provider === "fetch" && b.name === "exa-mcp");
+	assert.equal(wireFetchExa.ok, 1);
+	// JSON-safe and re-parsable by the client model.
+	assert.deepEqual(JSON.parse(JSON.stringify(json)), json);
+	restoreFetch();
+	ok("C2: shared health state records search+fetch; wire JSON merges active cooldowns");
+}
+
 // Single source of truth for Part A coverage: the suite FAILS on scenario
 // drift (an accidental deletion or a skip that stopped calling ok())
 // instead of silently printing a lower count. Bump this when adding a
 // scenario — no doc anywhere else restates the number on purpose.
-const PART_A_SCENARIOS = 47;
+const PART_A_SCENARIOS = 48;
 assert.equal(passed, PART_A_SCENARIOS, `Part A scenario drift: ${passed} ok() of ${PART_A_SCENARIOS}`);
 console.log(`\nPart A: ${passed}/${PART_A_SCENARIOS} scenarios passed`);
 

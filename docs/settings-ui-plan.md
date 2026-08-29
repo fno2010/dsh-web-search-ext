@@ -367,6 +367,51 @@ verification) can survive to `resultView`. Therefore:
   multi-backend merge, non-pinned empty backends; scenario count asserted
   in-test only, not in docs).
 
+## C2 health panel — design evidence (2026-08-29)
+
+Transport (verified against the installed host packages; re-check after a
+harness bump):
+
+- Classic plugins on this host version can **add no `/api` RPC methods**
+  (`dsh-host-apiproxy`'s `UNARY_ROUTES` / `SSE_ROUTES` are closed sets owned
+  by the host) and **no plugin remote events** (`dsh-api-remotes` forwards a
+  fixed allowlist: settings/credentials/llm/agent-preset/command only).
+  Writing the settings document is a persistence channel, not telemetry.
+  The one extensible host→browser surface is `dsh-host-webserver`'s
+  `webServer` route table: `register({ kind: "exact" | "prefix", path,
+  handler })` with raw node:http handlers — the same mechanism
+  `dsh-client-connection` uses for `/api` (`ctx.inject` + `sctx.effect(()
+  => sctx.webServer.register(route), "label")`).
+- So `apply()` registers `GET /web-search-ext/health` (exact) on that table,
+  only when the `webServer` service is mounted (optional `ctx.inject`):
+  CLI/headless profiles register no route, and the card's Health tab shows
+  its explicit unavailable line instead. Non-GET/HEAD → 405;
+  `cache-control: no-store`.
+- The route sits **outside** the `/api` browser-trust fence (that fence is
+  owned by the `/api` handler itself; the host binds loopback by default and
+  `--host 0.0.0.0` is unsupported). Hence the payload invariant:
+  **counters only** — session counters plus per-backend
+  `{ provider, name, label, attempts, ok, failed, lastCallAt, lastCallMs,
+  lastOk, cooldownRemainingMs }`. No credentials, no URLs, no query text.
+  Documented as load-bearing in `lib/health.js` and `registerHealthRoute`:
+  do not add sensitive fields to the snapshot.
+
+State: one `createHealthState()` in `apply()`, shared by both providers
+(nullable ctor arg — 2-arg construction stays inert). `search()`/`fetch()`
+call `noteCall` at tool-call entry, `recordBackend` for every plan entry
+actually attempted (last label seen wins; aborts are NOT recorded as
+backend failures — the rethrow precedes the failure record;
+cooldown-skipped backends are NOT counted as attempts), and `noteResults`
+with the source count a search returned. Counters are session-scoped and
+never persisted: the tab reflects the current host process.
+
+Client: a Settings | Health tab on the settings card (`role="tablist"`,
+`aria-selected`), fetched on open plus an explicit Refresh. The pure model
+(`src/client/health.js`, React-free, node-testable) normalizes the wire
+payload (`parseHealth`); any malformed shape → `null` → the tab renders an
+explicit "Health unavailable: <reason>" line with retry — never a
+silently empty tab.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

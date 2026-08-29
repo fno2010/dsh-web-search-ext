@@ -8,6 +8,7 @@
  * error/stopped states, and the non-web-view fallback (never throws).
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { isSafeHref, parseMarker, queryTitle, webSearchCardModel } from "../src/client/model.js";
 import { commandOptions } from "../src/client/command.js";
 
@@ -508,7 +509,35 @@ const tEcho = (key, params) =>
 	ok("C3 command options: malformed probe rows skipped, closed codes translated, lastFail + all-filtered probe degrade");
 }
 
+// The committed client bundle is what the browser actually loads, and no CI
+// path runs the browser-side slot registry (the e2e-host job boots dsh web
+// WITHOUT a browser). Registering the host-owned key "web_search" at the
+// default priority 0 is a hard slot-registry error that kills the whole
+// client entry apply ("Failed to load plugins"), so pin the shipped
+// registration here: the host `web-toolview` entry owns key "web_search" at
+// priority 0, and the registry renders the LOWEST-priority entry per key —
+// our registration must pin an explicit priority below 0 to shadow it.
+// The options object is captured whole, so the check does not depend
+// on property order; the registration appears once per entry id
+// (link + npm install form).
+{
+	const bundle = readFileSync(new URL("../client/client.js", import.meta.url), "utf8");
+	// Every ctx.slots.register call anchored on the WebSearchRow
+	// component (flat options object: no nested braces), then keep the
+	// web_search toolview registrations.
+	const regRe = /ctx\.slots\.register\(\s*\{([^{}]*)\}\s*,\s*WebSearchRow\)/g;
+	const hits = [...bundle.matchAll(regRe)].filter(([, opts]) =>
+		/name:\s*"tool\.call\.toolview"/.test(opts) && /key:\s*"web_search"/.test(opts));
+	assert.equal(hits.length, 2, "bundle registers the web_search toolview under both entry ids");
+	for (const [i, hit] of hits.entries()) {
+		const p = hit[1].match(/priority:\s*(-?\d+)/);
+		assert.ok(p, `registration ${i + 1} pins an explicit priority`);
+		assert.ok(Number(p[1]) < 0, `registration ${i + 1} shadows the host web-toolview entry (priority below 0)`);
+	}
+	ok("committed bundle: web_search toolview registration shadows host web-toolview (priority < 0, both entry ids)");
+}
+
 // Sentinel: the scenario count lives in-test, never in docs.
-assert.equal(passed, 24, "scenario sentinel");
+assert.equal(passed, 25, "scenario sentinel");
 
 console.log(`\nAll ${passed} toolview model scenarios passed.`);

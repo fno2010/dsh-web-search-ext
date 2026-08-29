@@ -542,6 +542,80 @@ wire change; no new surface. Client-only change: `startMs` in the
 card model (node-testable), the ticking suffix in the row, one new
 locale key, and the pure-model scenarios in the toolview suite.
 
+## C3 /search-engine command — design evidence (2026-08-30)
+
+Issue #20 as filed mentions `user.command.define` + `user.ui.popupSelect`.
+Those are not literal APIs — no `user.*` client namespace exists in the
+installed harness packages. The real client surface for a plugin-owned
+slash command is a **CommandContribution** registered on the shared
+command-UI service:
+
+1. **Surface.** `CommandUiRuntime` (dsh-client-ui-commands
+   `lib/client.js`, `super(ctx, "commandUi")`) exposes
+   `register(contribution)`: `{ name, description,
+   available(session), ui: { kind: "popupSelect", options(session,
+   signal), onSelect(option, session) } }`, with `SelectOption = { id,
+   label, detail?, active?, confirmation? }`. The issue's
+   "popupSelect" maps to this shell 1:1; the shell (option list, keyboard
+   nav, onSelect error display) is owned by the host package — a business
+   contribution never sees the shell, it only supplies data + callbacks.
+2. **Service sharing.** The service registers into the root-level
+   cordis isolate (`ctx.root[isolate][name]`), so every plugin fiber in
+   the web app resolves the SAME `CommandUiRuntime` through its ctx Proxy
+   — the contribution reaches the host's popupSelect shell even though
+   the shell is mounted by the frontend. The web-app profile layer boots
+   `@deepseek-ai/dsh-client-ui-commands` as its own entry (dsh-web-app
+   `cordis.patch.yml`, id `ui-commands`), and
+   `@deepseek-ai/dsh-session-log-export` in the same layer declares it in
+   its `dsh.client.inject` — the established declaration pattern, which
+   we follow (package.json `dsh.client.inject`).
+3. **Duplicate names fail loud, never shadow.**
+   `CommandUiRuntime.register` throws synchronously on a duplicate
+   contribution name; a host-catalog collision (agent/execute/images/
+   line/list built-ins, other plugins) "fails loud at candidate
+   synthesis". So the issue's guard — register in try/catch, fall back to
+   `/web-search-engine`, surface the fallback in the card — is the
+   correct shape: primary `search-engine` → on throw, secondary
+   `web-search-engine` → on second throw, the card's hint line says the
+   command is unavailable. A *deferred* collision (registered under a
+   free name, later claimed) still fails loud in the menu, not silently.
+4. **onSelect errors are visible.** The popup shell catches an onSelect
+   rejection, keeps the popup open, and shows `errorText(error)` — so
+   throwing a localized error from `onSelect` (e.g. the probe route
+   returning non-OK) surfaces instead of failing silently.
+5. **Session projection.** `ClientSessionContext` carries only
+   `{ sessionId }` (dsh-client-ui-input-trigger types). The contract
+   note: "RPC and service access goes through the provider plugin's own
+   root context captured at registration" — hence the contribution's
+   closures capture our plugin root ctx (`scope`, `api`, `t`) at
+   registration time; they never dereference session-scoped services.
+6. **Timer/fetch closure traps do not apply to us.** The dynamic-package
+   runner's throwing traps only shadow identifiers inside its top-level
+   `new Function(...)` closure; our bundle's real code runs inside the
+   CJS `window.__ModuleLoader__.load` factory (dsh-client-modules lazy
+   CJS model), where `fetch`/`setInterval` resolve to the window
+   globals. Empirical proof in this repo: shipped C2/G3 already call
+   bare `fetch(HEALTH_ROUTE)`/`fetch(PROBE_ROUTE)` from the same bundle
+   and work on the live host — so the command's health/probe fetches are
+   safe by the same token.
+7. **Data paths are all pre-existing client capabilities.** Status:
+   `GET /web-search-ext/health` (C2 wire: backends rows + G3 probe) plus
+   `api.credentials.describe({ refs: [EXA_API_KEY,
+   FIRECRAWL_API_KEY] })` (key state, same call the settings card uses).
+   Preferred switch: `scope.set("preferred", …)` on the bound settings
+   scope. Test: `POST /web-search-ext/probe` (G3 on-demand route — no
+   vendor calls at apply time, unchanged). No host-side change; no new
+   wire surface.
+
+Design: `src/client/command.js` is the pure model (option/detail builders
+over `commandOptions`, `keyWord`, `backendStatusWord`, `probeWord` —
+React-free, node-testable like model.js/health.js); `src/client/index.js`
+registers the contribution in `apply()` (feature-guarded on
+`ctx.commandUi.register`, try/catch name fallback, module-level
+`commandRegistration` state) and renders which name materialized (or that
+none did) as the first hint line of the settings pane — failure never
+silent.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

@@ -24,6 +24,7 @@ import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh
 import { en, zh } from "./locales.js";
 import { WebSearchRow } from "./row.js";
 import { HEALTH_ROUTE, PROBE_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
+import { COMMAND_PRIMARY, COMMAND_FALLBACK, commandOptions } from "./command.js";
 import css from "./card.module.css";
 
 const NS = "web-search-ext";
@@ -33,9 +34,13 @@ const NUMERIC = ["numResults", "maxSnippetChars", "rateLimitCooldownSec"];
 const FIELDS = ["preferred", ...NUMERIC, "firecrawlKeyless"];
 
 // Module-level injection: services this client plugin needs, by name.
-const inject = ["slots", "locale", "connection", "settingsScope", "remote"];
+const inject = ["slots", "locale", "connection", "settingsScope", "remote", "commandUi"];
 
 const NO_KEY_STATE = { configured: false, writable: true, source: "" };
+
+// C3: where the /search-engine command ended up (set during apply, read by
+// the card's hint line): primary name, fallback name, or unavailable.
+let commandRegistration = { name: null, fallback: false, unavailable: true };
 
 /** Defensively read whatever shape the derived scope exposes. */
 function readScope(scope) {
@@ -77,6 +82,15 @@ function keyStateFrom(res) {
     return { configured: !!d.configured, writable: d.writable !== false, source: d.source || "" };
   };
   return { exa: one(EXA_REF), fc: one(FC_REF) };
+}
+
+/** C3: settings-pane hint line — which slash-command name materialized (or none). */
+function commandLineText(t) {
+  if (commandRegistration.name === null) return t("cmd.lineUnavail");
+  if (commandRegistration.fallback) {
+    return t("cmd.lineFallback", { name: COMMAND_FALLBACK, primary: COMMAND_PRIMARY });
+  }
+  return t("cmd.line", { name: COMMAND_PRIMARY });
 }
 
 function WebSearchExtCard(props) {
@@ -309,6 +323,7 @@ function WebSearchExtCard(props) {
                 role: "tabpanel",
                 id: "dsw-websearch-panel-settings"
               },
+                h("p", { className: css.hint }, commandLineText(t)),
                 h("div", { className: css.field },
                   h("div", { className: css.head },
                     h("label", { className: css.label }, t("preferred"))
@@ -571,6 +586,82 @@ function apply(ctx) {
   // Wire APIs + forwarded events, surfaced to the card through the slot.
   const api = ctx.get("connection").api;
   const remote = ctx.get("remote");
+
+  // C3: /search-engine command (client contribution; the host's popupSelect
+  // shell owns the UI). All three actions run on client capabilities only —
+  // preferred switch (bound settings scope), status (GET health +
+  // credentials.describe), connectivity test (POST probe route) — and the
+  // callbacks capture THIS root ctx, because the popup passes a session
+  // projection that carries only a sessionId.
+  //
+  // Collision handling (known surface: host built-ins agent/execute/images/
+  // line/list, other plugins' commands): the contribution registry rejects
+  // a duplicate name at register time, so register the primary name and, on
+  // throw, fall back to the secondary; the card's hint line surfaces which
+  // name materialized (or that none did) — failure never silent.
+  if (ctx.commandUi && typeof ctx.commandUi.register === "function") {
+    const value = () => {
+      const snap = readScope(scope);
+      return snap && snap.value && typeof snap.value === "object" ? snap.value : {};
+    };
+    const contribution = {
+      name: COMMAND_PRIMARY,
+      description: t("cmd.description"),
+      available: () => true,
+      ui: {
+        kind: "popupSelect",
+        options: async (_session, signal) => {
+          const [healthPayload, keyRes] = await Promise.all([
+            fetch(HEALTH_ROUTE, { headers: { accept: "application/json" }, signal })
+              .then((res) => (res.ok ? res.json() : null))
+              .catch(() => null),
+            Promise.resolve()
+              .then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] }))
+              .catch(() => null)
+          ]);
+          const v = value();
+          return commandOptions({
+            t,
+            preferred: typeof v.preferred === "string" ? v.preferred : "exa",
+            exaKey: keyStateFrom(keyRes).exa,
+            fcKey: keyStateFrom(keyRes).fc,
+            fcKeyless: v.firecrawlKeyless !== false,
+            health: parseHealth(healthPayload)
+          });
+        },
+        onSelect: async (option) => {
+          if (option.id === "exa" || option.id === "firecrawl") {
+            if (value().preferred === option.id) return; // already active
+            await scope.set("preferred", option.id);
+            return;
+          }
+          if (option.id === "test") {
+            const res = await fetch(PROBE_ROUTE, { method: "POST", headers: { accept: "application/json" } });
+            if (!res.ok) throw new Error(t("cmd.testFailed", { status: res.status }));
+          }
+        }
+      }
+    };
+    try {
+      ctx.effect(
+        () => ctx.commandUi.register(contribution),
+        "web-search-ext: /search-engine command"
+      );
+      commandRegistration = { name: COMMAND_PRIMARY, fallback: false, unavailable: false };
+    } catch {
+      try {
+        ctx.effect(
+          () => ctx.commandUi.register({ ...contribution, name: COMMAND_FALLBACK }),
+          "web-search-ext: /web-search-engine command (fallback)"
+        );
+        commandRegistration = { name: COMMAND_FALLBACK, fallback: true, unavailable: false };
+      } catch {
+        commandRegistration = { name: null, fallback: false, unavailable: true };
+      }
+    }
+  } else {
+    commandRegistration = { name: null, fallback: false, unavailable: true };
+  }
 
   // Plugins → configurable tab: one keyed card per settings namespace.
   ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({

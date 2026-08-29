@@ -9,6 +9,7 @@
  */
 import assert from "node:assert/strict";
 import { isSafeHref, parseMarker, queryTitle, webSearchCardModel } from "../src/client/model.js";
+import { commandOptions } from "../src/client/command.js";
 
 let passed = 0;
 function ok(label) {
@@ -408,7 +409,89 @@ function runningBlock(argsRaw) {
 	ok("running with empty/malformed/empty-queries argsRaw: bare row");
 }
 
+// C3: /search-engine command options (src/client/command.js, pure model).
+// The fake translator echoes its key plus the interpolated params, so the
+// assertions pin both the closed vocabulary and the exact param flow.
+const tEcho = (key, params) =>
+	params && typeof params === "object" ? key + " " + JSON.stringify(params) : key;
+
+// Happy path: configured keys, live search backends, stored probe.
+{
+	const now = Date.now();
+	const health = {
+		backends: [
+			{ provider: "search", name: "exa", label: "Exa", attempts: 5, ok: 5, failed: 0, lastCallAt: now - 7_200_000, lastCallMs: 321, lastOk: true, cooldownRemainingMs: 0 },
+			{ provider: "search", name: "firecrawl", label: "Firecrawl", attempts: 2, ok: 0, failed: 2, lastCallAt: now - 60_000, lastCallMs: 800, lastOk: false, cooldownRemainingMs: 45_000 }
+		],
+		probe: {
+			at: now - 7_200_000,
+			backends: [
+				{ name: "exa", label: "Exa", status: "ok", detail: "ok", ms: 412 },
+				{ name: "firecrawl", label: "Firecrawl", status: "fail", detail: "auth", ms: 96 }
+			]
+		}
+	};
+	const opts = commandOptions({
+		t: tEcho,
+		preferred: "firecrawl",
+		exaKey: { configured: true, writable: true, source: "env" },
+		fcKey: { configured: true, writable: true, source: "file" },
+		fcKeyless: true,
+		health
+	});
+	assert.deepEqual(opts.map((o) => o.id), ["exa", "firecrawl", "test"]);
+	assert.equal(opts[0].detail, `cmd.keyedEnv · cmd.lastOk ${JSON.stringify({ time: "2h 0m" })}`);
+	assert.equal(opts[1].detail, `cmd.keyedFile · cmd.cooldown ${JSON.stringify({ time: "45s" })}`);
+	assert.equal(opts[0].active, false);
+	assert.equal(opts[1].active, true);
+	assert.ok(!("active" in opts[2]), "test row carries no active flag");
+	assert.equal(opts[2].detail, `cmd.testLast ${JSON.stringify({ age: "2h 0m", codes: "Exa probe.ok · Firecrawl probe.auth" })}`);
+	ok("C3 command options: keys + live backends + stored probe → active flags and detail words");
+}
+
+// Degraded: health unavailable, no keys, keyless only for exa.
+{
+	const opts = commandOptions({
+		t: tEcho,
+		preferred: "exa",
+		exaKey: null,
+		fcKey: null,
+		fcKeyless: false,
+		health: null
+	});
+	assert.equal(opts[0].detail, "cmd.keyless · cmd.never");
+	assert.equal(opts[1].detail, "cmd.keyMissing · cmd.never");
+	assert.equal(opts[2].detail, "cmd.neverTested");
+	assert.equal(opts[0].active, true);
+	assert.equal(opts[1].active, false);
+	assert.ok(!("active" in opts[2]), "test row carries no active flag");
+	ok("C3 command options: degraded health + key states → never words, no throw");
+}
+
+// Probe edge: malformed backend entries are skipped, closed codes map through probe.*.
+{
+	const now = Date.now();
+	const opts = commandOptions({
+		t: tEcho,
+		preferred: "exa",
+		exaKey: { configured: true, writable: true, source: "" },
+		fcKey: null,
+		fcKeyless: true,
+		health: {
+			backends: [],
+			probe: {
+				at: now - 7_200_000,
+				backends: [{ label: "Exa", detail: "ok" }, { label: null }, { label: "FC", detail: "disabled" }]
+			}
+		}
+	});
+	assert.equal(opts[0].detail, `cmd.keyedFile · cmd.never`);
+	assert.equal(opts[1].detail, `cmd.keyless · cmd.never`);
+	assert.equal(opts[2].detail, `cmd.testLast ${JSON.stringify({ age: "2h 0m", codes: "Exa probe.ok · FC probe.disabled" })}`);
+	ok("C3 command options: malformed probe rows skipped, closed codes translated");
+}
+
 // Sentinel: the scenario count lives in-test, never in docs.
-assert.equal(passed, 21, "scenario sentinel");
+assert.equal(passed, 24, "scenario sentinel");
 
 console.log(`\nAll ${passed} toolview model scenarios passed.`);

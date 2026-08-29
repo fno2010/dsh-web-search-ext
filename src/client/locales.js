@@ -71,7 +71,27 @@ export const en = {
   "probe.timeout": "timed out",
   "probe.network": "network error",
   "probe.error": "request failed",
-  "probe.disabled": "not enabled"
+  "probe.disabled": "not enabled",
+
+  // /search-engine slash command (C3; popupSelect contribution)
+  "cmd.description": "Configure web-search-ext: preferred backend, status, connectivity test",
+  "cmd.preferExa": "Prefer Exa",
+  "cmd.preferFirecrawl": "Prefer Firecrawl",
+  "cmd.test": "Test connectivity",
+  "cmd.keyedEnv": "keyed (env)",
+  "cmd.keyedFile": "keyed (file)",
+  "cmd.keyless": "keyless",
+  "cmd.keyMissing": "no key, keyless disabled",
+  "cmd.never": "never called",
+  "cmd.lastOk": "last ok {time} ago",
+  "cmd.lastFail": "last failed {time} ago",
+  "cmd.cooldown": "cooldown for {time}",
+  "cmd.neverTested": "never tested",
+  "cmd.testLast": "last test {age} ago: {codes}",
+  "cmd.testFailed": "connectivity test failed (HTTP {status})",
+  "cmd.line": "Slash command: /{name}",
+  "cmd.lineFallback": "Slash command: /{name} (/{primary} is in use)",
+  "cmd.lineUnavail": "Slash command unavailable (/search-engine and /web-search-engine are both in use)"
 };
 
 export const zh = {
@@ -147,5 +167,25 @@ export const zh = {
   "probe.timeout": "超时",
   "probe.network": "网络错误",
   "probe.error": "请求失败",
-  "probe.disabled": "未启用"
+  "probe.disabled": "未启用",
+
+  // /search-engine slash command (C3; popupSelect contribution)
+  "cmd.description": "配置 web-search-ext：首选后端、状态、连通性测试",
+  "cmd.preferExa": "优先 Exa",
+  "cmd.preferFirecrawl": "优先 Firecrawl",
+  "cmd.test": "测试连通性",
+  "cmd.keyedEnv": "带 key（环境变量）",
+  "cmd.keyedFile": "带 key（文件）",
+  "cmd.keyless": "无 key",
+  "cmd.keyMissing": "无 key 且已禁用 keyless",
+  "cmd.never": "从未调用",
+  "cmd.lastOk": "最近成功：{time} 前",
+  "cmd.lastFail": "最近失败：{time} 前",
+  "cmd.cooldown": "冷却中：剩 {time}",
+  "cmd.neverTested": "从未测试",
+  "cmd.testLast": "上次测试 {age} 前：{codes}",
+  "cmd.testFailed": "连通性测试失败（HTTP {status}）",
+  "cmd.line": "斜杠命令：/{name}",
+  "cmd.lineFallback": "斜杠命令：/{name}（/{primary} 已被占用）",
+  "cmd.lineUnavail": "斜杠命令不可用（/search-engine 与 /web-search-engine 均被占用）"
 };

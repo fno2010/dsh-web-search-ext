@@ -579,6 +579,12 @@ command-UI service:
    `web-search-engine` → on second throw, the card's hint line says the
    command is unavailable. A *deferred* collision (registered under a
    free name, later claimed) still fails loud in the menu, not silently.
+   The fallback additionally assumes `register` throws synchronously
+   DURING our apply (cordis re-throws a synchronously-failing effect
+   callback): true in the shipped boot order, where the profile entries
+   that boot `CommandUiRuntime` apply before plugin entries load — a
+   hypothetical deferred plugin apply would let a duplicate throw escape
+   the catch and surface at that later apply instead.
 4. **onSelect errors are visible.** The popup shell catches an onSelect
    rejection, keeps the popup open, and shows `errorText(error)` — so
    throwing a localized error from `onSelect` (e.g. the probe route

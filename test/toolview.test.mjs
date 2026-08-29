@@ -468,7 +468,9 @@ const tEcho = (key, params) =>
 	ok("C3 command options: degraded health + key states → never words, no throw");
 }
 
-// Probe edge: malformed backend entries are skipped, closed codes map through probe.*.
+// Probe edge: malformed backend entries are skipped, closed codes map
+// through probe.*; a present-but-fully-filtered probe degrades to neverTested;
+// a finite lastCallAt with lastOk false and no cooldown says lastFail.
 {
 	const now = Date.now();
 	const opts = commandOptions({
@@ -478,7 +480,9 @@ const tEcho = (key, params) =>
 		fcKey: null,
 		fcKeyless: true,
 		health: {
-			backends: [],
+			backends: [
+				{ provider: "search", name: "firecrawl", label: "Firecrawl", lastCallAt: now - 60_000, lastCallMs: 800, lastOk: false, cooldownRemainingMs: 0 }
+			],
 			probe: {
 				at: now - 7_200_000,
 				backends: [{ label: "Exa", detail: "ok" }, { label: null }, { label: "FC", detail: "disabled" }]
@@ -486,9 +490,22 @@ const tEcho = (key, params) =>
 		}
 	});
 	assert.equal(opts[0].detail, `cmd.keyedFile · cmd.never`);
-	assert.equal(opts[1].detail, `cmd.keyless · cmd.never`);
+	assert.equal(opts[1].detail, `cmd.keyless · cmd.lastFail ${JSON.stringify({ time: "1m 0s" })}`);
 	assert.equal(opts[2].detail, `cmd.testLast ${JSON.stringify({ age: "2h 0m", codes: "Exa probe.ok · FC probe.disabled" })}`);
-	ok("C3 command options: malformed probe rows skipped, closed codes translated");
+	// All probe rows filtered out (no detail string) → closed-degrade to never tested.
+	const opts2 = commandOptions({
+		t: tEcho,
+		preferred: "exa",
+		exaKey: null,
+		fcKey: null,
+		fcKeyless: false,
+		health: {
+			backends: [],
+			probe: { at: now - 60_000, backends: [null, { label: "X" }] }
+		}
+	});
+	assert.equal(opts2[2].detail, "cmd.neverTested");
+	ok("C3 command options: malformed probe rows skipped, closed codes translated, lastFail + all-filtered probe degrade");
 }
 
 // Sentinel: the scenario count lives in-test, never in docs.

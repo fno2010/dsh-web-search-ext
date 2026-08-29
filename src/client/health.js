@@ -10,8 +10,50 @@
 /** Same-origin route the Health tab fetches (host lib/health.js). */
 export const HEALTH_ROUTE = "/web-search-ext/health";
 
+/** Same-origin route the "Test now" button POSTs to (host lib/index.js, G3). */
+export const PROBE_ROUTE = "/web-search-ext/probe";
+
+/**
+ * Closed set of probe detail codes the host may produce
+ * (lib/index.js `classifyProbeError`). Anything else is a shape change —
+ * reject the whole payload rather than render an unknown code.
+ */
+export const PROBE_DETAIL_CODES = ["ok", "rate-limited", "auth", "timeout", "error", "network", "disabled"];
+
 function isFiniteNumber(v) {
   return typeof v === "number" && Number.isFinite(v);
+}
+
+/**
+ * Validate the G3 probe payload (host `probeBackends` result). Returns the
+ * display model — or null when malformed (a shape change must surface as
+ * the unavailable line, exactly like the C2 counters).
+ *
+ * Display model: `{ at: number, backends: [{ name: string, label: string,
+ * status: "ok" | "error" | "disabled", detail: <PROBE_DETAIL_CODES>,
+ * ms: number }] }`. `label` defaults to `name`; a missing `ms` to 0.
+ */
+function parseProbe(probe) {
+  if (probe === null || typeof probe !== "object" || Array.isArray(probe)) return null;
+  if (!isFiniteNumber(probe.at) || probe.at < 0) return null;
+  if (!Array.isArray(probe.backends)) return null;
+  const backends = [];
+  for (const row of probe.backends) {
+    if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
+    if (typeof row.name !== "string" || row.name === "") return null;
+    if (row.status !== "ok" && row.status !== "error" && row.status !== "disabled") return null;
+    if (typeof row.detail !== "string" || !PROBE_DETAIL_CODES.includes(row.detail)) return null;
+    const ms = row.ms === undefined || row.ms === null ? 0 : row.ms;
+    if (!isFiniteNumber(ms) || ms < 0) return null;
+    backends.push({
+      name: row.name,
+      label: typeof row.label === "string" && row.label !== "" ? row.label : row.name,
+      status: row.status,
+      detail: row.detail,
+      ms
+    });
+  }
+  return { at: probe.at, backends };
 }
 
 /**
@@ -25,7 +67,12 @@ function isFiniteNumber(v) {
  *     backends: [{ provider: string, name: string, label: string,
  *       attempts: number, ok: number, failed: number,
  *       lastCallAt: number | null, lastCallMs: number | null,
- *       lastOk: boolean | null, cooldownRemainingMs: number }] }
+ *       lastOk: boolean | null, cooldownRemainingMs: number }],
+ *     probe: null | { at: number, backends: [{ name, label, status,
+ *       detail, ms }] } }
+ *
+ * The `probe` field (G3) is absent/null until the first connectivity probe;
+ * when present it must be well-formed, or the whole payload is rejected.
  */
 export function parseHealth(payload) {
   if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
@@ -70,13 +117,18 @@ export function parseHealth(payload) {
       cooldownRemainingMs: cooldown
     });
   }
+  // G3: optional probe result. Absent or null → no probe yet; present but
+  // malformed → reject the whole payload (same strictness as the counters).
+  const probe = p.probe === undefined || p.probe === null ? null : parseProbe(p.probe);
+  if (probe === null && p.probe !== undefined && p.probe !== null) return null;
   return {
     startedAt: p.startedAt,
     uptimeMs: p.uptimeMs,
     searchCalls: p.searchCalls,
     fetchCalls: p.fetchCalls,
     resultsReturned: p.resultsReturned === undefined ? null : p.resultsReturned,
-    backends
+    backends,
+    probe
   };
 }
 

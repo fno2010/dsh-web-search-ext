@@ -16,6 +16,8 @@ import {
 	MultiBackendFetchProvider,
 	Config,
 	PROVIDER_ID,
+	probeBackends,
+	storeProbe,
 	createHealthState,
 	activeCooldowns,
 	buildHealthJson
@@ -1278,11 +1280,115 @@ const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }
 	ok("C2: shared health state records search+fetch; wire JSON merges active cooldowns");
 }
 
+// 49. G3: connectivity probe — every backend is probed with a minimal
+//      one-result request through the SAME backend functions a real search
+//      runs; outcomes map to closed detail codes; the result is stored on
+//      the shared health state and rides the wire JSON; probes never touch
+//      session counters or cooldowns.
+{
+	const health = createHealthState();
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) return jsonResponse(200, EXA_MCP_OK);
+		assert.ok(url.startsWith("https://api.firecrawl.dev"), `unexpected url ${url}`);
+		return jsonResponse(429, "");
+	});
+	const result = await probeBackends(makeCtx(), { ...DEFAULTS });
+	assert.equal(typeof result.at, "number");
+	assert.equal(result.backends.length, 2, "keyless exa + keyless firecrawl both in the plan");
+	const exa = result.backends.find((b) => b.name === "exa");
+	assert.equal(exa.label, "exa-mcp", "no key → the anonymous MCP path is probed");
+	assert.equal(exa.status, "ok");
+	assert.equal(exa.detail, "ok");
+	assert.ok(typeof exa.ms === "number" && exa.ms >= 0);
+	const fc = result.backends.find((b) => b.name === "firecrawl");
+	assert.equal(fc.label, "firecrawl");
+	assert.equal(fc.status, "error");
+	assert.equal(fc.detail, "rate-limited");
+	// Secret-free invariant: plan literals + closed codes only — no URLs,
+	// no vendor messages, no keys in the payload.
+	assert.doesNotMatch(JSON.stringify(result), /https?:\/\//);
+	// Stored on the shared state and carried through the wire JSON.
+	storeProbe(health, result);
+	const json = buildHealthJson(health, {});
+	assert.deepEqual(json.probe, JSON.parse(JSON.stringify(result)));
+	// Diagnostics, not searches: no counter or cooldown contamination.
+	assert.equal(health.searchCalls, 0);
+	assert.equal(health.fetchCalls, 0);
+	assert.equal(health.resultsReturned, 0);
+	assert.equal(health.backends.size, 0);
+	restoreFetch();
+	ok("G3: probe maps ok/429 to closed codes; stored result rides the wire JSON");
+}
+
+// 50. G3: probe failure classification — auth (keyed REST 401, keyed and
+//      keyless firecrawl 401), transport failure (network), vendor error
+//      (500), per-backend timeout, and the disabled row (no key + keyless
+//      off → no request at all).
+{
+	// 401 on both keyed backends → "auth"; the key presence picks the REST
+	// path for exa (label exa-rest), not the anonymous MCP.
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.exa.ai")) return jsonResponse(401, "");
+		assert.ok(url.startsWith("https://api.firecrawl.dev"), `unexpected url ${url}`);
+		return jsonResponse(401, "");
+	});
+	let r = await probeBackends(makeCtx(), { ...DEFAULTS, exaApiKey: "exa-test-key", firecrawlApiKey: "fc-test-key" });
+	assert.equal(r.backends.find((b) => b.name === "exa").label, "exa-rest", "key present → REST path is probed");
+	assert.equal(r.backends.find((b) => b.name === "exa").detail, "auth");
+	assert.equal(r.backends.find((b) => b.name === "firecrawl").detail, "auth");
+
+	// keyless firecrawl 401 (the shared keyless pool refused) → "auth".
+	mockFetch(async () => jsonResponse(401, ""));
+	r = await probeBackends(makeCtx(), { ...DEFAULTS });
+	assert.equal(r.backends.find((b) => b.name === "firecrawl").detail, "auth");
+
+	// no firecrawl key + keyless off → a disabled row and NO request.
+	let firecrawlTouched = false;
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) firecrawlTouched = true;
+		return jsonResponse(200, EXA_MCP_OK);
+	});
+	r = await probeBackends(makeCtx(), { ...DEFAULTS, firecrawlKeyless: false });
+	assert.equal(r.backends.length, 2, "exa still probed; firecrawl present as disabled");
+	assert.deepEqual(r.backends.find((b) => b.name === "firecrawl"),
+		{ name: "firecrawl", label: "firecrawl", status: "disabled", detail: "disabled", ms: 0 });
+	assert.equal(firecrawlTouched, false, "no request for a disabled backend");
+
+	// fetch rejects → "network" (transport); vendor 500 → "error" (the
+	// request reached the vendor and was answered).
+	mockFetch(async (url) => {
+		if (url.startsWith("https://mcp.exa.ai")) throw new TypeError("fetch failed");
+		return jsonResponse(500, "");
+	});
+	r = await probeBackends(makeCtx(), { ...DEFAULTS });
+	assert.equal(r.backends.find((b) => b.name === "exa").detail, "network");
+	assert.equal(r.backends.find((b) => b.name === "firecrawl").detail, "error");
+
+	// Per-backend timeout: the handler holds the connection past the
+	// probe budget; the probe's own signal fires and the backend surfaces
+	// the abort as WEB_ABORTED.
+	mockFetch(async (url, init) =>
+		new Promise((resolve, reject) => {
+			const t = setTimeout(() => resolve(jsonResponse(200, EXA_MCP_OK)), 400);
+			init.signal.addEventListener("abort", () => {
+				clearTimeout(t);
+				reject(new DOMException("The operation was aborted.", "AbortError"));
+			});
+		})
+	);
+	r = await probeBackends(makeCtx(), { ...DEFAULTS }, { timeoutMs: 50 });
+	assert.equal(r.backends.find((b) => b.name === "exa").detail, "timeout");
+	assert.equal(r.backends.find((b) => b.name === "firecrawl").detail, "timeout");
+	assert.ok(r.backends.every((b) => b.status === "error"), "timeout is an error status");
+	restoreFetch();
+	ok("G3: probe failure matrix — auth/network/error/timeout/disabled, no request for disabled");
+}
+
 // Single source of truth for Part A coverage: the suite FAILS on scenario
 // drift (an accidental deletion or a skip that stopped calling ok())
 // instead of silently printing a lower count. Bump this when adding a
 // scenario — no doc anywhere else restates the number on purpose.
-const PART_A_SCENARIOS = 48;
+const PART_A_SCENARIOS = 50;
 assert.equal(passed, PART_A_SCENARIOS, `Part A scenario drift: ${passed} ok() of ${PART_A_SCENARIOS}`);
 console.log(`\nPart A: ${passed}/${PART_A_SCENARIOS} scenarios passed`);
 

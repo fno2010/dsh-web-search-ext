@@ -13,9 +13,10 @@ import {
 	noteCall,
 	noteResults,
 	activeCooldowns,
-	buildHealthJson
+	buildHealthJson,
+	storeProbe
 } from "../lib/health.js";
-import { HEALTH_ROUTE, parseHealth, formatDuration, ageOf } from "../src/client/health.js";
+import { HEALTH_ROUTE, PROBE_ROUTE, parseHealth, formatDuration, ageOf } from "../src/client/health.js";
 
 let passed = 0;
 function ok(label) {
@@ -251,10 +252,74 @@ function ok(label) {
 	ok("buildHealthJson: wire shape, cooldown merge, JSON round trip → parseHealth");
 }
 
+// 7. G3 probe payload: the route constant matches the host; parseHealth
+//    accepts a well-formed probe (label defaults to name, missing ms to 0,
+//    absent probe to null) and rejects a malformed probe shape by rejecting
+//    the WHOLE payload; the stored probe round-trips buildHealthJson →
+//    JSON → parseHealth losslessly.
+{
+	assert.equal(PROBE_ROUTE, "/web-search-ext/probe", "client route matches the host");
+	const goodProbe = {
+		at: 500,
+		backends: [
+			{ name: "exa", label: "exa-mcp", status: "ok", detail: "ok", ms: 123 },
+			{ name: "firecrawl", status: "error", detail: "rate-limited" }
+		]
+	};
+	const wire = {
+		startedAt: 1000,
+		uptimeMs: 12_000,
+		searchCalls: 0,
+		fetchCalls: 0,
+		resultsReturned: 0,
+		backends: [],
+		probe: goodProbe
+	};
+	const model = parseHealth(wire);
+	assert.notEqual(model, null, "valid probe accepted");
+	assert.equal(model.probe.at, 500);
+	const pExa = model.probe.backends[0];
+	assert.equal(pExa.label, "exa-mcp");
+	assert.equal(pExa.status, "ok");
+	assert.equal(pExa.detail, "ok");
+	assert.equal(pExa.ms, 123);
+	const pFc = model.probe.backends[1];
+	assert.equal(pFc.label, "firecrawl", "missing label → name");
+	assert.equal(pFc.detail, "rate-limited");
+	assert.equal(pFc.ms, 0, "missing ms → 0");
+	// Absent or null probe → null (fresh session, not yet probed).
+	assert.equal(parseHealth({ ...wire, probe: null }).probe, null);
+	assert.equal(parseHealth({ ...wire, probe: undefined }).probe, null);
+
+	// Malformed probe → the whole payload is rejected.
+	const bad = (probe) => parseHealth({ ...wire, probe });
+	assert.equal(bad({ at: "x", backends: [] }), null, "string at");
+	assert.equal(bad({ at: -1, backends: [] }), null, "negative at");
+	assert.equal(bad({ backends: [] }), null, "missing at");
+	assert.equal(bad({ at: 1, backends: "no" }), null, "backends not an array");
+	assert.equal(bad({ at: 1, backends: [null] }), null, "null probe row");
+	assert.equal(bad({ at: 1, backends: [{ name: "", status: "ok", detail: "ok" }] }), null, "empty name");
+	assert.equal(bad({ at: 1, backends: [{ name: "exa", status: "maybe", detail: "ok" }] }), null, "status outside the closed set");
+	assert.equal(bad({ at: 1, backends: [{ name: "exa", status: "ok", detail: "unknown-code" }] }), null, "detail outside the closed set");
+	assert.equal(bad({ at: 1, backends: [{ name: "exa", status: "ok", detail: "ok", ms: -5 }] }), null, "negative ms");
+	assert.equal(bad("probe"), null, "probe is not an object");
+
+	// Round trip: host stores the probe, the wire JSON carries it, and the
+	// client parses it back losslessly.
+	const state = createHealthState(1_000_000);
+	storeProbe(state, goodProbe);
+	const json = buildHealthJson(state, {});
+	assert.deepEqual(JSON.parse(JSON.stringify(json.probe)), goodProbe, "wire probe is JSON-safe");
+	const reparsed = parseHealth(JSON.parse(JSON.stringify(json)));
+	assert.notEqual(reparsed, null);
+	assert.deepEqual(reparsed.probe, parseHealth(wire).probe, "round trip preserves the probe");
+	ok("G3 probe: route const, valid/absent/malformed parsing, store→wire→parse round trip");
+}
+
 // Single source of truth for this suite's coverage: the suite FAILS on
 // scenario drift instead of silently printing a lower count. Bump this
 // when adding a scenario — no doc anywhere else restates the number on
 // purpose.
-const HEALTH_SCENARIOS = 6;
+const HEALTH_SCENARIOS = 7;
 assert.equal(passed, HEALTH_SCENARIOS, `health scenario drift: ${passed} ok() of ${HEALTH_SCENARIOS}`);
 console.log(`\nhealth: ${passed}/${HEALTH_SCENARIOS} scenarios passed`);

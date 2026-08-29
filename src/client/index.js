@@ -23,7 +23,7 @@ import { createElement as h, useState, useEffect, useRef } from "react";
 import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
 import { WebSearchRow } from "./row.js";
-import { HEALTH_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
+import { HEALTH_ROUTE, PROBE_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
 import css from "./card.module.css";
 
 const NS = "web-search-ext";
@@ -367,15 +367,24 @@ function WebSearchExtCard(props) {
   );
 }
 
+// G3: fire the connectivity probe at most once per card session — on the
+// first Health-tab open that still has no stored result (the "first
+// install" moment). The host itself never probes at apply time, so this
+// card is the only thing that reaches the vendors.
+let autoProbeFired = false;
+
 /**
- * Health tab (C2): fetches the session telemetry from the host's
- * same-origin GET /web-search-ext/health route on mount and on refresh.
- * A fetch/parse failure surfaces as an explicit unavailable line with a
- * retry — the tab never renders a silently empty state.
+ * Health tab (C2 + G3): fetches the session telemetry from the host's
+ * same-origin GET /web-search-ext/health route on mount and on refresh,
+ * and shows the connectivity probe result (POST /web-search-ext/probe on
+ * first open / on "Test now"). A fetch/parse failure surfaces as an
+ * explicit unavailable line with a retry — the tab never renders a
+ * silently empty state.
  */
 function HealthTab({ t, panelId }) {
   const [state, setState] = useState({ phase: "loading", data: null, error: "" });
   const [reload, setReload] = useState(0);
+  const [probe, setProbe] = useState({ testing: false, error: "" });
 
   useEffect(() => {
     let cancelled = false;
@@ -390,6 +399,12 @@ function HealthTab({ t, panelId }) {
         const model = parseHealth(payload);
         if (model === null) throw new Error("unparsable payload");
         setState({ phase: "ready", data: model, error: "" });
+        // G3: on first install the Health tab opens with no stored probe —
+        // fire it once per card session so the user sees real status.
+        if (model.probe === null && !autoProbeFired) {
+          autoProbeFired = true;
+          runProbe();
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -406,6 +421,37 @@ function HealthTab({ t, panelId }) {
       className: css.discard,
       onClick: () => setReload((n) => n + 1)
     }, t("health.refresh"));
+  }
+
+  // G3: run a live connectivity probe (POST /web-search-ext/probe) and
+  // merge the result into the displayed payload. A failure never goes
+  // silent: the reason lands on its own line and the last good data stays
+  // in place, so the "Test now" button doubles as the retry.
+  function runProbe() {
+    setProbe((p) => ({ ...p, testing: true, error: "" }));
+    fetch(PROBE_ROUTE, { method: "POST", headers: { accept: "application/json" } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((payload) => {
+        const model = parseHealth(payload);
+        if (model === null) throw new Error("unparsable payload");
+        setState((s) => (s.phase === "error" ? { phase: "ready", data: model, error: "" } : { ...s, data: model }));
+        setProbe({ testing: false, error: "" });
+      })
+      .catch((err) => {
+        setProbe({ testing: false, error: String((err && err.message) || err) });
+      });
+  }
+
+  function testButton() {
+    return h("button", {
+      type: "button",
+      className: css.discard,
+      disabled: probe.testing,
+      onClick: () => runProbe()
+    }, probe.testing ? t("health.connectivity.testing") : t("health.connectivity.test"));
   }
 
   function section(title, headExtra, ...rows) {
@@ -470,7 +516,27 @@ function HealthTab({ t, panelId }) {
     ? [valueRow(t("health.none"))]
     : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1000) })));
 
+  // G3 connectivity: per-backend probe outcomes (closed detail codes,
+  // translated via the `probe.*` keys). Shown first — on first install it
+  // answers "does anything reach the vendors at all" before any session
+  // counters exist.
+  const probeData = data.probe;
+  function probeLine(b) {
+    const glyph = b.status === "ok" ? "✓" : b.status === "disabled" ? "−" : "✗";
+    return `${glyph} ${t(`probe.${b.detail}`)}${b.status === "disabled" ? "" : ` · ${b.ms}ms`}`;
+  }
+  const probeRows = probeData === null
+    ? [valueRow(probe.testing ? t("health.connectivity.testing") : t("health.connectivity.none"))]
+    : [
+        valueRow(t("health.connectivity.last", { age: ageOf(probeData.at, now) })),
+        ...probeData.backends.map((b) => row(b.label, probeLine(b)))
+      ];
+
   return h("div", { className: css.health, role: "tabpanel", id: panelId },
+    section(t("health.connectivity"), testButton(), ...probeRows),
+    probe.error !== ""
+      ? h("p", { className: css.failed }, t("health.connectivity.error"), " ", probe.error)
+      : null,
     section(t("health.session"), refreshButton(), valueRow(sessionLine)),
     data.backends.length === 0
       ? h("p", { className: css.hint }, t("health.noActivity"))

@@ -67,7 +67,20 @@ const en = {
 	"health.remaining": "{count}s remaining",
 	"health.none": "none",
 	"health.noActivity": "No backend activity this session yet.",
-	"health.refresh": "Refresh"
+	"health.refresh": "Refresh",
+	"health.connectivity": "Connectivity",
+	"health.connectivity.test": "Test now",
+	"health.connectivity.testing": "Testing…",
+	"health.connectivity.error": "Connectivity test failed:",
+	"health.connectivity.last": "tested {age} ago",
+	"health.connectivity.none": "No connectivity test yet.",
+	"probe.ok": "OK",
+	"probe.rate-limited": "rate limited (429)",
+	"probe.auth": "auth rejected",
+	"probe.timeout": "timed out",
+	"probe.network": "network error",
+	"probe.error": "request failed",
+	"probe.disabled": "not enabled"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -120,7 +133,20 @@ const zh = {
 	"health.remaining": "剩余 {count}s",
 	"health.none": "无",
 	"health.noActivity": "本会话尚无后端活动。",
-	"health.refresh": "刷新"
+	"health.refresh": "刷新",
+	"health.connectivity": "连接状态",
+	"health.connectivity.test": "立即测试",
+	"health.connectivity.testing": "正在测试…",
+	"health.connectivity.error": "连接测试失败：",
+	"health.connectivity.last": "{age} 前测试",
+	"health.connectivity.none": "尚未测试连接。",
+	"probe.ok": "正常",
+	"probe.rate-limited": "限流 (429)",
+	"probe.auth": "认证被拒绝",
+	"probe.timeout": "超时",
+	"probe.network": "网络错误",
+	"probe.error": "请求失败",
+	"probe.disabled": "未启用"
 };
 //#endregion
 //#region src/client/model.js
@@ -534,8 +560,58 @@ function WebSearchRow({ block, inspect, t }) {
 //#region src/client/health.js
 /** Same-origin route the Health tab fetches (host lib/health.js). */
 const HEALTH_ROUTE = "/web-search-ext/health";
+/** Same-origin route the "Test now" button POSTs to (host lib/index.js, G3). */
+const PROBE_ROUTE = "/web-search-ext/probe";
+/**
+* Closed set of probe detail codes the host may produce
+* (lib/index.js `classifyProbeError`). Anything else is a shape change —
+* reject the whole payload rather than render an unknown code.
+*/
+const PROBE_DETAIL_CODES = [
+	"ok",
+	"rate-limited",
+	"auth",
+	"timeout",
+	"error",
+	"network",
+	"disabled"
+];
 function isFiniteNumber(v) {
 	return typeof v === "number" && Number.isFinite(v);
+}
+/**
+* Validate the G3 probe payload (host `probeBackends` result). Returns the
+* display model — or null when malformed (a shape change must surface as
+* the unavailable line, exactly like the C2 counters).
+*
+* Display model: `{ at: number, backends: [{ name: string, label: string,
+* status: "ok" | "error" | "disabled", detail: <PROBE_DETAIL_CODES>,
+* ms: number }] }`. `label` defaults to `name`; a missing `ms` to 0.
+*/
+function parseProbe(probe) {
+	if (probe === null || typeof probe !== "object" || Array.isArray(probe)) return null;
+	if (!isFiniteNumber(probe.at) || probe.at < 0) return null;
+	if (!Array.isArray(probe.backends)) return null;
+	const backends = [];
+	for (const row of probe.backends) {
+		if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
+		if (typeof row.name !== "string" || row.name === "") return null;
+		if (row.status !== "ok" && row.status !== "error" && row.status !== "disabled") return null;
+		if (typeof row.detail !== "string" || !PROBE_DETAIL_CODES.includes(row.detail)) return null;
+		const ms = row.ms === void 0 || row.ms === null ? 0 : row.ms;
+		if (!isFiniteNumber(ms) || ms < 0) return null;
+		backends.push({
+			name: row.name,
+			label: typeof row.label === "string" && row.label !== "" ? row.label : row.name,
+			status: row.status,
+			detail: row.detail,
+			ms
+		});
+	}
+	return {
+		at: probe.at,
+		backends
+	};
 }
 /**
 * Normalize the wire payload into the display model, or null when any
@@ -548,7 +624,12 @@ function isFiniteNumber(v) {
 *     backends: [{ provider: string, name: string, label: string,
 *       attempts: number, ok: number, failed: number,
 *       lastCallAt: number | null, lastCallMs: number | null,
-*       lastOk: boolean | null, cooldownRemainingMs: number }] }
+*       lastOk: boolean | null, cooldownRemainingMs: number }],
+*     probe: null | { at: number, backends: [{ name, label, status,
+*       detail, ms }] } }
+*
+* The `probe` field (G3) is absent/null until the first connectivity probe;
+* when present it must be well-formed, or the whole payload is rejected.
 */
 function parseHealth(payload) {
 	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
@@ -588,13 +669,16 @@ function parseHealth(payload) {
 			cooldownRemainingMs: cooldown
 		});
 	}
+	const probe = p.probe === void 0 || p.probe === null ? null : parseProbe(p.probe);
+	if (probe === null && p.probe !== void 0 && p.probe !== null) return null;
 	return {
 		startedAt: p.startedAt,
 		uptimeMs: p.uptimeMs,
 		searchCalls: p.searchCalls,
 		fetchCalls: p.fetchCalls,
 		resultsReturned: p.resultsReturned === void 0 ? null : p.resultsReturned,
-		backends
+		backends,
+		probe
 	};
 }
 /**
@@ -971,11 +1055,14 @@ function WebSearchExtCard(props) {
 		panelId: "dsw-websearch-panel-health"
 	})) : null);
 }
+let autoProbeFired = false;
 /**
-* Health tab (C2): fetches the session telemetry from the host's
-* same-origin GET /web-search-ext/health route on mount and on refresh.
-* A fetch/parse failure surfaces as an explicit unavailable line with a
-* retry — the tab never renders a silently empty state.
+* Health tab (C2 + G3): fetches the session telemetry from the host's
+* same-origin GET /web-search-ext/health route on mount and on refresh,
+* and shows the connectivity probe result (POST /web-search-ext/probe on
+* first open / on "Test now"). A fetch/parse failure surfaces as an
+* explicit unavailable line with a retry — the tab never renders a
+* silently empty state.
 */
 function HealthTab({ t, panelId }) {
 	const [state, setState] = (0, react.useState)({
@@ -984,6 +1071,10 @@ function HealthTab({ t, panelId }) {
 		error: ""
 	});
 	const [reload, setReload] = (0, react.useState)(0);
+	const [probe, setProbe] = (0, react.useState)({
+		testing: false,
+		error: ""
+	});
 	(0, react.useEffect)(() => {
 		let cancelled = false;
 		setState({
@@ -1003,6 +1094,10 @@ function HealthTab({ t, panelId }) {
 				data: model,
 				error: ""
 			});
+			if (model.probe === null && !autoProbeFired) {
+				autoProbeFired = true;
+				runProbe();
+			}
 		}).catch((err) => {
 			if (cancelled) return;
 			setState({
@@ -1021,6 +1116,48 @@ function HealthTab({ t, panelId }) {
 			className: card_module_default.discard,
 			onClick: () => setReload((n) => n + 1)
 		}, t("health.refresh"));
+	}
+	function runProbe() {
+		setProbe((p) => ({
+			...p,
+			testing: true,
+			error: ""
+		}));
+		fetch(PROBE_ROUTE, {
+			method: "POST",
+			headers: { accept: "application/json" }
+		}).then((res) => {
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			return res.json();
+		}).then((payload) => {
+			const model = parseHealth(payload);
+			if (model === null) throw new Error("unparsable payload");
+			setState((s) => s.phase === "error" ? {
+				phase: "ready",
+				data: model,
+				error: ""
+			} : {
+				...s,
+				data: model
+			});
+			setProbe({
+				testing: false,
+				error: ""
+			});
+		}).catch((err) => {
+			setProbe({
+				testing: false,
+				error: String(err && err.message || err)
+			});
+		});
+	}
+	function testButton() {
+		return (0, react.createElement)("button", {
+			type: "button",
+			className: card_module_default.discard,
+			disabled: probe.testing,
+			onClick: () => runProbe()
+		}, probe.testing ? t("health.connectivity.testing") : t("health.connectivity.test"));
 	}
 	function section(title, headExtra, ...rows) {
 		return (0, react.createElement)("div", { className: card_module_default.healthSection }, (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, (0, react.createElement)("div", { className: card_module_default.healthSectionTitle }, title), headExtra), ...rows);
@@ -1065,11 +1202,16 @@ function HealthTab({ t, panelId }) {
 		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
 	].join(" · ");
 	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
+	const probeData = data.probe;
+	function probeLine(b) {
+		return `${b.status === "ok" ? "✓" : b.status === "disabled" ? "−" : "✗"} ${t(`probe.${b.detail}`)}${b.status === "disabled" ? "" : ` · ${b.ms}ms`}`;
+	}
+	const probeRows = probeData === null ? [valueRow(probe.testing ? t("health.connectivity.testing") : t("health.connectivity.none"))] : [valueRow(t("health.connectivity.last", { age: ageOf(probeData.at, now) })), ...probeData.backends.map((b) => row(b.label, probeLine(b)))];
 	return (0, react.createElement)("div", {
 		className: card_module_default.health,
 		role: "tabpanel",
 		id: panelId
-	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
+	}, section(t("health.connectivity"), testButton(), ...probeRows), probe.error !== "" ? (0, react.createElement)("p", { className: card_module_default.failed }, t("health.connectivity.error"), " ", probe.error) : null, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {
@@ -1179,7 +1321,20 @@ const en = {
 	"health.remaining": "{count}s remaining",
 	"health.none": "none",
 	"health.noActivity": "No backend activity this session yet.",
-	"health.refresh": "Refresh"
+	"health.refresh": "Refresh",
+	"health.connectivity": "Connectivity",
+	"health.connectivity.test": "Test now",
+	"health.connectivity.testing": "Testing…",
+	"health.connectivity.error": "Connectivity test failed:",
+	"health.connectivity.last": "tested {age} ago",
+	"health.connectivity.none": "No connectivity test yet.",
+	"probe.ok": "OK",
+	"probe.rate-limited": "rate limited (429)",
+	"probe.auth": "auth rejected",
+	"probe.timeout": "timed out",
+	"probe.network": "network error",
+	"probe.error": "request failed",
+	"probe.disabled": "not enabled"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -1232,7 +1387,20 @@ const zh = {
 	"health.remaining": "剩余 {count}s",
 	"health.none": "无",
 	"health.noActivity": "本会话尚无后端活动。",
-	"health.refresh": "刷新"
+	"health.refresh": "刷新",
+	"health.connectivity": "连接状态",
+	"health.connectivity.test": "立即测试",
+	"health.connectivity.testing": "正在测试…",
+	"health.connectivity.error": "连接测试失败：",
+	"health.connectivity.last": "{age} 前测试",
+	"health.connectivity.none": "尚未测试连接。",
+	"probe.ok": "正常",
+	"probe.rate-limited": "限流 (429)",
+	"probe.auth": "认证被拒绝",
+	"probe.timeout": "超时",
+	"probe.network": "网络错误",
+	"probe.error": "请求失败",
+	"probe.disabled": "未启用"
 };
 //#endregion
 //#region src/client/model.js
@@ -1646,8 +1814,58 @@ function WebSearchRow({ block, inspect, t }) {
 //#region src/client/health.js
 /** Same-origin route the Health tab fetches (host lib/health.js). */
 const HEALTH_ROUTE = "/web-search-ext/health";
+/** Same-origin route the "Test now" button POSTs to (host lib/index.js, G3). */
+const PROBE_ROUTE = "/web-search-ext/probe";
+/**
+* Closed set of probe detail codes the host may produce
+* (lib/index.js `classifyProbeError`). Anything else is a shape change —
+* reject the whole payload rather than render an unknown code.
+*/
+const PROBE_DETAIL_CODES = [
+	"ok",
+	"rate-limited",
+	"auth",
+	"timeout",
+	"error",
+	"network",
+	"disabled"
+];
 function isFiniteNumber(v) {
 	return typeof v === "number" && Number.isFinite(v);
+}
+/**
+* Validate the G3 probe payload (host `probeBackends` result). Returns the
+* display model — or null when malformed (a shape change must surface as
+* the unavailable line, exactly like the C2 counters).
+*
+* Display model: `{ at: number, backends: [{ name: string, label: string,
+* status: "ok" | "error" | "disabled", detail: <PROBE_DETAIL_CODES>,
+* ms: number }] }`. `label` defaults to `name`; a missing `ms` to 0.
+*/
+function parseProbe(probe) {
+	if (probe === null || typeof probe !== "object" || Array.isArray(probe)) return null;
+	if (!isFiniteNumber(probe.at) || probe.at < 0) return null;
+	if (!Array.isArray(probe.backends)) return null;
+	const backends = [];
+	for (const row of probe.backends) {
+		if (row === null || typeof row !== "object" || Array.isArray(row)) return null;
+		if (typeof row.name !== "string" || row.name === "") return null;
+		if (row.status !== "ok" && row.status !== "error" && row.status !== "disabled") return null;
+		if (typeof row.detail !== "string" || !PROBE_DETAIL_CODES.includes(row.detail)) return null;
+		const ms = row.ms === void 0 || row.ms === null ? 0 : row.ms;
+		if (!isFiniteNumber(ms) || ms < 0) return null;
+		backends.push({
+			name: row.name,
+			label: typeof row.label === "string" && row.label !== "" ? row.label : row.name,
+			status: row.status,
+			detail: row.detail,
+			ms
+		});
+	}
+	return {
+		at: probe.at,
+		backends
+	};
 }
 /**
 * Normalize the wire payload into the display model, or null when any
@@ -1660,7 +1878,12 @@ function isFiniteNumber(v) {
 *     backends: [{ provider: string, name: string, label: string,
 *       attempts: number, ok: number, failed: number,
 *       lastCallAt: number | null, lastCallMs: number | null,
-*       lastOk: boolean | null, cooldownRemainingMs: number }] }
+*       lastOk: boolean | null, cooldownRemainingMs: number }],
+*     probe: null | { at: number, backends: [{ name, label, status,
+*       detail, ms }] } }
+*
+* The `probe` field (G3) is absent/null until the first connectivity probe;
+* when present it must be well-formed, or the whole payload is rejected.
 */
 function parseHealth(payload) {
 	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
@@ -1700,13 +1923,16 @@ function parseHealth(payload) {
 			cooldownRemainingMs: cooldown
 		});
 	}
+	const probe = p.probe === void 0 || p.probe === null ? null : parseProbe(p.probe);
+	if (probe === null && p.probe !== void 0 && p.probe !== null) return null;
 	return {
 		startedAt: p.startedAt,
 		uptimeMs: p.uptimeMs,
 		searchCalls: p.searchCalls,
 		fetchCalls: p.fetchCalls,
 		resultsReturned: p.resultsReturned === void 0 ? null : p.resultsReturned,
-		backends
+		backends,
+		probe
 	};
 }
 /**
@@ -2083,11 +2309,14 @@ function WebSearchExtCard(props) {
 		panelId: "dsw-websearch-panel-health"
 	})) : null);
 }
+let autoProbeFired = false;
 /**
-* Health tab (C2): fetches the session telemetry from the host's
-* same-origin GET /web-search-ext/health route on mount and on refresh.
-* A fetch/parse failure surfaces as an explicit unavailable line with a
-* retry — the tab never renders a silently empty state.
+* Health tab (C2 + G3): fetches the session telemetry from the host's
+* same-origin GET /web-search-ext/health route on mount and on refresh,
+* and shows the connectivity probe result (POST /web-search-ext/probe on
+* first open / on "Test now"). A fetch/parse failure surfaces as an
+* explicit unavailable line with a retry — the tab never renders a
+* silently empty state.
 */
 function HealthTab({ t, panelId }) {
 	const [state, setState] = (0, react.useState)({
@@ -2096,6 +2325,10 @@ function HealthTab({ t, panelId }) {
 		error: ""
 	});
 	const [reload, setReload] = (0, react.useState)(0);
+	const [probe, setProbe] = (0, react.useState)({
+		testing: false,
+		error: ""
+	});
 	(0, react.useEffect)(() => {
 		let cancelled = false;
 		setState({
@@ -2115,6 +2348,10 @@ function HealthTab({ t, panelId }) {
 				data: model,
 				error: ""
 			});
+			if (model.probe === null && !autoProbeFired) {
+				autoProbeFired = true;
+				runProbe();
+			}
 		}).catch((err) => {
 			if (cancelled) return;
 			setState({
@@ -2133,6 +2370,48 @@ function HealthTab({ t, panelId }) {
 			className: card_module_default.discard,
 			onClick: () => setReload((n) => n + 1)
 		}, t("health.refresh"));
+	}
+	function runProbe() {
+		setProbe((p) => ({
+			...p,
+			testing: true,
+			error: ""
+		}));
+		fetch(PROBE_ROUTE, {
+			method: "POST",
+			headers: { accept: "application/json" }
+		}).then((res) => {
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			return res.json();
+		}).then((payload) => {
+			const model = parseHealth(payload);
+			if (model === null) throw new Error("unparsable payload");
+			setState((s) => s.phase === "error" ? {
+				phase: "ready",
+				data: model,
+				error: ""
+			} : {
+				...s,
+				data: model
+			});
+			setProbe({
+				testing: false,
+				error: ""
+			});
+		}).catch((err) => {
+			setProbe({
+				testing: false,
+				error: String(err && err.message || err)
+			});
+		});
+	}
+	function testButton() {
+		return (0, react.createElement)("button", {
+			type: "button",
+			className: card_module_default.discard,
+			disabled: probe.testing,
+			onClick: () => runProbe()
+		}, probe.testing ? t("health.connectivity.testing") : t("health.connectivity.test"));
 	}
 	function section(title, headExtra, ...rows) {
 		return (0, react.createElement)("div", { className: card_module_default.healthSection }, (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, (0, react.createElement)("div", { className: card_module_default.healthSectionTitle }, title), headExtra), ...rows);
@@ -2177,11 +2456,16 @@ function HealthTab({ t, panelId }) {
 		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
 	].join(" · ");
 	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
+	const probeData = data.probe;
+	function probeLine(b) {
+		return `${b.status === "ok" ? "✓" : b.status === "disabled" ? "−" : "✗"} ${t(`probe.${b.detail}`)}${b.status === "disabled" ? "" : ` · ${b.ms}ms`}`;
+	}
+	const probeRows = probeData === null ? [valueRow(probe.testing ? t("health.connectivity.testing") : t("health.connectivity.none"))] : [valueRow(t("health.connectivity.last", { age: ageOf(probeData.at, now) })), ...probeData.backends.map((b) => row(b.label, probeLine(b)))];
 	return (0, react.createElement)("div", {
 		className: card_module_default.health,
 		role: "tabpanel",
 		id: panelId
-	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
+	}, section(t("health.connectivity"), testButton(), ...probeRows), probe.error !== "" ? (0, react.createElement)("p", { className: card_module_default.failed }, t("health.connectivity.error"), " ", probe.error) : null, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {

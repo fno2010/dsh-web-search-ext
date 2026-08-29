@@ -28,7 +28,12 @@
 //     backend is not a wire field, so a multi-backend merge shows the
 //     honest union), freshness (publishedAt, "unknown" when the vendor
 //     ships none), and verification state (badge label + detail, "not
-//     verified" when the snippet carries no marker).
+//     verified" when the snippet carries no marker);
+//   - the in-flight indicator (C5 re-scope): while the call runs, the
+//     collapsed row shows "searching… Ns" — the host ships no in-flight
+//     progress channel (the running block is frozen at tool/call), so the
+//     elapsed label ticks on this row's own clock from block.time and
+//     claims nothing about phase or serving backend.
 //
 // A result without a structured `web` search view (generic view, host error
 // path, older host) degrades to the raw result text instead of throwing —
@@ -43,6 +48,7 @@ import {
   StateDot
 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { webSearchCardModel, isSafeHref } from "./model.js";
+import { formatDuration } from "./health.js";
 import css from "./row.module.css";
 
 /** Title fallback when a source ships no title (usually keyless paths). */
@@ -100,6 +106,20 @@ export function WebSearchRow({ block, inspect, t }) {
   // drill-down is meaningless — close it. (Out-of-range indexes no-op
   // safely anyway; this is state hygiene, not a correctness guard.)
   useEffect(() => setDrillIndex(null), [block.callId]);
+  // C5: in-flight indicator. The host re-renders the row only on session
+  // snapshot changes and the running block is frozen, so the elapsed label
+  // ticks on the row's own 1 s clock from model.startMs (the host's
+  // tool/call log time — the only start-time fact the wire carries). No
+  // in-flight progress channel exists on this host, so the label claims
+  // nothing about phase or backend: "searching… Ns", not "searching exa…".
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    if (model.state !== "running" || model.startMs === null) return undefined;
+    const tick = () => setElapsedMs(Math.max(0, Date.now() - model.startMs));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [model.state, model.startMs, block.callId]);
   const hasBody =
     model.state === "ok"
       ? model.provenance.length > 0 ||
@@ -145,7 +165,16 @@ export function WebSearchRow({ block, inspect, t }) {
         onToggle: () => setExpanded((value) => !value),
         collapsedContent: [
           h("span", { key: "sep", className: css.sep, "aria-hidden": true }),
-          h("span", { key: "summary", className: summaryClass }, summary)
+          h("span", { key: "summary", className: summaryClass }, summary),
+          model.state === "running"
+            ? h(
+                "span",
+                { key: "running", className: css.runningSuffix },
+                model.startMs !== null
+                  ? `${t("row.searching")} ${formatDuration(elapsedMs)}`
+                  : t("row.searching")
+              )
+            : null
         ]
       },
       h(

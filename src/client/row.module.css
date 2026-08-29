@@ -87,6 +87,17 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
+/* C5: in-flight "searching… Ns" suffix; flex:none so it stays visible when
+   the query summary ellipses. */
+.runningSuffix {
+  white-space: nowrap;
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  line-height: 24px;
+  margin-left: 8px;
+}
+
 .visuallyHidden {
   position: absolute;
   width: 1px;

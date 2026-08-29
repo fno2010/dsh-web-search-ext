@@ -15,10 +15,15 @@
 // line.
 //
 // `resultView` is null while the call runs (RunningToolCall), so the running
-// state is derived from argsRaw alone. A settled call whose view is not a
-// `web` search card (generic view, older host) degrades to raw content text —
-// never throws, and a non-pinned provider's answer is never claimed as our
-// provenance.
+// state is derived from argsRaw alone. The running block carries `time`
+// (Unix epoch ms when the host logged `tool/call`) — the only start-time
+// fact the wire carries; the card model surfaces it as `startMs` for the
+// row's client-ticked elapsed indicator (C5 re-scope: the host ships no
+// in-flight progress, so the indicator claims nothing about phase or
+// backend — only that the search is in flight and how long it has been).
+// A settled call whose view is not a `web` search card (generic view, older
+// host) degrades to raw content text — never throws, and a non-pinned
+// provider's answer is never claimed as our provenance.
 
 /** Marker label → visual tone. Closed list, keyed by the EXACT marker text
  *  our verify.js MARKERS emits — an unknown bracket prefix in a snippet is
@@ -222,8 +227,16 @@ function splitReceipt(body) {
  * host lookups — the view is a function of what the turn already knows.
  * @param {object} block - frozen RunningToolCall or ToolResultNode.
  * @returns the card model consumed by the row component:
- *   { state, title, provenance: [{query, receipt, backend}], backends: string[],
+ *   { state, title, startMs, provenance: [{query, receipt, backend}], backends: string[],
  *     answer, truncated, sources: [{url,title,snippet,publishedAt,badge}], text }
+ *
+ * `startMs` (C5): the running call's start time — the host's `tool/call`
+ * event log time (Unix epoch ms, the only start-time fact the wire carries)
+ * — or null when the block is settled or `time` is absent/malformed. The
+ * row ticks the elapsed indicator on its own clock from this; the host
+ * never re-renders a running row (its running affordance is pure CSS), so
+ * the client owns the tick. A malformed `time` degrades to a label without
+ * a number rather than a garbage elapsed.
  */
 export function webSearchCardModel(block) {
   const settled = "kind" in block;
@@ -237,6 +250,13 @@ export function webSearchCardModel(block) {
   const model = {
     state,
     title: queryTitle(block),
+    startMs:
+      !settled &&
+      typeof block.time === "number" &&
+      Number.isFinite(block.time) &&
+      block.time >= 0
+        ? block.time
+        : null,
     provenance: [],
     backends: [],
     answer: null,

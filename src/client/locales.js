@@ -22,6 +22,7 @@ export const en = {
   // web_search toolview card (C1)
   "row.title": "Search",
   "row.running": "Searching the web…",
+  "row.searching": "searching…",
   "row.failed": "Search failed",
   "row.stopped": "Search stopped",
   "row.truncated": "Showing the first {count} sources. Refine the query for more.",
@@ -97,6 +98,7 @@ export const zh = {
   // web_search toolview card (C1)
   "row.title": "搜索",
   "row.running": "正在搜索网页…",
+  "row.searching": "搜索中…",
   "row.failed": "搜索失败",
   "row.stopped": "搜索已中止",
   "row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",

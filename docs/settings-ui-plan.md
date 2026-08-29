@@ -494,6 +494,53 @@ trip) live in the mocked failover suite; the client probe parsing
 (valid/absent/malformed + round trip) in the health suite. No scenario
 counts restated in docs.
 
+## C5 in-flight progress — spike verdict and re-scope (2026-08-30)
+
+Issue #17 as filed: show progress in the toolview while a search is in
+flight, e.g. `searching exa… → firecrawl fallback… → verifying 3/8…`.
+Prerequisite spike (per the issue): does the toolview block carry running
+content while the tool call is incomplete?
+
+**Verdict: no.** Evidence (all spot-checked against the installed harness
+packages):
+
+1. `RunningToolCall` (dsh-client-runtime
+   `types/client/sessions/conversation.d.ts:266`) is
+   `{ callId, name, argsRaw, turn, step, time, callView, subCalls }` — no
+   content or progress field. `argsRaw` is frozen at `tool/call`; the slot
+   contract says the block is "a frozen running-or-settled node" and the
+   view "a pure function of what the turn already knows".
+2. The session wire has exactly two tool events: `tool/call` and
+   `tool/result` (dsh-session known event types). There is no
+   `tool/progress` event.
+3. dsh-tool-web (the host tool that owns the web card) has no progress
+   channel; its own web rows keep a *generic pending* card while running
+   (`webCardModel` returns null until the block settles with a `kind`).
+4. The host's row renderer re-renders only on session-snapshot changes.
+   The running affordance is a pure CSS sweep animation on
+   `[data-state=running]` (dsh-client-ui-tool — no timer or elapsed-time
+   rendering anywhere in the package).
+5. Classic plugins have no plugin-registered `/api` RPC and no plugin
+   remote events (dsh-api-remotes allowlist: settings/credentials/
+   llm/agent-preset/command only), so the provider cannot push phase
+   state to the client. A client-side poll of a plugin route is also a
+   dead end: the tool call does not carry its `callId` to the provider, so
+   in-flight phase state could not be attributed per call and would
+   cross-wire under parallel `web_search` calls.
+
+**Re-scope (not drop).** The honest client-derived running indicator:
+the row already renders `data-state="running"` with the C1 CSS sweep; it
+gains a visible `searching… Ns` suffix in the collapsed row. `startMs`
+comes from the block's `time` (the host's `tool/call` log time, Unix
+epoch ms — the only start-time fact the wire carries; the client model
+validates it and the row ticks the elapsed label on its own 1 s clock,
+since the host never re-renders a running row). No phase or backend is
+claimed before settlement — the serving backend only becomes known to
+the client with the receipt in `tool/result`. No host-side change; no
+wire change; no new surface. Client-only change: `startMs` in the
+card model (node-testable), the ticking suffix in the row, one new
+locale key, and the pure-model scenarios in the toolview suite.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

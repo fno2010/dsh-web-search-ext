@@ -167,6 +167,26 @@ function runningBlock(argsRaw) {
 	ok("running: multi-query title joined");
 }
 
+// C5: the running call's start time (the host's tool/call log time, Unix
+// epoch ms — the only start-time fact the wire carries) is surfaced as
+// startMs for the row's client-ticked elapsed label. Malformed/absent times
+// degrade to null (the row shows the label without a number); settled blocks
+// never expose a start time.
+{
+	assert.equal(webSearchCardModel({ ...runningBlock(), time: 1_000_000 }).startMs, 1_000_000);
+	assert.equal(webSearchCardModel(runningBlock()).startMs, 0, "fixture time 0 is a valid epoch ms");
+	for (const bad of ["123", Number.NaN, -1]) {
+		const block = runningBlock();
+		block.time = bad;
+		assert.equal(webSearchCardModel(block).startMs, null, `time ${String(bad)} → null`);
+	}
+	const noTime = runningBlock();
+	delete noTime.time;
+	assert.equal(webSearchCardModel(noTime).startMs, null, "absent time → null");
+	assert.equal(webSearchCardModel(settledBlock(webView())).startMs, null, "settled → null");
+	ok("C5 running startMs: valid epoch ms surfaced; malformed/absent → null; settled → null");
+}
+
 // Settled ok, full structured web view: receipt becomes provenance, the rest
 // of our content becomes the answer, badges parse, truncation passes through.
 {
@@ -389,6 +409,6 @@ function runningBlock(argsRaw) {
 }
 
 // Sentinel: the scenario count lives in-test, never in docs.
-assert.equal(passed, 20, "scenario sentinel");
+assert.equal(passed, 21, "scenario sentinel");
 
 console.log(`\nAll ${passed} toolview model scenarios passed.`);

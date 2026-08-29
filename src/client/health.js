@@ -30,7 +30,8 @@ function isFiniteNumber(v) {
 export function parseHealth(payload) {
   if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
   const p = payload;
-  if (!isFiniteNumber(p.startedAt) || !isFiniteNumber(p.uptimeMs)) return null;
+  if (!isFiniteNumber(p.startedAt) || p.startedAt < 0) return null;
+  if (!isFiniteNumber(p.uptimeMs) || p.uptimeMs < 0) return null;
   if (!isFiniteNumber(p.searchCalls) || p.searchCalls < 0) return null;
   if (!isFiniteNumber(p.fetchCalls) || p.fetchCalls < 0) return null;
   if (p.resultsReturned !== undefined && p.resultsReturned !== null

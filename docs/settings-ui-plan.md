@@ -388,8 +388,10 @@ harness bump):
   its explicit unavailable line instead. Non-GET/HEAD → 405;
   `cache-control: no-store`.
 - The route sits **outside** the `/api` browser-trust fence (that fence is
-  owned by the `/api` handler itself; the host binds loopback by default and
-  `--host 0.0.0.0` is unsupported). Hence the payload invariant:
+  owned by the `/api` handler itself). The host web server binds loopback
+  by default, but its config accepts other bind addresses too — so the
+  counters-only invariant must hold for ANY bind, not just loopback. Hence
+  the payload invariant:
   **counters only** — session counters plus per-backend
   `{ provider, name, label, attempts, ok, failed, lastCallAt, lastCallMs,
   lastOk, cooldownRemainingMs }`. No credentials, no URLs, no query text.

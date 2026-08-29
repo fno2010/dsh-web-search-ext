@@ -287,6 +287,8 @@ function WebSearchExtCard(props) {
             h("button", {
               type: "button",
               role: "tab",
+              id: "dsw-websearch-tab-settings",
+              "aria-controls": "dsw-websearch-panel-settings",
               className: tab === "settings" ? `${css.tab} ${css.tabActive}` : css.tab,
               "aria-selected": tab === "settings",
               onClick: () => setTab("settings")
@@ -294,13 +296,19 @@ function WebSearchExtCard(props) {
             h("button", {
               type: "button",
               role: "tab",
+              id: "dsw-websearch-tab-health",
+              "aria-controls": "dsw-websearch-panel-health",
               className: tab === "health" ? `${css.tab} ${css.tabActive}` : css.tab,
               "aria-selected": tab === "health",
               onClick: () => setTab("health")
             }, t("health.tab"))
           ),
           tab === "settings"
-            ? h("div", { className: css.settingsPane },
+            ? h("div", {
+                className: css.settingsPane,
+                role: "tabpanel",
+                id: "dsw-websearch-panel-settings"
+              },
                 h("div", { className: css.field },
                   h("div", { className: css.head },
                     h("label", { className: css.label }, t("preferred"))
@@ -353,7 +361,7 @@ function WebSearchExtCard(props) {
                     t("saving")) : t("save"))
                 )
               )
-            : h(HealthTab, { t })
+            : h(HealthTab, { t, panelId: "dsw-websearch-panel-health" })
         )
       : null
   );
@@ -365,7 +373,7 @@ function WebSearchExtCard(props) {
  * A fetch/parse failure surfaces as an explicit unavailable line with a
  * retry — the tab never renders a silently empty state.
  */
-function HealthTab({ t }) {
+function HealthTab({ t, panelId }) {
   const [state, setState] = useState({ phase: "loading", data: null, error: "" });
   const [reload, setReload] = useState(0);
 
@@ -421,12 +429,12 @@ function HealthTab({ t }) {
   }
 
   if (state.phase === "loading") {
-    return h("div", { className: css.health },
+    return h("div", { className: css.health, role: "tabpanel", id: panelId },
       h("p", { className: css.hint }, t("health.loading")));
   }
 
   if (state.phase === "error") {
-    return h("div", { className: css.health },
+    return h("div", { className: css.health, role: "tabpanel", id: panelId },
       h("p", { className: css.failed }, t("health.error"), " ", state.error),
       h("div", { className: css.healthSectionHead }, refreshButton()));
   }
@@ -462,7 +470,7 @@ function HealthTab({ t }) {
     ? [valueRow(t("health.none"))]
     : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1000) })));
 
-  return h("div", { className: css.health },
+  return h("div", { className: css.health, role: "tabpanel", id: panelId },
     section(t("health.session"), refreshButton(), valueRow(sessionLine)),
     data.backends.length === 0
       ? h("p", { className: css.hint }, t("health.noActivity"))

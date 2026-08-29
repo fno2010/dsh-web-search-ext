@@ -147,6 +147,8 @@ function ok(label) {
 	assert.equal(parseHealth(42), null);
 	assert.equal(parseHealth([]), null, "an array is not an object");
 	assert.equal(parseHealth(good({ startedAt: "x" })), null, "string startedAt");
+	assert.equal(parseHealth(good({ startedAt: -1 })), null, "negative startedAt");
+	assert.equal(parseHealth(good({ uptimeMs: -1 })), null, "negative uptime");
 	assert.equal(parseHealth(good({ uptimeMs: Infinity })), null, "non-finite uptime");
 	assert.equal(parseHealth(good({ searchCalls: -1 })), null, "negative searchCalls");
 	assert.equal(parseHealth(good({ resultsReturned: -1 })), null, "negative resultsReturned");

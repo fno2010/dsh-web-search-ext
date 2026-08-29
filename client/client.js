@@ -553,7 +553,8 @@ function isFiniteNumber(v) {
 function parseHealth(payload) {
 	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
 	const p = payload;
-	if (!isFiniteNumber(p.startedAt) || !isFiniteNumber(p.uptimeMs)) return null;
+	if (!isFiniteNumber(p.startedAt) || p.startedAt < 0) return null;
+	if (!isFiniteNumber(p.uptimeMs) || p.uptimeMs < 0) return null;
 	if (!isFiniteNumber(p.searchCalls) || p.searchCalls < 0) return null;
 	if (!isFiniteNumber(p.fetchCalls) || p.fetchCalls < 0) return null;
 	if (p.resultsReturned !== void 0 && p.resultsReturned !== null && (!isFiniteNumber(p.resultsReturned) || p.resultsReturned < 0)) return null;
@@ -917,16 +918,24 @@ function WebSearchExtCard(props) {
 	}, (0, react.createElement)("button", {
 		type: "button",
 		role: "tab",
+		id: "dsw-websearch-tab-settings",
+		"aria-controls": "dsw-websearch-panel-settings",
 		className: tab === "settings" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
 		"aria-selected": tab === "settings",
 		onClick: () => setTab("settings")
 	}, t("health.settings")), (0, react.createElement)("button", {
 		type: "button",
 		role: "tab",
+		id: "dsw-websearch-tab-health",
+		"aria-controls": "dsw-websearch-panel-health",
 		className: tab === "health" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
 		"aria-selected": tab === "health",
 		onClick: () => setTab("health")
-	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", { className: card_module_default.settingsPane }, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", {
+		className: card_module_default.settingsPane,
+		role: "tabpanel",
+		id: "dsw-websearch-panel-settings"
+	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -957,7 +966,10 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, { t })) : null);
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+		t,
+		panelId: "dsw-websearch-panel-health"
+	})) : null);
 }
 /**
 * Health tab (C2): fetches the session telemetry from the host's
@@ -965,7 +977,7 @@ function WebSearchExtCard(props) {
 * A fetch/parse failure surfaces as an explicit unavailable line with a
 * retry — the tab never renders a silently empty state.
 */
-function HealthTab({ t }) {
+function HealthTab({ t, panelId }) {
 	const [state, setState] = (0, react.useState)({
 		phase: "loading",
 		data: null,
@@ -1019,8 +1031,16 @@ function HealthTab({ t }) {
 	function valueRow(value) {
 		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
 	}
-	if (state.phase === "loading") return (0, react.createElement)("div", { className: card_module_default.health }, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
-	if (state.phase === "error") return (0, react.createElement)("div", { className: card_module_default.health }, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
+	if (state.phase === "loading") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
+	if (state.phase === "error") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
 	const data = state.data;
 	const now = Date.now();
 	const searchRows = data.backends.filter((b) => b.provider === "search");
@@ -1045,7 +1065,11 @@ function HealthTab({ t }) {
 		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
 	].join(" · ");
 	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
-	return (0, react.createElement)("div", { className: card_module_default.health }, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
+	return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {
@@ -1641,7 +1665,8 @@ function isFiniteNumber(v) {
 function parseHealth(payload) {
 	if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return null;
 	const p = payload;
-	if (!isFiniteNumber(p.startedAt) || !isFiniteNumber(p.uptimeMs)) return null;
+	if (!isFiniteNumber(p.startedAt) || p.startedAt < 0) return null;
+	if (!isFiniteNumber(p.uptimeMs) || p.uptimeMs < 0) return null;
 	if (!isFiniteNumber(p.searchCalls) || p.searchCalls < 0) return null;
 	if (!isFiniteNumber(p.fetchCalls) || p.fetchCalls < 0) return null;
 	if (p.resultsReturned !== void 0 && p.resultsReturned !== null && (!isFiniteNumber(p.resultsReturned) || p.resultsReturned < 0)) return null;
@@ -2005,16 +2030,24 @@ function WebSearchExtCard(props) {
 	}, (0, react.createElement)("button", {
 		type: "button",
 		role: "tab",
+		id: "dsw-websearch-tab-settings",
+		"aria-controls": "dsw-websearch-panel-settings",
 		className: tab === "settings" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
 		"aria-selected": tab === "settings",
 		onClick: () => setTab("settings")
 	}, t("health.settings")), (0, react.createElement)("button", {
 		type: "button",
 		role: "tab",
+		id: "dsw-websearch-tab-health",
+		"aria-controls": "dsw-websearch-panel-health",
 		className: tab === "health" ? `${card_module_default.tab} ${card_module_default.tabActive}` : card_module_default.tab,
 		"aria-selected": tab === "health",
 		onClick: () => setTab("health")
-	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", { className: card_module_default.settingsPane }, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, t("health.tab"))), tab === "settings" ? (0, react.createElement)("div", {
+		className: card_module_default.settingsPane,
+		role: "tabpanel",
+		id: "dsw-websearch-panel-settings"
+	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -2045,7 +2078,10 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, { t })) : null);
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+		t,
+		panelId: "dsw-websearch-panel-health"
+	})) : null);
 }
 /**
 * Health tab (C2): fetches the session telemetry from the host's
@@ -2053,7 +2089,7 @@ function WebSearchExtCard(props) {
 * A fetch/parse failure surfaces as an explicit unavailable line with a
 * retry — the tab never renders a silently empty state.
 */
-function HealthTab({ t }) {
+function HealthTab({ t, panelId }) {
 	const [state, setState] = (0, react.useState)({
 		phase: "loading",
 		data: null,
@@ -2107,8 +2143,16 @@ function HealthTab({ t }) {
 	function valueRow(value) {
 		return (0, react.createElement)("div", { className: card_module_default.healthRow }, (0, react.createElement)("div", { className: card_module_default.healthValue }, value));
 	}
-	if (state.phase === "loading") return (0, react.createElement)("div", { className: card_module_default.health }, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
-	if (state.phase === "error") return (0, react.createElement)("div", { className: card_module_default.health }, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
+	if (state.phase === "loading") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, t("health.loading")));
+	if (state.phase === "error") return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, (0, react.createElement)("p", { className: card_module_default.failed }, t("health.error"), " ", state.error), (0, react.createElement)("div", { className: card_module_default.healthSectionHead }, refreshButton()));
 	const data = state.data;
 	const now = Date.now();
 	const searchRows = data.backends.filter((b) => b.provider === "search");
@@ -2133,7 +2177,11 @@ function HealthTab({ t }) {
 		...data.resultsReturned === null ? [] : [t("health.results", { count: data.resultsReturned })]
 	].join(" · ");
 	const cooldownRows = cooled.length === 0 ? [valueRow(t("health.none"))] : cooled.map((b) => row(b.label, t("health.remaining", { count: Math.ceil(b.cooldownRemainingMs / 1e3) })));
-	return (0, react.createElement)("div", { className: card_module_default.health }, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
+	return (0, react.createElement)("div", {
+		className: card_module_default.health,
+		role: "tabpanel",
+		id: panelId
+	}, section(t("health.session"), refreshButton(), valueRow(sessionLine)), data.backends.length === 0 ? (0, react.createElement)("p", { className: card_module_default.hint }, t("health.noActivity")) : null, backendSection("search", searchRows), backendSection("fetch", fetchRows), section(t("health.cooldowns"), null, ...cooldownRows));
 }
 function apply(ctx) {
 	ctx.effect(() => ctx.locale.register(NS, {

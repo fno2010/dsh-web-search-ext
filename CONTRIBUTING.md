@@ -6,8 +6,8 @@ Thanks for improving the plugin! This file covers development, conventions, addi
 
 - Node.js >= 22. The host half (`lib/`) has no build step; the client half (`src/client/`) builds to the **committed** `client/client.js` via `npm run build:client` (tsdown) — after any `src/client/` change, rebuild and commit the bundle (CI rebuilds and fails on drift, and the publish job never builds). Install deps with `npm install` (a lockfile-less dev is fine; the package publishes `lib/`, the built `client/` bundle, the Cordis patch file, and the docs).
 - Run the suite: `npm test`
-  - **Part A** — 10 mocked failover/mapping scenarios (deterministic, no network).
-  - **Part B** — 3 live keyless smoke calls (Exa anonymous MCP, Firecrawl keyless, dual plan). Skipped automatically when `CI` is set (`CI=true npm test` = Part A only). Part B hits shared anonymous rate limits — don't run it in a tight loop.
+  - **Part A** — mocked failover/mapping/verification/fetch scenarios (deterministic, no network; the scenario count is asserted inside the suite).
+  - **Part B** — live keyless smoke calls (Exa anonymous MCP, Firecrawl keyless, dual plan). Skipped automatically when `CI` is set (`CI=true npm test` = Part A only). Part B hits shared anonymous rate limits — don't run it in a tight loop.
 
 ## Conventions
 

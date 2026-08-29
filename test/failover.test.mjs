@@ -1041,7 +1041,13 @@ function fetchProviderWith(options) {
 	ok("L1 cap-crossing chunk: capped prefix retained, matching words found → [verified]");
 }
 
-console.log(`\nPart A: ${passed}/40 scenarios passed`);
+// Single source of truth for Part A coverage: the suite FAILS on scenario
+// drift (an accidental deletion or a skip that stopped calling ok())
+// instead of silently printing a lower count. Bump this when adding a
+// scenario — no doc anywhere else restates the number on purpose.
+const PART_A_SCENARIOS = 40;
+assert.equal(passed, PART_A_SCENARIOS, `Part A scenario drift: ${passed} ok() of ${PART_A_SCENARIOS}`);
+console.log(`\nPart A: ${passed}/${PART_A_SCENARIOS} scenarios passed`);
 
 // ── Part B: live smoke (real endpoints, keyless) ────────────────────────────
 

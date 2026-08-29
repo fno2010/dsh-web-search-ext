@@ -271,6 +271,65 @@ copy comes from `t()` — matching the settings shell's "ownerless copy" model
   `tsdown` is referenced in `dsh-client-ui-settings-models/package.json` and
   `dsh-client-modules/package.json`.
 
+## C1 toolview card — evidence (spot-checked against installed artifacts, 2026-08-29)
+
+Data path for the `web_search` toolview card (`src/client/row.js` + `model.js`):
+
+- **Slot contract**: `dsh-client-ui-tool/lib/types/client/contract/slots.d.ts` —
+  keyed slot `tool.call.toolview`, `scope: 'session'`, owner payload
+  `ToolCallOwnerProps { callId, toolName, block, cwd?, home?, openFile, inspect? }`
+  + locale seat (`t`). "A key the shipped composition already covers is
+  replaced, not shared" → `key: 'web_search'` takes over the built-in WebRow.
+  Registration reference: `dsh-client-ui-skill/lib/client.js`
+  (`ctx.locale.register(NS, {zh, en})` + `ctx.slots.inject("tool.call.toolview",
+  () => ctx.slots.register({ name, key, locale: NS }, Component))`); its
+  `dsh.client` manifest injects `dsh-client-ui-tool` — we now do the same.
+- **Data source is the structured `resultView`, not parsed text**: the host's
+  `dsh-tool-web/lib/index.js` `execute()` returns
+  `{ content?, sources: projectSource(...), truncated }` and
+  `output.presentationMeta` = `searchMetaFromValue(value)` →
+  `{ sources (byte-projected to url/title?/snippet?/publishedAt?), truncated,
+  answer: value.content }`; `presentResult` builds
+  `{ card: "web", kind: "search", title: queries.join(", "), sources,
+  truncated, answer? }` → client `ToolResultNode.resultView`. So our provider's
+  `content` (receipt line first, then optional vendor text) arrives as
+  `resultView.answer`, and our verify.js marker prefixes survive inside
+  `resultView.sources[].snippet`. `resultView` is `null` while the call runs
+  (`RunningToolCall` carries only `argsRaw`/`time`), so the running state is
+  derived from `argsRaw` alone (relevant to #17 C5: no running content exists
+  on the wire yet).
+- **Provider-agnostic degradation**: our card owns all `web_search` calls
+  (keyed takeover), so it must handle a non-pinned provider too: provenance is
+  only claimed when the first `answer` line starts with `web-search-ext:`
+  (our receipt prefix); badges only from our closed-list marker grammar
+  (`[alive]`, `[verified]`, `[verified·changed]`, `[unverified]`, `[dead 404]`,
+  `[blocked]`, `[timeout]`, `[unreachable]`, `[skipped]` + optional `(detail)`,
+  exactly what `lib/verify.js` MARKERS emits); a view that is not a `web`
+  `search` card degrades to the raw content text. Never throws, never
+  mislabels.
+- **Chrome**: host primitive `DisclosureRow` + `StateDot`/
+  `IconGlobeOutline14`/`IconInspectOutline12` from
+  `@deepseek-ai/dsh-client-ui-primitives` (resolved by the host module loader
+  at runtime; already in the tsdown `neverBundle` list — the same module our
+  settings card imports icons from). Row CSS mirrors the host ToolRow tokens
+  (`--dsw-alias-state-success/warn/error-primary` badge tones, sweep animation,
+  24px row) verified present in the installed
+  `dsh-web-frontend/dist` theme.
+- **Model is pure** (`src/client/model.js`, no React/CSS imports) and unit
+  tested in `test/toolview.test.mjs` (deterministic, no network).
+- **Answer body renders through the host's `MarkdownText` primitive**
+  (`model.answer`, i.e. `resultView.answer` minus our claimed receipts/
+  headers). Verified in the installed web-frontend dist export map:
+  `MarkdownText` sits in the same `@deepseek-ai/dsh-client-ui-primitives`
+  module our row already imports (alongside `DisclosureRow`/`StateDot`, in
+  the tsdown `neverBundle` list), and the built-in `WebSearchBlock` it
+  replaces renders this same wire `answer` through it (`jsx(MarkdownText,
+  { text: answer })` — the only call site). Its contract disables raw HTML,
+  relative links, and unsafe protocols, so it is the safer renderer, not a
+  risk. The non-web degraded path (`model.text`) stays plain pre-wrap — that
+  is the host's generic tool-result treatment, and error text must never be
+  re-interpreted as markdown.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

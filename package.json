@@ -19,7 +19,7 @@
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node test/failover.test.mjs && node test/composition.test.mjs && node test/tool-registration.test.mjs",
+    "test": "node test/failover.test.mjs && node test/composition.test.mjs && node test/tool-registration.test.mjs && node test/toolview.test.mjs",
     "build:client": "tsdown && node scripts/wrap-client.mjs"
   },
   "exports": {
@@ -63,6 +63,7 @@
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-tool",
         "@deepseek-ai/dsh-api-remotes"
       ]
     }

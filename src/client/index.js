@@ -25,13 +25,14 @@ import { en, zh } from "./locales.js";
 import { WebSearchRow } from "./row.js";
 import { HEALTH_ROUTE, PROBE_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
 import { COMMAND_PRIMARY, COMMAND_FALLBACK, commandOptions } from "./command.js";
+import { VERIFY_LEVELS, effectiveVerifyLevel } from "./settings-model.js";
 import css from "./card.module.css";
 
 const NS = "web-search-ext";
 const EXA_REF = "EXA_API_KEY";
 const FC_REF = "FIRECRAWL_API_KEY";
 const NUMERIC = ["numResults", "maxSnippetChars", "rateLimitCooldownSec"];
-const FIELDS = ["preferred", ...NUMERIC, "firecrawlKeyless"];
+const FIELDS = ["preferred", "verifyLevel", ...NUMERIC, "firecrawlKeyless"];
 
 // Module-level injection: services this client plugin needs, by name.
 const inject = ["slots", "locale", "connection", "settingsScope", "remote", "commandUi"];
@@ -61,6 +62,10 @@ function effectiveValue(snap, field) {
 function initialDraft(snap) {
   return {
     preferred: effectiveValue(snap, "preferred"),
+    // C6: normalize before display — an unset or hand-edited value shows
+    // the host schema's default tier instead of a dead select option, and
+    // save() then writes a schema-valid value (or skips an unchanged one).
+    verifyLevel: effectiveVerifyLevel(effectiveValue(snap, "verifyLevel")),
     numResults: effectiveValue(snap, "numResults"),
     maxSnippetChars: effectiveValue(snap, "maxSnippetChars"),
     rateLimitCooldownSec: effectiveValue(snap, "rateLimitCooldownSec"),
@@ -336,6 +341,23 @@ function WebSearchExtCard(props) {
                   },
                     h("option", { value: "exa" }, "exa"),
                     h("option", { value: "firecrawl" }, "firecrawl"))
+                ),
+                // C6: verification tier. The host resolves it per call
+                // (installSettingsSection hot-swaps the config source on
+                // every write), so a saved change applies from the next
+                // web_search onward — no restart.
+                h("div", { className: css.field },
+                  h("div", { className: css.head },
+                    h("label", { className: css.label }, t("verifyLevel"))
+                  ),
+                  h("select", {
+                    className: css.input,
+                    disabled: ro,
+                    value: effectiveVerifyLevel(draft?.verifyLevel),
+                    onChange: (e) => setField("verifyLevel", e.target.value)
+                  },
+                    ...VERIFY_LEVELS.map((level) => h("option", { value: level }, level))),
+                  h("p", { className: css.hint }, t("verifyLevelHint"))
                 ),
                 textField("numResults", "numResults", "number", "1"),
                 textField("maxSnippetChars", "maxSnippetChars", "number", "1"),

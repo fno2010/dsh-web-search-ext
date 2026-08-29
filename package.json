@@ -19,7 +19,7 @@
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node test/failover.test.mjs && node test/composition.test.mjs && node test/tool-registration.test.mjs && node test/toolview.test.mjs && node test/health.test.mjs",
+    "test": "node test/failover.test.mjs && node test/composition.test.mjs && node test/tool-registration.test.mjs && node test/toolview.test.mjs && node test/health.test.mjs && node test/settings.test.mjs",
     "build:client": "tsdown && node scripts/wrap-client.mjs"
   },
   "exports": {

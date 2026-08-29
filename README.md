@@ -56,7 +56,7 @@ Settings namespace `web-search-ext` in `~/.dsh/settings.yaml` (hot-reloaded):
 | Field | Default | Description |
 |---|---|---|
 | `preferred` | `exa` | Backend to try first: `exa` \| `firecrawl` |
-| `numResults` | `8` | Default result count when the tool doesn't cap it |
+| `numResults` | `8` | Result count to request; also a hard cap on results returned (context budget) — a larger `maxResults` request is clamped to it and the receipt says so |
 | `maxSnippetChars` | `500` | Snippet length bound |
 | `rateLimitCooldownSec` | `60` | Fallback 429 cooldown when the backend reports no window; `0` disables |
 | `firecrawlKeyless` | `true` | Allow keyless Firecrawl requests (search + fetch) |
@@ -111,7 +111,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh
 - The only outbound requests are to the configured Exa and Firecrawl endpoints (plus the local verification probes described below); nothing else is contacted.
 - API keys travel only in the `authorization` header of their own backend's requests — never in bodies, never to the other backend, never in error messages.
 - No install-time scripts: plain ESM JavaScript, no build step, no `postinstall`/`prepare`.
-- Snippets are bounded (`maxSnippetChars`) and Firecrawl's page-markdown descriptions are stripped of image links before entering model context.
+- One search's context is bounded: results are clamped to `numResults` (the receipt announces `N of M results (numResults cap)` when a backend over-delivers) and snippets are bounded to `maxSnippetChars`; Firecrawl's page-markdown descriptions are stripped of image links before entering model context.
 - Verification probes (L0/L1) only fetch URLs that appear in backend results, with bounded bytes/timeouts; redirects are followed manually and every hop is re-validated against the same SSRF rules (public http(s) only; loopback, private, link-local, and CGNAT ranges are refused — including IPv6 literal and trailing-dot spellings; addresses that cannot be confidently classified are refused, fail closed).
 - The `web_fetch` provider refuses non-public targets (non-http(s) schemes, loopback, private, link-local) before sending the URL to any scraping backend.
 

@@ -6,7 +6,7 @@
  *         string windows, maxCooldownSec clamp), combined errors, abort,
  *         L0/L1 verification markers (incl. redirect re-validation, status
  *         mapping, slow-drip body deadline), SSRF guard matrix, provenance
- *         receipt, freshness params, fetch backends.
+ *         receipt, context budget clamps (G5), freshness params, fetch backends.
  * Part B: live smoke — one real keyless call per backend (Exa anonymous MCP,
  *          Firecrawl v2 keyless), asserting the provider maps real payloads.
  */
@@ -1041,11 +1041,101 @@ function fetchProviderWith(options) {
 	ok("L1 cap-crossing chunk: capped prefix retained, matching words found → [verified]");
 }
 
+// G5 context budget: ten firecrawl v2 results; numResults' default of 8 keeps
+// the first eight.
+const FIRECRAWL_V2_TEN = { success: true, data: { web: Array.from({ length: 10 }, (_, i) => ({
+	url: `https://many.example/${i + 1}`,
+	title: `M${i + 1}`,
+	description: `Snippet ${i + 1} for the context budget.`
+})) } };
+
+// 41. G5 context budget: backend over-delivers 10 for a numResults of 8 →
+//     clamped before verification; receipt + structured flag announce it;
+//     L0 probes only the kept results.
+{
+	const seen = new Set();
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, FIRECRAWL_V2_TEN);
+		}
+		assert.equal(init.method, "HEAD", "L0 uses HEAD by default");
+		seen.add(String(url));
+		return jsonResponse(200, "");
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources.length, 8, "clamped to numResults");
+	assert.equal(result.truncated, true, "structured truncated flag set on clamp");
+	assert.match(result.content, /web-search-ext: firecrawl · [\d.]+s · 8 of 10 results \(numResults cap\) · liveness: 8 alive/);
+	assert.equal(seen.size, 8, "verification probed only the kept results");
+	assert.ok(!seen.has("https://many.example/9"), "dropped result not probed");
+	assert.ok(!seen.has("https://many.example/10"), "dropped result not probed");
+	restoreFetch();
+	ok("G5 budget: 10 → 8 clamped; receipt + truncated flag say so; L0 skips dropped results");
+}
+
+// 42. G5 context budget: a caller maxResults above numResults is clamped
+//     before the vendor request (limit param), not just after.
+{
+	let postedLimit;
+	mockFetch(async (url, init) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			postedLimit = JSON.parse(init.body).limit;
+			return jsonResponse(200, FIRECRAWL_V2_TEN);
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello", maxResults: 12 });
+	assert.equal(postedLimit, 8, "vendor request clamped to numResults");
+	assert.equal(result.sources.length, 8);
+	assert.equal(result.truncated, true);
+	assert.match(result.content, /8 of 10 results \(numResults cap\)/);
+	restoreFetch();
+	ok("G5 budget: request.maxResults above numResults clamped at the vendor request");
+}
+
+// 43. G5 context budget: a request below the budget passes through
+//     untouched — no clamp notice.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, { success: true, data: { web: FIRECRAWL_V2_TEN.data.web.slice(0, 3) } });
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello", maxResults: 3 });
+	assert.equal(result.sources.length, 3);
+	assert.equal(result.truncated, false);
+	assert.match(result.content, /^web-search-ext: firecrawl · [\d.]+s · 3 results · liveness: 3 alive\n$/);
+	assert.doesNotMatch(result.content, /numResults cap/);
+	restoreFetch();
+	ok("G5 budget: below-budget request untruncated, no notice");
+}
+
+// 44. G5 context budget: backend returns exactly the budget → no notice.
+{
+	mockFetch(async (url) => {
+		if (url.startsWith("https://api.firecrawl.dev")) {
+			return jsonResponse(200, { success: true, data: { web: FIRECRAWL_V2_TEN.data.web.slice(0, 8) } });
+		}
+		return jsonResponse(200, ""); // L0
+	});
+	const p = providerWith({ ...DEFAULTS, preferred: "firecrawl" });
+	const result = await p.search({ query: "hello" });
+	assert.equal(result.sources.length, 8);
+	assert.equal(result.truncated, false);
+	assert.doesNotMatch(result.content, /numResults cap/);
+	restoreFetch();
+	ok("G5 budget: at-budget result set passes without a notice");
+}
+
 // Single source of truth for Part A coverage: the suite FAILS on scenario
 // drift (an accidental deletion or a skip that stopped calling ok())
 // instead of silently printing a lower count. Bump this when adding a
 // scenario — no doc anywhere else restates the number on purpose.
-const PART_A_SCENARIOS = 40;
+const PART_A_SCENARIOS = 44;
 assert.equal(passed, PART_A_SCENARIOS, `Part A scenario drift: ${passed} ok() of ${PART_A_SCENARIOS}`);
 console.log(`\nPart A: ${passed}/${PART_A_SCENARIOS} scenarios passed`);
 

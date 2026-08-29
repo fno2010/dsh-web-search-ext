@@ -278,8 +278,16 @@ Data path for the `web_search` toolview card (`src/client/row.js` + `model.js`):
 - **Slot contract**: `dsh-client-ui-tool/lib/types/client/contract/slots.d.ts` —
   keyed slot `tool.call.toolview`, `scope: 'session'`, owner payload
   `ToolCallOwnerProps { callId, toolName, block, cwd?, home?, openFile, inspect? }`
-  + locale seat (`t`). "A key the shipped composition already covers is
-  replaced, not shared" → `key: 'web_search'` takes over the built-in WebRow.
+  + locale seat (`t`). Keyed-slot collision rule (verified in the minified
+  slot registry, `dsh-web-frontend/dist`): a keyed slot REJECTS a second
+  entry for the same key at the same priority — a hard error, "register at
+  a different priority to shadow it (lowest renders)". Entries sort by
+  ascending priority and the FIRST entry per key renders. The host
+  `web-toolview` plugin owns `key: 'web_search'` at the default priority 0,
+  so our registration shadows it at an explicit `priority: -1` — a covered
+  key is shadowed, not shared, and the shadow must be pinned (the committed
+  bundle's registration is asserted by `test/toolview.test.mjs`, since no
+  CI path runs the browser-side registry).
   Registration reference: `dsh-client-ui-skill/lib/client.js`
   (`ctx.locale.register(NS, {zh, en})` + `ctx.slots.inject("tool.call.toolview",
   () => ctx.slots.register({ name, key, locale: NS }, Component))`); its

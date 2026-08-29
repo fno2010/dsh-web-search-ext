@@ -1528,6 +1528,7 @@ function apply(ctx) {
 	ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({
 		name: "tool.call.toolview",
 		key: "web_search",
+		priority: -1,
 		locale: NS
 	}, WebSearchRow));
 }
@@ -3074,6 +3075,7 @@ function apply(ctx) {
 	ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({
 		name: "tool.call.toolview",
 		key: "web_search",
+		priority: -1,
 		locale: NS
 	}, WebSearchRow));
 }

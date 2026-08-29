@@ -693,14 +693,21 @@ function apply(ctx) {
     inject: () => ({ t, scope, api, remote })
   }, WebSearchExtCard));
 
-  // web_search toolview card (C1): take over the host's built-in web row for
-  // the `web_search` tool. A key the shipped composition already covers is
-  // replaced, not shared — our card renders the same structured sources plus
-  // the provenance receipt and per-source verification badges, and degrades
-  // to the raw result text whenever the view is not a structured web card.
+  // web_search toolview card (C1): shadow the host's built-in web row for
+  // the `web_search` tool. Keyed slots resolve by (key, priority): the host
+  // `web-toolview` plugin already registers key "web_search" at the default
+  // priority 0, and a second entry for the same key at the same priority is
+  // a hard registry error ("register at a different priority to shadow it
+  // (lowest renders)"). Entries sort by ascending priority and the FIRST
+  // entry per key renders, so registering at an explicit priority -1
+  // shadows the host entry instead of colliding with it. Our card renders
+  // the same structured sources plus the provenance receipt and per-source
+  // verification badges, and degrades to the raw result text whenever the
+  // view is not a structured web card.
   ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({
     name: "tool.call.toolview",
     key: "web_search",
+    priority: -1,
     locale: NS
   }, WebSearchRow));
 }

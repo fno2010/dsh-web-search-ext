@@ -414,6 +414,86 @@ payload (`parseHealth`); any malformed shape → `null` → the tab renders an
 explicit "Health unavailable: <reason>" line with retry — never a
 silently empty tab.
 
+## G3 first-install connectivity probe — design evidence (2026-08-30)
+
+Issue #19: on first install, probe Exa (keyed/keyless) and Firecrawl
+(keyed/keyless) and show e.g. `✓ Exa OK / ✗ Firecrawl 429` on the settings
+card. Reuses C2's probing surface where possible.
+
+On-demand, not at apply time. `apply()` never probes: a fresh install,
+every host restart, and the `e2e-host` CI job would otherwise make live
+vendor calls (the keyless pools are shared and rate-limited — CI hammering
+them would burn the pool for all users and flap the e2e assertion). The
+"first install" moment a user actually perceives is the first time the
+Health tab opens after install/restart, so the card fires the probe
+ONCE per card session (module-level flag) when its initial GET returns
+`probe: null`; the "Test now" button fires it at will. No host-side
+staleness throttle: a "Test now" click must re-test, each probe is two
+minimal one-result requests bounded by a per-backend 15 s timeout, and
+vendors answer 429s *as data* (detail `rate-limited`), not as failures.
+
+Route: `POST /web-search-ext/probe` (exact, registered beside the health
+route on the same `webServer` table; anything else → 405 with
+`allow: POST`; `cache-control: no-store`). It runs `probeBackends()` with
+the CURRENT options (settings edits apply immediately, no restart), stores
+the result on the shared health state (`storeProbe`), and answers with the
+FULL health wire JSON — so the client's existing `parseHealth` path
+updates counters and probe in one round trip. Concurrent POSTs coalesce
+onto a single in-flight probe. `probeBackends` never rejects — key
+resolution runs INSIDE each per-backend try, so even a broken credentials
+layer (the most likely first-install damage) classifies into the closed
+set instead of escaping — and the handler's only error path is a
+defensive 500 with a CLOSED body (`{ "error": "probe failed" }`, no raw
+reason echo) — failure never silent.
+
+Probe mechanics: reuses the SAME backend functions `search()` runs —
+exa serves as keyed REST (`exa-rest`) or anonymous hosted MCP (`exa-mcp`)
+depending on `resolveKey`; firecrawl serves as keyed or keyless. The probe
+request is a minimal one-result search; each backend gets its own
+`AbortSignal.timeout`. Key resolution happens inside each per-backend try,
+so a credentials-layer rejection (a fresh install is where that layer is
+most likely broken) lands on that backend's row as `error` (label falls
+back to the plan name — the serving variant is unknown) instead of
+rejecting the whole probe. No failover: a probe reports per backend, it
+never substitutes one for another. Firecrawl with no key AND
+`firecrawlKeyless` off is reported as `disabled` — and never requested.
+Probes are diagnostics, not searches: they never touch the health
+counters or the cooldown state.
+
+Secret-free invariant (extends C2's, same load-bearing argument — the
+route sits outside the `/api` fence and the web server's bind address is
+configurable): a probe row carries `{ name, label, status, detail, ms }`
+where `name`/`label` are plan literals, `status ∈ ok | error | disabled`,
+and `detail` is a CLOSED, locale-neutral code set translated client-side
+via the `probe.*` keys:
+
+| outcome | detail |
+| --- | --- |
+| success | `ok` |
+| HTTP 429 (`WEB_RATE_LIMIT`) | `rate-limited` |
+| HTTP 401/402/403 (embedded in the backend's WebError message as `(HTTP 40x)`) | `auth` |
+| the probe's own timeout (abort surfaced as `WEB_ABORTED`) | `timeout` |
+| wrapped fetch transport failure (`…request failed:` — checked before any vendor status text, so a proxy error carrying an HTTP code stays `network`) | `network` |
+| any other failure (other vendor WebErrors, or a non-WebError rejection such as a credentials-layer failure inside key resolution; the row's label falls back to the plan name) | `error` |
+| firecrawl absent from the plan | `disabled` |
+
+No vendor messages, URLs, or keys ever appear in the payload.
+
+Client: the Health tab gains a Connectivity section (first, so it answers
+"does anything reach the vendors at all" before any session counters
+exist): one row per probed backend (`✓ / ✗ / −` + translated detail code +
+latency), a "tested N ago" line, and the "Test now" button. A probe
+failure shows its reason on an explicit line with the last good data in
+place — never silent. `parseHealth` validates the optional `probe` field
+with the same strictness as the counters (malformed probe → the whole
+payload is rejected).
+
+Tests: the probe mechanics (outcome mapping, the failure matrix,
+disabled-row semantics, no counter contamination, store→wire→parse round
+trip) live in the mocked failover suite; the client probe parsing
+(valid/absent/malformed + round trip) in the health suite. No scenario
+counts restated in docs.
+
 ## Open questions / risks
 
 1. **Bundle entry `id` vs install method — RESOLVED (pre-release review).**

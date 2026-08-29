@@ -55,7 +55,22 @@ export const en = {
   "health.remaining": "{count}s remaining",
   "health.none": "none",
   "health.noActivity": "No backend activity this session yet.",
-  "health.refresh": "Refresh"
+  "health.refresh": "Refresh",
+  "health.connectivity": "Connectivity",
+  "health.connectivity.test": "Test now",
+  "health.connectivity.testing": "Testing…",
+  "health.connectivity.error": "Connectivity test failed:",
+  "health.connectivity.last": "tested {age} ago",
+  "health.connectivity.none": "No connectivity test yet.",
+
+  // connectivity probe detail codes (G3; closed set, host lib/index.js)
+  "probe.ok": "OK",
+  "probe.rate-limited": "rate limited (429)",
+  "probe.auth": "auth rejected",
+  "probe.timeout": "timed out",
+  "probe.network": "network error",
+  "probe.error": "request failed",
+  "probe.disabled": "not enabled"
 };
 
 export const zh = {
@@ -115,5 +130,20 @@ export const zh = {
   "health.remaining": "剩余 {count}s",
   "health.none": "无",
   "health.noActivity": "本会话尚无后端活动。",
-  "health.refresh": "刷新"
+  "health.refresh": "刷新",
+  "health.connectivity": "连接状态",
+  "health.connectivity.test": "立即测试",
+  "health.connectivity.testing": "正在测试…",
+  "health.connectivity.error": "连接测试失败：",
+  "health.connectivity.last": "{age} 前测试",
+  "health.connectivity.none": "尚未测试连接。",
+
+  // connectivity probe detail codes (G3; closed set, host lib/index.js)
+  "probe.ok": "正常",
+  "probe.rate-limited": "限流 (429)",
+  "probe.auth": "认证被拒绝",
+  "probe.timeout": "超时",
+  "probe.network": "网络错误",
+  "probe.error": "请求失败",
+  "probe.disabled": "未启用"
 };

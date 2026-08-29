@@ -14,6 +14,8 @@ Thanks for improving the plugin! This file covers development, conventions, addi
 - **Branches**: `feat/…`, `fix/…`, `docs/…`, `test/…`, `ci/…`, `chore/…`.
 - **Commits**: Conventional Commits prefixes (`feat`, `fix`, `docs`, `test`, `ci`, `chore`, `refactor`) with an imperative subject.
 - **All changes go through a pull request** — `main` is branch-protected: a PR is required, the `test` CI check must pass (and be up to date), direct pushes and force pushes are disabled, and the rules apply to the repo owner too.
+- **PRs are opened for an atomic goal, not for a release.** One PR = one bounded, independently reviewable goal: resolve an issue, add a feature, or fix a bug. A version number is a ship-time grouping label (bump + CHANGELOG + tag + publish), never a PR boundary — a release is assembled from many atomic-goal PRs plus one final release-chore PR (the version-bump + CHANGELOG PR; see Releasing). Track each release with an umbrella issue and one subissue per atomic goal.
+- **Squash merges carry one Conventional subject + a hand-written body.** The merge commit's title is the PR's single Conventional-Commit subject (GitHub's automatic `(#N)` suffix is fine); the body is hand-written (what changed and why). Never use GitHub's default "full commit history" bullet body — intermediate commits are working state, not shippable history.
 - **Test baseline**: any new backend or behaviour change ships with a mocked failover/mapping scenario in `test/failover.test.mjs`. No scenario, no merge.
 - No API keys or secrets in the diff, ever.
 

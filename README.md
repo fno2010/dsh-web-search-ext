@@ -117,7 +117,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # then restart dsh
 
 ## Development
 
-- Tests: `npm test` — 39 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
+- Tests: `npm test` — 40 mocked failover/mapping scenarios plus live keyless smoke calls (smoke is skipped in CI).
 - Adding a backend, branch/PR conventions, and the release process: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

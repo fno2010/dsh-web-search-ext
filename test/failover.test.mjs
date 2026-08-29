@@ -816,10 +816,12 @@ function fetchProviderWith(options) {
 	);
 	assert.equal(calls, 0);
 	// HTTP-date form (RFC 7231): a future date is honored; a past date
-	// falls back to the configured flat cooldown. toUTCString() has second
-	// precision and parsing runs a few ms after the date was built, so the
-	// ceiling of (date - now) can land on 119, 120, or 121 — assert the
-	// 2-minute band, not an exact second.
+	// falls back to the configured flat cooldown. toUTCString() truncates
+	// to whole seconds and the provider's Math.ceil runs a few ms after
+	// the date was built, so the reported window lands on 120 or 119
+	// (121 is impossible — truncation + ceil never exceeds the nominal
+	// 120; 118 would need a >1 s stall between the two clocks). Assert
+	// the band, not an exact second.
 	const futureDate = new Date(Date.now() + 120_000).toUTCString();
 	const pastDate = new Date(Date.now() - 120_000).toUTCString();
 	mockFetch(async (url) => {
@@ -829,7 +831,7 @@ function fetchProviderWith(options) {
 	const p2 = providerWith(DEFAULTS);
 	await assert.rejects(
 		() => p2.search({ query: "hello" }),
-		(error) => /exa \(rate limited\).*retry in ~1(19|20|21)s/u.test(error.message)
+		(error) => /exa \(rate limited\).*retry in ~1(1[89]|20)s/u.test(error.message)
 	);
 	mockFetch(async (url) => {
 		if (url.startsWith("https://mcp.exa.ai")) return header429(pastDate);

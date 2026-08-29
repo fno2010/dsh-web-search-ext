@@ -117,7 +117,7 @@ dsh plugin --profile web remove @fno2010/dsh-web-search-ext   # 然后重启 dsh
 
 ## 开发
 
-- 测试：`npm test`——39 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
+- 测试：`npm test`——40 个 mock 故障切换/映射场景（含抓取与校验）+ 真实无 key 冒烟调用（CI 中跳过冒烟）。
 - 添加后端、分支/PR 规范、发版流程：[CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 许可证

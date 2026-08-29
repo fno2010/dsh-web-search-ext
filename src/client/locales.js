@@ -26,7 +26,15 @@ export const en = {
   "row.stopped": "Search stopped",
   "row.truncated": "Showing the first {count} sources. Refine the query for more.",
   "row.noResults": "No results found.",
-  "row.inspect": "Inspect"
+  "row.inspect": "Inspect",
+
+  // web_search toolview drill-down (C4)
+  "row.drill.backend": "Backend",
+  "row.drill.merged": " (merged across sub-queries)",
+  "row.drill.published": "Published",
+  "row.drill.unknown": "unknown",
+  "row.drill.verification": "Verified",
+  "row.drill.notVerified": "not verified"
 };
 
 export const zh = {

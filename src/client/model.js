@@ -40,6 +40,24 @@ const MARKER_TONE = {
 const RECEIPT_PREFIX = "web-search-ext:";
 
 /**
+ * Parse the serving backend's label out of a claimed receipt line.
+ * buildReceipt emits `web-search-ext: <label> · <seconds>s · …` where label
+ * is the backend that answered the call ("exa-rest" / "exa-mcp" /
+ * "firecrawl"). The per-source backend is NOT a wire field — dsh-tool-web's
+ * projectSource keeps only url/title/snippet/publishedAt — so the receipt is
+ * the card's only source of backend truth (all of a call's sources come
+ * from that one backend; failover is per-call, not per-result).
+ * @param {string} receipt - a claimed receipt line.
+ * @returns {string | null} the backend label, or null when unparseable.
+ */
+function receiptBackend(receipt) {
+  const rest = receipt.slice(RECEIPT_PREFIX.length).trimStart();
+  const sep = rest.indexOf(" · ");
+  const label = (sep === -1 ? rest : rest.slice(0, sep)).trim();
+  return label !== "" ? label : null;
+}
+
+/**
  * Parse our verification marker off a source snippet. verify.js `markSnippet`
  * emits `[label] (detail) rest`, where `detail` is free text that may itself
  * contain parentheses (fetch error reasons), so the detail group is matched
@@ -200,7 +218,7 @@ function splitReceipt(body) {
  * host lookups — the view is a function of what the turn already knows.
  * @param {object} block - frozen RunningToolCall or ToolResultNode.
  * @returns the card model consumed by the row component:
- *   { state, title, provenance: [{query, receipt}] , provenanceLines: string[],
+ *   { state, title, provenance: [{query, receipt, backend}], backends: string[],
  *     answer, truncated, sources: [{url,title,snippet,publishedAt,badge}], text }
  */
 export function webSearchCardModel(block) {
@@ -216,6 +234,7 @@ export function webSearchCardModel(block) {
     state,
     title: queryTitle(block),
     provenance: [],
+    backends: [],
     answer: null,
     truncated: false,
     sources: [],
@@ -260,7 +279,9 @@ export function webSearchCardModel(block) {
     for (const section of sections) {
       const { receipt, rest: restText } = splitReceipt(section.body);
       if (receipt !== null) {
-        model.provenance.push({ query: section.query, receipt });
+        const backend = receiptBackend(receipt);
+        model.provenance.push({ query: section.query, receipt, backend });
+        if (backend !== null && !model.backends.includes(backend)) model.backends.push(backend);
       }
       // A claimed receipt carries the query label in the provenance section;
       // a receipt-less section keeps its `### <query>` header as raw text.

@@ -183,7 +183,8 @@ function runningBlock(argsRaw) {
 	const model = webSearchCardModel(settledBlock(view));
 	assert.equal(model.state, "ok");
 	assert.equal(model.title, "q1, q2", "view title wins over argsRaw");
-	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT }]);
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa" }]);
+	assert.deepEqual(model.backends, ["exa"], "single receipt → single backend");
 	assert.equal(model.answer, "Vendor summary text.");
 	assert.equal(model.truncated, true);
 	assert.equal(model.sources.length, 3);
@@ -199,7 +200,8 @@ function runningBlock(argsRaw) {
 {
 	const view = webView({ answer: `${RECEIPT}\n`, sources: [] });
 	const model = webSearchCardModel(settledBlock(view));
-	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT }]);
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa" }]);
+	assert.deepEqual(model.backends, ["exa"]);
 	assert.equal(model.answer, null, "trailing newline leaves no answer body");
 	assert.equal(model.truncated, false);
 	ok("settled ok: receipt-only answer → provenance only, no empty answer");
@@ -233,11 +235,33 @@ function runningBlock(argsRaw) {
 	});
 	const model = webSearchCardModel(settledBlock(view));
 	assert.deepEqual(model.provenance, [
-		{ query: "harness release notes", receipt: r1 },
-		{ query: "dsh toolview slots", receipt: r2 }
+		{ query: "harness release notes", receipt: r1, backend: "exa" },
+		{ query: "dsh toolview slots", receipt: r2, backend: "exa" }
 	]);
+	assert.deepEqual(model.backends, ["exa"], "identical backends dedupe");
 	assert.equal(model.answer, "Vendor follow-up text for the second query.", "receipts+headers stripped, vendor text kept, no re-prefixed headers");
 	ok("multi-query merge: per-query receipts claimed with labels, answer de-duplicated");
+}
+
+// C4: multi-backend merge — a 429 failover mid-flight serves sub-queries from
+// different backends (real buildReceipt labels: exa-rest / exa-mcp /
+// firecrawl). The drill-down shows the honest union; attribution per source
+// is not a wire fact, so the card says "merged".
+{
+	const r1 = "web-search-ext: exa-rest · 1.1s · 5 results · liveness: 5 alive";
+	const r2 = "web-search-ext: firecrawl · 2.3s · 3 results · liveness: 2 alive, 1 dead";
+	const view = webView({
+		title: "q one, q two",
+		answer: `### q one\n\n${r1}\n\n### q two\n\n${r2}`,
+		sources: []
+	});
+	const model = webSearchCardModel(settledBlock(view));
+	assert.deepEqual(model.provenance, [
+		{ query: "q one", receipt: r1, backend: "exa-rest" },
+		{ query: "q two", receipt: r2, backend: "firecrawl" }
+	]);
+	assert.deepEqual(model.backends, ["exa-rest", "firecrawl"], "union, first-seen order");
+	ok("C4 backend: two backends in one merge → per-entry labels + union");
 }
 
 // Multi-query merge where a sub-section carries no receipt (host text is
@@ -249,7 +273,7 @@ function runningBlock(argsRaw) {
 		sources: []
 	});
 	const model = webSearchCardModel(settledBlock(view));
-	assert.deepEqual(model.provenance, [{ query: "q1", receipt: RECEIPT }]);
+	assert.deepEqual(model.provenance, [{ query: "q1", receipt: RECEIPT, backend: "exa" }]);
 	assert.equal(model.answer, "### q2\nforeign provider section text", "receipt-less section keeps its header");
 	ok("multi-query merge: receipt-less section stays foreign text with header");
 }
@@ -280,6 +304,7 @@ function runningBlock(argsRaw) {
 	});
 	const model = webSearchCardModel(settledBlock(view));
 	assert.equal(model.provenance.length, 0, "a foreign answer is not our receipt");
+	assert.deepEqual(model.backends, [], "no receipt → no backend claim");
 	assert.equal(model.answer, "Some other provider's summary line.");
 	assert.equal(model.sources[0].badge.tone, "ok", "leading marker in a foreign snippet still badges");
 	assert.equal(model.sources[1].badge, null, "embedded marker does not badge");
@@ -351,6 +376,6 @@ function runningBlock(argsRaw) {
 }
 
 // Sentinel: the scenario count lives in-test, never in docs.
-assert.equal(passed, 19, "scenario sentinel");
+assert.equal(passed, 20, "scenario sentinel");
 
 console.log(`\nAll ${passed} toolview model scenarios passed.`);

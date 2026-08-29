@@ -1,4 +1,4 @@
-// The web_search toolview row (C1).
+// The web_search toolview row (C1 card + C4 per-result drill-down).
 //
 // Registered into the keyed `tool.call.toolview` slot under key "web_search"
 // — a key the shipped composition already covers, so this is a takeover of
@@ -22,7 +22,13 @@
 //     primitive (same module our row already imports) — host parity with the
 //     built-in WebSearchBlock we replace, which renders this same wire
 //     `answer` through MarkdownText, and its contract disables raw HTML and
-//     unsafe-protocol links.
+//     unsafe-protocol links;
+//   - per-result drill-down (C4): clicking a source row expands why it is
+//     there — serving backend (parsed from the receipt; the per-source
+//     backend is not a wire field, so a multi-backend merge shows the
+//     honest union), freshness (publishedAt, "unknown" when the vendor
+//     ships none), and verification state (badge label + detail, "not
+//     verified" when the snippet carries no marker).
 //
 // A result without a structured `web` search view (generic view, host error
 // path, older host) degrades to the raw result text instead of throwing —
@@ -88,6 +94,8 @@ function firstLine(text) {
 export function WebSearchRow({ block, inspect, t }) {
   const model = webSearchCardModel(block);
   const [expanded, setExpanded] = useState(false);
+  // C4: per-result drill-down — index of the expanded source row, or null.
+  const [drillIndex, setDrillIndex] = useState(null);
   const hasBody =
     model.state === "ok"
       ? model.provenance.length > 0 ||
@@ -169,7 +177,19 @@ export function WebSearchRow({ block, inspect, t }) {
                     { key: `${source.url}:${i}`, className: css.source },
                     h(
                       "div",
-                      { className: css.sourceHead },
+                      {
+                        className: css.sourceHead,
+                        role: "button",
+                        tabIndex: 0,
+                        "aria-expanded": drillIndex === i,
+                        onClick: () => setDrillIndex(drillIndex === i ? null : i),
+                        onKeyDown: (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setDrillIndex(drillIndex === i ? null : i);
+                          }
+                        }
+                      },
                       h("span", { className: css.sourceIndex, "aria-hidden": true }, String(i + 1)),
                       source.badge !== null
                         ? h(
@@ -189,7 +209,8 @@ export function WebSearchRow({ block, inspect, t }) {
                               className: css.sourceTitle,
                               href: source.url,
                               target: "_blank",
-                              rel: "noopener noreferrer"
+                              rel: "noopener noreferrer",
+                              onClick: (event) => event.stopPropagation()
                             },
                             source.title !== null ? source.title : hostnameOf(source.url)
                           )
@@ -197,8 +218,67 @@ export function WebSearchRow({ block, inspect, t }) {
                             "span",
                             { className: css.sourceTitle, "aria-disabled": "true" },
                             source.title !== null ? source.title : source.url
-                          )
+                          ),
+                      h("span", { className: css.drillToggle, "aria-hidden": true }, "›")
                     ),
+                    // C4: per-result drill-down — why this result: which
+                    // backend served it (receipt-derived; the per-source
+                    // backend is not a wire field), its freshness
+                    // (publishedAt), and its verification state.
+                    drillIndex === i
+                      ? h(
+                          "div",
+                          { className: css.drill },
+                          [
+                            model.backends.length > 0
+                              ? h(
+                                  "div",
+                                  { className: css.drillRow },
+                                  [
+                                    h("span", { className: css.drillLabel }, t("row.drill.backend")),
+                                    h(
+                                      "span",
+                                      { className: css.drillValue },
+                                      model.backends.length > 1
+                                        ? `${model.backends.join(" · ")}${t("row.drill.merged")}`
+                                        : model.backends[0]
+                                    )
+                                  ]
+                                )
+                              : null,
+                            h(
+                              "div",
+                              { className: css.drillRow },
+                              [
+                                h("span", { className: css.drillLabel }, t("row.drill.published")),
+                                h(
+                                  "span",
+                                  { className: css.drillValue },
+                                  source.publishedAt !== null && source.publishedAt !== ""
+                                    ? source.publishedAt
+                                    : t("row.drill.unknown")
+                                )
+                              ]
+                            ),
+                            h(
+                              "div",
+                              { className: css.drillRow },
+                              [
+                                h("span", { className: css.drillLabel }, t("row.drill.verification")),
+                                h(
+                                  "span",
+                                  {
+                                    className: `${css.drillValue}${source.badge !== null ? ` ${css[`drillValue_${source.badge.tone}`]}` : ""}`
+                                  },
+                                  source.badge !== null
+                                    ? `${source.badge.label}${source.badge.detail !== null ? ` · ${source.badge.detail}` : ""}`
+                                    : t("row.drill.notVerified")
+                                )
+                              ]
+                            )
+                          ]
+                        )
+                      : null,
                     source.snippet !== ""
                       ? h("div", { className: css.sourceSnippet }, source.snippet)
                       : null,

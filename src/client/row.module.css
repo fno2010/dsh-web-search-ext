@@ -178,6 +178,74 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  cursor: pointer;
+}
+
+.drillToggle {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.drillToggle:hover {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.drillToggle[aria-expanded="true"] {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.drill {
+  border-top: 1px dashed var(--dsw-alias-border-l2);
+  margin-top: 4px;
+  padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drillRow {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.drillLabel {
+  color: var(--dsw-alias-label-caption);
+  flex: none;
+  width: 72px;
+}
+
+.drillValue {
+  color: var(--dsw-alias-label-secondary);
+  word-break: break-word;
+  min-width: 0;
+}
+
+.drillValue_ok {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.drillValue_warn {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.drillValue_error {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.drillValue_muted {
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .badge {

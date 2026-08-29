@@ -17,7 +17,12 @@
 //     carries the G5 numResults-cap case);
 //   - source URLs are clickable only when they are public http(s) links
 //     (mirrors the host's SafeLink policy; anything else renders as inert
-//     text — the wire only guarantees a string).
+//     text — the wire only guarantees a string);
+//   - the vendor answer body is rendered through the host's MarkdownText
+//     primitive (same module our row already imports) — host parity with the
+//     built-in WebSearchBlock we replace, which renders this same wire
+//     `answer` through MarkdownText, and its contract disables raw HTML and
+//     unsafe-protocol links.
 //
 // A result without a structured `web` search view (generic view, host error
 // path, older host) degrades to the raw result text instead of throwing —
@@ -28,6 +33,7 @@ import {
   DisclosureRow,
   IconGlobeOutline14,
   IconInspectOutline12,
+  MarkdownText,
   StateDot
 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { webSearchCardModel, isSafeHref } from "./model.js";
@@ -213,7 +219,11 @@ export function WebSearchRow({ block, inspect, t }) {
               )
             : null,
           model.answer !== null
-            ? h("div", { className: css.answerText }, model.answer)
+            ? h(
+                "div",
+                { className: css.answerText },
+                h(MarkdownText, { text: model.answer })
+              )
             : null,
           model.text !== null
             ? h(

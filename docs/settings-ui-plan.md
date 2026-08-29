@@ -317,15 +317,18 @@ Data path for the `web_search` toolview card (`src/client/row.js` + `model.js`):
   `dsh-web-frontend/dist` theme.
 - **Model is pure** (`src/client/model.js`, no React/CSS imports) and unit
   tested in `test/toolview.test.mjs` (deterministic, no network).
-- **Answer body is plain pre-wrap text, not rendered markdown.** The vendor
-  answer (`resultView.answer` minus our claimed receipts/headers) is shown as
-  `white-space: pre-wrap` text, which is what the host's own generic
-  tool-result path does too. The installed `dsh-client-ui-tool` client entry
-  exports only `apply`/`inject` — no Markdown component to import — and the
-  host web-frontend dist exposes no verified markdown primitive for plugins,
-  so importing a renderer would be an unverified runtime-risk import. Trade-off:
-  if a vendor answer embeds markdown syntax it shows as source text. Revisit
-  only if the pinned host surfaces a verified markdown primitive.
+- **Answer body renders through the host's `MarkdownText` primitive**
+  (`model.answer`, i.e. `resultView.answer` minus our claimed receipts/
+  headers). Verified in the installed web-frontend dist export map:
+  `MarkdownText` sits in the same `@deepseek-ai/dsh-client-ui-primitives`
+  module our row already imports (alongside `DisclosureRow`/`StateDot`, in
+  the tsdown `neverBundle` list), and the built-in `WebSearchBlock` it
+  replaces renders this same wire `answer` through it (`jsx(MarkdownText,
+  { text: answer })` — the only call site). Its contract disables raw HTML,
+  relative links, and unsafe protocols, so it is the safer renderer, not a
+  risk. The non-web degraded path (`model.text`) stays plain pre-wrap — that
+  is the host's generic tool-result treatment, and error text must never be
+  re-interpreted as markdown.
 
 ## Open questions / risks
 

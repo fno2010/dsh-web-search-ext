@@ -2,7 +2,7 @@ try {
 window.__ModuleLoader__.load({ id: "dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText, .row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText, .row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -41,6 +41,7 @@ const en = {
 	"row.failed": "Search failed",
 	"row.stopped": "Search stopped",
 	"row.truncated": "Showing the first {count} sources. Refine the query for more.",
+	"row.noResults": "No results found.",
 	"row.inspect": "Inspect"
 };
 const zh = {
@@ -68,6 +69,7 @@ const zh = {
 	"row.failed": "搜索失败",
 	"row.stopped": "搜索已中止",
 	"row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",
+	"row.noResults": "未找到结果。",
 	"row.inspect": "查看"
 };
 //#endregion
@@ -86,10 +88,15 @@ const MARKER_TONE = {
 	unreachable: "error",
 	skipped: "muted"
 };
-/** Leading marker shape from verify.js `markSnippet`: `[label]( detail)? rest`. */
-const MARKER_RE = /^\[([^\]]+)\](?:\s*\(([^)]*)\))?\s*/;
+/** Receipt prefix: our provenance line is only ever claimed from a line that
+*  starts with this (lib/index.js buildReceipt). */
+const RECEIPT_PREFIX = "web-search-ext:";
 /**
-* Parse our verification marker off a source snippet.
+* Parse our verification marker off a source snippet. verify.js `markSnippet`
+* emits `[label] (detail) rest`, where `detail` is free text that may itself
+* contain parentheses (fetch error reasons), so the detail group is matched
+* with a balanced-paren scan, not a `[^)]*` regex (which truncates at the
+* first inner `)`).
 * @param {string} snippet - the source snippet as it arrived on the wire.
 * @returns {{ marker: string, tone: string, detail: string | null, rest: string } | null}
 *   null when the snippet carries no known marker (verifyLevel off, or a
@@ -97,16 +104,54 @@ const MARKER_RE = /^\[([^\]]+)\](?:\s*\(([^)]*)\))?\s*/;
 */
 function parseMarker(snippet) {
 	if (typeof snippet !== "string" || snippet === "") return null;
-	const m = snippet.match(MARKER_RE);
-	if (m === null) return null;
-	const tone = MARKER_TONE[m[1]];
+	if (snippet[0] !== "[") return null;
+	const close = snippet.indexOf("]");
+	if (close === -1) return null;
+	const marker = snippet.slice(1, close);
+	const tone = MARKER_TONE[marker];
 	if (tone === void 0) return null;
+	let restStart = close + 1;
+	let detail = null;
+	if (snippet[restStart] === " " && snippet[restStart + 1] === "(") {
+		let depth = 0;
+		let end = -1;
+		for (let i = restStart + 1; i < snippet.length; i += 1) if (snippet[i] === "(") depth += 1;
+		else if (snippet[i] === ")") {
+			depth -= 1;
+			if (depth === 0) {
+				end = i;
+				break;
+			}
+		}
+		if (end !== -1) {
+			detail = snippet.slice(restStart + 2, end) || null;
+			restStart = end + 1;
+		}
+	}
 	return {
-		marker: m[1],
+		marker,
 		tone,
-		detail: m[2] || null,
-		rest: snippet.slice(m[0].length)
+		detail,
+		rest: snippet.slice(restStart).replace(/^\s+/, "")
 	};
+}
+/**
+* Whether a wire source URL is safe to render as a clickable link. The
+* mirror of the host's SafeLink policy: only public http(s) URLs are links;
+* everything else renders as inert text (the wire only guarantees a string,
+* and a nonconforming or malicious provider could carry javascript:/data:
+* URLs).
+* @param {unknown} url
+* @returns {boolean}
+*/
+function isSafeHref(url) {
+	if (typeof url !== "string" || url === "") return false;
+	try {
+		const protocol = new URL(url).protocol;
+		return protocol === "http:" || protocol === "https:";
+	} catch {
+		return false;
+	}
 }
 /**
 * The row title: the host's authoritative view title when present, else the
@@ -138,10 +183,60 @@ function contentText(block) {
 	return text === "" ? null : text;
 }
 /**
+* Split a tool output answer into per-query sections. The host joins
+* multi-query results as `### <query>\n\n<content>` (dsh-tool-web
+* mergeSearchResults); a single-query answer is one section without a header.
+* An unanchored leading `###` line in provider text is treated as a section
+* boundary too — worst case a receipt-less foreign section, which is exactly
+* how foreign text is identified (no receipt claimed for it).
+* @param {string} answer
+* @returns {Array<{ query: string | null, body: string }>}
+*/
+function splitSections(answer) {
+	const sections = [];
+	const parts = answer.split(/\n(?=### )/);
+	for (const part of parts) {
+		const m = part.match(/^### ([^\n]*)\n/);
+		if (m !== null) sections.push({
+			query: m[1].trim() || null,
+			body: part.slice(m[0].length).trim()
+		});
+		else sections.push({
+			query: null,
+			body: part.trim()
+		});
+	}
+	return sections.filter((section) => section.body !== "");
+}
+/**
+* Extract (receipt, rest) pairs from one section body. A section contributes
+* a receipt only when one of its lines starts with our receipt prefix —
+* foreign provider text is never dressed up as web-search-ext provenance.
+* @param {string} body
+* @returns {{ receipt: string | null, rest: string | null }}
+*/
+function splitReceipt(body) {
+	const lines = body.split("\n");
+	const receiptIndex = lines.findIndex((line) => line.trimStart().startsWith(RECEIPT_PREFIX));
+	if (receiptIndex === -1) return {
+		receipt: null,
+		rest: body
+	};
+	const receipt = lines[receiptIndex].trim();
+	lines.splice(receiptIndex, 1);
+	const rest = lines.join("\n").trim();
+	return {
+		receipt,
+		rest: rest !== "" ? rest : null
+	};
+}
+/**
 * Derive the whole card from the frozen block. Pure: no subscriptions, no
 * host lookups — the view is a function of what the turn already knows.
 * @param {object} block - frozen RunningToolCall or ToolResultNode.
-* @returns the card model consumed by the row component.
+* @returns the card model consumed by the row component:
+*   { state, title, provenance: [{query, receipt}] , provenanceLines: string[],
+*     answer, truncated, sources: [{url,title,snippet,publishedAt,badge}], text }
 */
 function webSearchCardModel(block) {
 	const settled = "kind" in block;
@@ -149,7 +244,7 @@ function webSearchCardModel(block) {
 	const model = {
 		state,
 		title: queryTitle(block),
-		provenance: null,
+		provenance: [],
 		answer: null,
 		truncated: false,
 		sources: [],
@@ -168,12 +263,17 @@ function webSearchCardModel(block) {
 	}
 	model.truncated = web.truncated === true;
 	if (typeof web.answer === "string" && web.answer !== "") {
-		const nl = web.answer.indexOf("\n");
-		const first = (nl === -1 ? web.answer : web.answer.slice(0, nl)).trim();
-		if (first.startsWith("web-search-ext:")) {
-			model.provenance = first;
-			model.answer = nl === -1 ? null : web.answer.slice(nl + 1).trim() !== "" ? web.answer.slice(nl + 1).trim() : null;
-		} else model.answer = web.answer.trim() !== "" ? web.answer.trim() : null;
+		const sections = splitSections(web.answer);
+		const rest = [];
+		for (const section of sections) {
+			const { receipt, rest: restText } = splitReceipt(section.body);
+			if (receipt !== null) model.provenance.push({
+				query: section.query,
+				receipt
+			});
+			if (restText !== null) rest.push(receipt === null && section.query !== null ? `### ${section.query}\n${restText}` : restText);
+		}
+		model.answer = rest.length > 0 ? rest.join("\n\n") : null;
 	}
 	for (const source of web.sources) {
 		if (source === null || typeof source !== "object") continue;
@@ -205,17 +305,22 @@ var row_module_default = {
 	"bodyWrap": "row-module__bodyWrap",
 	"card": "row-module__card",
 	"chevron": "row-module__chevron",
+	"emptyNote": "row-module__emptyNote",
 	"errorSummary": "row-module__errorSummary",
 	"errorText": "row-module__errorText",
 	"genericText": "row-module__genericText",
 	"inspectButton": "row-module__inspectButton",
 	"leading": "row-module__leading",
 	"provenance": "row-module__provenance",
+	"provenanceEntry": "row-module__provenanceEntry",
+	"provenanceLine": "row-module__provenanceLine",
+	"provenanceQuery": "row-module__provenanceQuery",
 	"root": "row-module__root",
 	"row": "row-module__row",
 	"sep": "row-module__sep",
 	"source": "row-module__source",
 	"sourceHead": "row-module__sourceHead",
+	"sourceIndex": "row-module__sourceIndex",
 	"sourceMeta": "row-module__sourceMeta",
 	"sources": "row-module__sources",
 	"sourceSnippet": "row-module__sourceSnippet",
@@ -266,8 +371,10 @@ function firstLine(text) {
 function WebSearchRow({ block, inspect, t }) {
 	const model = webSearchCardModel(block);
 	const [expanded, setExpanded] = (0, react.useState)(false);
-	const hasBody = model.state === "ok" ? model.provenance !== null || model.sources.length > 0 || model.truncated === true || model.answer !== null || model.text !== null : model.text !== null;
-	const open = expanded && hasBody;
+	const hasBody = model.state === "ok" ? model.provenance.length > 0 || model.sources.length > 0 || model.truncated === true || model.answer !== null || model.text !== null : model.text !== null;
+	const empty = model.state === "ok" && !hasBody;
+	const expandable = hasBody || empty;
+	const open = expanded && expandable;
 	const status = stateStatus(model.state, t);
 	const summary = model.state === "error" && model.text !== null ? firstLine(model.text) : model.title !== "" ? model.title : t("row.title");
 	const summaryClass = model.state === "error" ? `${row_module_default.summary} ${row_module_default.errorSummary}` : row_module_default.summary;
@@ -283,7 +390,7 @@ function WebSearchRow({ block, inspect, t }) {
 		icon: leadingFor(model.state),
 		title: t("row.title"),
 		open,
-		expandable: hasBody,
+		expandable,
 		expandOnRowClick: true,
 		keepContentWhenOpen: true,
 		onToggle: () => setExpanded((value) => !value),
@@ -295,15 +402,24 @@ function WebSearchRow({ block, inspect, t }) {
 			key: "summary",
 			className: summaryClass
 		}, summary)]
-	}, (0, react.createElement)("div", { className: row_module_default.bodyWrap }, (0, react.createElement)("div", { className: row_module_default.card }, model.provenance !== null ? (0, react.createElement)("div", { className: row_module_default.provenance }, model.provenance) : null, model.sources.length > 0 ? (0, react.createElement)("ul", { className: row_module_default.sources }, model.sources.map((source, i) => (0, react.createElement)("li", {
+	}, (0, react.createElement)("div", { className: row_module_default.bodyWrap }, (0, react.createElement)("div", { className: row_module_default.card }, model.provenance.length > 0 ? (0, react.createElement)("div", { className: row_module_default.provenance }, model.provenance.map((entry, i) => (0, react.createElement)("div", {
+		key: i,
+		className: row_module_default.provenanceEntry
+	}, entry.query !== null ? (0, react.createElement)("div", { className: row_module_default.provenanceQuery }, entry.query) : null, (0, react.createElement)("div", { className: row_module_default.provenanceLine }, entry.receipt)))) : null, empty ? (0, react.createElement)("div", { className: row_module_default.emptyNote }, t("row.noResults")) : null, model.sources.length > 0 ? (0, react.createElement)("ul", { className: row_module_default.sources }, model.sources.map((source, i) => (0, react.createElement)("li", {
 		key: `${source.url}:${i}`,
 		className: row_module_default.source
-	}, (0, react.createElement)("div", { className: row_module_default.sourceHead }, source.badge !== null ? (0, react.createElement)("span", { className: `${row_module_default.badge} ${row_module_default[`badge_${source.badge.tone}`]}` }, source.badge.detail !== null ? `${source.badge.label} · ${source.badge.detail}` : source.badge.label) : null, (0, react.createElement)("a", {
+	}, (0, react.createElement)("div", { className: row_module_default.sourceHead }, (0, react.createElement)("span", {
+		className: row_module_default.sourceIndex,
+		"aria-hidden": true
+	}, String(i + 1)), source.badge !== null ? (0, react.createElement)("span", { className: `${row_module_default.badge} ${row_module_default[`badge_${source.badge.tone}`]}` }, source.badge.detail !== null ? `${source.badge.label} · ${source.badge.detail}` : source.badge.label) : null, isSafeHref(source.url) ? (0, react.createElement)("a", {
 		className: row_module_default.sourceTitle,
 		href: source.url,
 		target: "_blank",
 		rel: "noopener noreferrer"
-	}, source.title !== null ? source.title : hostnameOf(source.url))), source.snippet !== "" ? (0, react.createElement)("div", { className: row_module_default.sourceSnippet }, source.snippet) : null, (0, react.createElement)("div", { className: row_module_default.sourceMeta }, [source.url, source.publishedAt].filter((part) => part !== null && part !== "").join(" · "))))) : null, model.truncated === true ? (0, react.createElement)("div", { className: row_module_default.truncatedNote }, t("row.truncated", { count: model.sources.length })) : null, model.answer !== null ? (0, react.createElement)("div", { className: row_module_default.answerText }, model.answer) : null, model.text !== null ? (0, react.createElement)("div", { className: model.state === "error" ? `${row_module_default.genericText} ${row_module_default.errorText}` : row_module_default.genericText }, model.text) : null), inspect !== void 0 ? (0, react.createElement)("button", {
+	}, source.title !== null ? source.title : hostnameOf(source.url)) : (0, react.createElement)("span", {
+		className: row_module_default.sourceTitle,
+		"aria-disabled": "true"
+	}, source.title !== null ? source.title : source.url)), source.snippet !== "" ? (0, react.createElement)("div", { className: row_module_default.sourceSnippet }, source.snippet) : null, (0, react.createElement)("div", { className: row_module_default.sourceMeta }, [source.url, source.publishedAt].filter((part) => part !== null && part !== "").join(" · "))))) : null, model.truncated === true ? (0, react.createElement)("div", { className: row_module_default.truncatedNote }, t("row.truncated", { count: model.sources.length })) : null, model.answer !== null ? (0, react.createElement)("div", { className: row_module_default.answerText }, model.answer) : null, model.text !== null ? (0, react.createElement)("div", { className: model.state === "error" ? `${row_module_default.genericText} ${row_module_default.errorText}` : row_module_default.genericText }, model.text) : null), inspect !== void 0 ? (0, react.createElement)("button", {
 		type: "button",
 		className: row_module_default.inspectButton,
 		onClick: inspect
@@ -663,7 +779,7 @@ try {
 window.__ModuleLoader__.load({ id: "@fno2010/dsh-web-search-ext", factory: (require) => {
 	var module = { exports: {} };
 	var exports = module.exports;
-const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText, .row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
+const wsxCss = ".row-module__root {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__row {\n  align-items: center;\n  min-width: 0;\n  height: 24px;\n  display: flex;\n  position: relative;\n  overflow: hidden;\n}\n\n.row-module__row[data-expandable] {\n  cursor: pointer;\n}\n\n.row-module__root[data-state=\"running\"] .row-module__row:after {\n  content: \"\";\n  background: linear-gradient(90deg, transparent 0%,\n    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%, transparent 100%);\n  pointer-events: none;\n  width: 300px;\n  animation: 2.6s ease-out infinite row-module__sweep;\n  position: absolute;\n  top: 0;\n  bottom: 0;\n  left: 0;\n}\n\n@keyframes row-module__sweep {\n  0% {\n    left: -300px;\n  }\n\n  90%, 100% {\n    left: 100%;\n  }\n}\n\n.row-module__leading {\n  width: 16px;\n  height: 16px;\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  justify-content: center;\n  align-items: center;\n  margin-right: 6px;\n  display: inline-flex;\n  position: relative;\n}\n\n.row-module__title {\n  color: var(--dsw-alias-label-secondary);\n  flex: none;\n  font-size: 14px;\n  line-height: 24px;\n}\n\n.row-module__chevron {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__sep {\n  background: var(--dsw-alias-label-caption);\n  border-radius: 1px;\n  flex: none;\n  width: 2px;\n  height: 2px;\n  margin: 0 8px;\n}\n\n.row-module__summary {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--dsw-alias-label-tertiary);\n  flex: auto;\n  font-size: 14px;\n  line-height: 24px;\n  overflow: hidden;\n}\n\n.row-module__errorSummary {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__visuallyHidden {\n  clip: rect(0 0 0 0);\n  white-space: nowrap;\n  border: 0;\n  width: 1px;\n  height: 1px;\n  margin: -1px;\n  padding: 0;\n  position: absolute;\n  overflow: hidden;\n}\n\n.row-module__bodyWrap {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__card {\n  border: 1px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block);\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 8px;\n  max-height: 320px;\n  margin: 4px 0 4px 4px;\n  padding: 8px 12px;\n  display: flex;\n  overflow: auto;\n}\n\n.row-module__provenance {\n  color: var(--dsw-alias-label-secondary);\n  border-bottom: 1px solid var(--dsw-alias-border-l2);\n  flex-direction: column;\n  gap: 4px;\n  padding-bottom: 6px;\n  font-size: 12px;\n  line-height: 1.5;\n  display: flex;\n}\n\n.row-module__provenanceEntry {\n  flex-direction: column;\n  display: flex;\n}\n\n.row-module__provenanceQuery {\n  color: var(--dsw-alias-label-caption);\n  font-size: 11px;\n}\n\n.row-module__provenanceLine {\n  color: var(--dsw-alias-label-secondary);\n}\n\n.row-module__emptyNote {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n}\n\n.row-module__sourceIndex {\n  color: var(--dsw-alias-label-caption);\n  text-align: right;\n  flex: none;\n  min-width: 14px;\n  font-size: 12px;\n}\n\n.row-module__sources {\n  flex-direction: column;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.row-module__source {\n  padding: 6px 0;\n}\n\n.row-module__source + .row-module__source {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.row-module__sourceHead {\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n  display: flex;\n}\n\n.row-module__badge {\n  white-space: nowrap;\n  border: 1px solid;\n  border-radius: 999px;\n  flex: none;\n  padding: 0 6px;\n  font-size: 11px;\n  line-height: 18px;\n}\n\n.row-module__badge_ok {\n  color: var(--dsw-alias-state-success-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_warn {\n  color: var(--dsw-alias-state-warn-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_error {\n  color: var(--dsw-alias-state-error-primary);\n  border-color: currentColor;\n}\n\n.row-module__badge_muted {\n  color: var(--dsw-alias-label-tertiary);\n  border-color: currentColor;\n}\n\n.row-module__sourceTitle {\n  color: var(--dsw-alias-label-primary);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  text-decoration: none;\n  overflow: hidden;\n}\n\n.row-module__sourceTitle:hover {\n  text-decoration: underline;\n}\n\n.row-module__sourceSnippet {\n  color: var(--dsw-alias-label-secondary);\n  -webkit-line-clamp: 3;\n  -webkit-box-orient: vertical;\n  margin-top: 2px;\n  font-size: 13px;\n  line-height: 1.5;\n  display: -webkit-box;\n  overflow: hidden;\n}\n\n.row-module__sourceMeta {\n  color: var(--dsw-alias-label-caption);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  margin-top: 2px;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.row-module__truncatedNote {\n  color: var(--dsw-alias-state-warn-primary);\n  font-size: 12px;\n}\n\n.row-module__answerText, .row-module__genericText {\n  color: var(--dsw-alias-label-secondary);\n  white-space: pre-wrap;\n  word-break: break-word;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.row-module__errorText {\n  color: var(--dsw-alias-state-error-primary);\n}\n\n.row-module__inspectButton {\n  border: 1px solid var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  cursor: pointer;\n  background: none;\n  border-radius: 8px;\n  align-self: flex-start;\n  align-items: center;\n  gap: 4px;\n  margin: 0 0 0 4px;\n  padding: 2px 8px;\n  font-size: 12px;\n  line-height: 16px;\n  display: inline-flex;\n}\n\n.row-module__inspectButton:hover {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-tertiary);\n}\n.card-module__card {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  border-radius: 12px;\n  list-style: none;\n  transition: border-color .16s, background .16s;\n}\n\n.card-module__card:hover {\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__cardOpen {\n  background: var(--dsw-alias-bg-layer-2);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__header {\n  appearance: none;\n  width: 100%;\n  font: inherit;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: 0;\n  border-radius: 12px;\n  align-items: center;\n  gap: 12px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.card-module__header:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: -2px;\n}\n\n.card-module__headText {\n  flex-direction: column;\n  flex: 1;\n  gap: 4px;\n  min-width: 0;\n  display: flex;\n}\n\n.card-module__name {\n  color: var(--dsw-alias-label-primary);\n  font-size: 15px;\n  font-weight: 600;\n  line-height: 1.4;\n}\n\n.card-module__description {\n  color: var(--dsw-alias-label-tertiary);\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__chevron {\n  color: var(--dsw-alias-label-tertiary);\n  flex: none;\n  transition: transform .16s;\n  display: inline-flex;\n}\n\n.card-module__chevronOpen {\n  transform: rotate(180deg);\n}\n\n.card-module__body {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  margin: 0 16px;\n  padding-bottom: 8px;\n}\n\n.card-module__field {\n  flex-direction: column;\n  gap: 6px;\n  padding: 12px 0;\n  display: flex;\n}\n\n.card-module__field + .card-module__field {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n}\n\n.card-module__head {\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.card-module__label {\n  min-width: 0;\n  color: var(--dsw-alias-label-primary);\n  flex: 1;\n  font-size: 13px;\n  font-weight: 500;\n  line-height: 1.5;\n}\n\n.card-module__badges {\n  align-items: center;\n  gap: 8px;\n  display: inline-flex;\n}\n\n.card-module__badge {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__badgeMuted {\n  white-space: nowrap;\n  color: var(--dsw-alias-label-tertiary);\n  border-radius: 999px;\n  padding: 1px 8px;\n  font-size: 11px;\n  line-height: 17px;\n}\n\n.card-module__pending {\n  white-space: nowrap;\n  background: var(--dsw-alias-bg-module-platform);\n  color: var(--dsw-alias-label-secondary);\n  border-radius: 999px;\n  flex: none;\n  padding: 1px 8px;\n  font-size: 11px;\n  font-weight: 500;\n  line-height: 17px;\n}\n\n.card-module__input {\n  border: 1px solid var(--dsw-alias-border-l2);\n  background: var(--dsw-alias-bg-layer-3);\n  height: 34px;\n  font: inherit;\n  color: var(--dsw-alias-label-primary);\n  border-radius: 8px;\n  padding: 0 12px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__input:focus-visible {\n  border-color: var(--dsw-alias-brand-primary);\n  outline: none;\n}\n\n.card-module__input:disabled {\n  color: var(--dsw-alias-label-tertiary);\n  cursor: default;\n}\n\n.card-module__hint {\n  color: var(--dsw-alias-label-tertiary);\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__check {\n  width: 14px;\n  height: 14px;\n  accent-color: var(--dsw-alias-brand-primary);\n}\n\n.card-module__footer {\n  border-top: 1px solid var(--dsw-alias-border-l2);\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n  padding: 12px 0 4px;\n  display: flex;\n}\n\n.card-module__failed {\n  min-width: 0;\n  color: var(--dsw-alias-label-error);\n  flex: 1;\n  margin: 0;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.card-module__discard, .card-module__save {\n  appearance: none;\n  font: inherit;\n  cursor: pointer;\n  border: 1px solid #0000;\n  border-radius: 8px;\n  padding: 5px 14px;\n  font-size: 13px;\n  line-height: 1.5;\n}\n\n.card-module__discard {\n  border-color: var(--dsw-alias-border-l2);\n  color: var(--dsw-alias-label-secondary);\n  background: none;\n}\n\n.card-module__discard:hover:not(:disabled) {\n  color: var(--dsw-alias-label-primary);\n  border-color: var(--dsw-alias-label-dimmed);\n}\n\n.card-module__save {\n  background: var(--dsw-alias-label-primary);\n  color: var(--dsw-alias-bg-layer-3);\n}\n\n.card-module__discard:disabled, .card-module__save:disabled {\n  opacity: .4;\n  cursor: default;\n}\n\n.card-module__discard:focus-visible, .card-module__save:focus-visible {\n  outline: 2px solid var(--dsw-alias-brand-primary);\n  outline-offset: 1px;\n}\n\n.card-module__spin {\n  animation: .8s linear infinite card-module__wsx-rot;\n  display: inline-flex;\n}\n\n@keyframes card-module__wsx-rot {\n  to {\n    transform: rotate(360deg);\n  }\n}\n";
 const wsxTagId = "@fno2010/dsh-web-search-ext/card.module.css";
 if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(wsxTagId) + "]") === null) {
 	const tag = document.createElement("style");
@@ -702,6 +818,7 @@ const en = {
 	"row.failed": "Search failed",
 	"row.stopped": "Search stopped",
 	"row.truncated": "Showing the first {count} sources. Refine the query for more.",
+	"row.noResults": "No results found.",
 	"row.inspect": "Inspect"
 };
 const zh = {
@@ -729,6 +846,7 @@ const zh = {
 	"row.failed": "搜索失败",
 	"row.stopped": "搜索已中止",
 	"row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",
+	"row.noResults": "未找到结果。",
 	"row.inspect": "查看"
 };
 //#endregion
@@ -747,10 +865,15 @@ const MARKER_TONE = {
 	unreachable: "error",
 	skipped: "muted"
 };
-/** Leading marker shape from verify.js `markSnippet`: `[label]( detail)? rest`. */
-const MARKER_RE = /^\[([^\]]+)\](?:\s*\(([^)]*)\))?\s*/;
+/** Receipt prefix: our provenance line is only ever claimed from a line that
+*  starts with this (lib/index.js buildReceipt). */
+const RECEIPT_PREFIX = "web-search-ext:";
 /**
-* Parse our verification marker off a source snippet.
+* Parse our verification marker off a source snippet. verify.js `markSnippet`
+* emits `[label] (detail) rest`, where `detail` is free text that may itself
+* contain parentheses (fetch error reasons), so the detail group is matched
+* with a balanced-paren scan, not a `[^)]*` regex (which truncates at the
+* first inner `)`).
 * @param {string} snippet - the source snippet as it arrived on the wire.
 * @returns {{ marker: string, tone: string, detail: string | null, rest: string } | null}
 *   null when the snippet carries no known marker (verifyLevel off, or a
@@ -758,16 +881,54 @@ const MARKER_RE = /^\[([^\]]+)\](?:\s*\(([^)]*)\))?\s*/;
 */
 function parseMarker(snippet) {
 	if (typeof snippet !== "string" || snippet === "") return null;
-	const m = snippet.match(MARKER_RE);
-	if (m === null) return null;
-	const tone = MARKER_TONE[m[1]];
+	if (snippet[0] !== "[") return null;
+	const close = snippet.indexOf("]");
+	if (close === -1) return null;
+	const marker = snippet.slice(1, close);
+	const tone = MARKER_TONE[marker];
 	if (tone === void 0) return null;
+	let restStart = close + 1;
+	let detail = null;
+	if (snippet[restStart] === " " && snippet[restStart + 1] === "(") {
+		let depth = 0;
+		let end = -1;
+		for (let i = restStart + 1; i < snippet.length; i += 1) if (snippet[i] === "(") depth += 1;
+		else if (snippet[i] === ")") {
+			depth -= 1;
+			if (depth === 0) {
+				end = i;
+				break;
+			}
+		}
+		if (end !== -1) {
+			detail = snippet.slice(restStart + 2, end) || null;
+			restStart = end + 1;
+		}
+	}
 	return {
-		marker: m[1],
+		marker,
 		tone,
-		detail: m[2] || null,
-		rest: snippet.slice(m[0].length)
+		detail,
+		rest: snippet.slice(restStart).replace(/^\s+/, "")
 	};
+}
+/**
+* Whether a wire source URL is safe to render as a clickable link. The
+* mirror of the host's SafeLink policy: only public http(s) URLs are links;
+* everything else renders as inert text (the wire only guarantees a string,
+* and a nonconforming or malicious provider could carry javascript:/data:
+* URLs).
+* @param {unknown} url
+* @returns {boolean}
+*/
+function isSafeHref(url) {
+	if (typeof url !== "string" || url === "") return false;
+	try {
+		const protocol = new URL(url).protocol;
+		return protocol === "http:" || protocol === "https:";
+	} catch {
+		return false;
+	}
 }
 /**
 * The row title: the host's authoritative view title when present, else the
@@ -799,10 +960,60 @@ function contentText(block) {
 	return text === "" ? null : text;
 }
 /**
+* Split a tool output answer into per-query sections. The host joins
+* multi-query results as `### <query>\n\n<content>` (dsh-tool-web
+* mergeSearchResults); a single-query answer is one section without a header.
+* An unanchored leading `###` line in provider text is treated as a section
+* boundary too — worst case a receipt-less foreign section, which is exactly
+* how foreign text is identified (no receipt claimed for it).
+* @param {string} answer
+* @returns {Array<{ query: string | null, body: string }>}
+*/
+function splitSections(answer) {
+	const sections = [];
+	const parts = answer.split(/\n(?=### )/);
+	for (const part of parts) {
+		const m = part.match(/^### ([^\n]*)\n/);
+		if (m !== null) sections.push({
+			query: m[1].trim() || null,
+			body: part.slice(m[0].length).trim()
+		});
+		else sections.push({
+			query: null,
+			body: part.trim()
+		});
+	}
+	return sections.filter((section) => section.body !== "");
+}
+/**
+* Extract (receipt, rest) pairs from one section body. A section contributes
+* a receipt only when one of its lines starts with our receipt prefix —
+* foreign provider text is never dressed up as web-search-ext provenance.
+* @param {string} body
+* @returns {{ receipt: string | null, rest: string | null }}
+*/
+function splitReceipt(body) {
+	const lines = body.split("\n");
+	const receiptIndex = lines.findIndex((line) => line.trimStart().startsWith(RECEIPT_PREFIX));
+	if (receiptIndex === -1) return {
+		receipt: null,
+		rest: body
+	};
+	const receipt = lines[receiptIndex].trim();
+	lines.splice(receiptIndex, 1);
+	const rest = lines.join("\n").trim();
+	return {
+		receipt,
+		rest: rest !== "" ? rest : null
+	};
+}
+/**
 * Derive the whole card from the frozen block. Pure: no subscriptions, no
 * host lookups — the view is a function of what the turn already knows.
 * @param {object} block - frozen RunningToolCall or ToolResultNode.
-* @returns the card model consumed by the row component.
+* @returns the card model consumed by the row component:
+*   { state, title, provenance: [{query, receipt}] , provenanceLines: string[],
+*     answer, truncated, sources: [{url,title,snippet,publishedAt,badge}], text }
 */
 function webSearchCardModel(block) {
 	const settled = "kind" in block;
@@ -810,7 +1021,7 @@ function webSearchCardModel(block) {
 	const model = {
 		state,
 		title: queryTitle(block),
-		provenance: null,
+		provenance: [],
 		answer: null,
 		truncated: false,
 		sources: [],
@@ -829,12 +1040,17 @@ function webSearchCardModel(block) {
 	}
 	model.truncated = web.truncated === true;
 	if (typeof web.answer === "string" && web.answer !== "") {
-		const nl = web.answer.indexOf("\n");
-		const first = (nl === -1 ? web.answer : web.answer.slice(0, nl)).trim();
-		if (first.startsWith("web-search-ext:")) {
-			model.provenance = first;
-			model.answer = nl === -1 ? null : web.answer.slice(nl + 1).trim() !== "" ? web.answer.slice(nl + 1).trim() : null;
-		} else model.answer = web.answer.trim() !== "" ? web.answer.trim() : null;
+		const sections = splitSections(web.answer);
+		const rest = [];
+		for (const section of sections) {
+			const { receipt, rest: restText } = splitReceipt(section.body);
+			if (receipt !== null) model.provenance.push({
+				query: section.query,
+				receipt
+			});
+			if (restText !== null) rest.push(receipt === null && section.query !== null ? `### ${section.query}\n${restText}` : restText);
+		}
+		model.answer = rest.length > 0 ? rest.join("\n\n") : null;
 	}
 	for (const source of web.sources) {
 		if (source === null || typeof source !== "object") continue;
@@ -866,17 +1082,22 @@ var row_module_default = {
 	"bodyWrap": "row-module__bodyWrap",
 	"card": "row-module__card",
 	"chevron": "row-module__chevron",
+	"emptyNote": "row-module__emptyNote",
 	"errorSummary": "row-module__errorSummary",
 	"errorText": "row-module__errorText",
 	"genericText": "row-module__genericText",
 	"inspectButton": "row-module__inspectButton",
 	"leading": "row-module__leading",
 	"provenance": "row-module__provenance",
+	"provenanceEntry": "row-module__provenanceEntry",
+	"provenanceLine": "row-module__provenanceLine",
+	"provenanceQuery": "row-module__provenanceQuery",
 	"root": "row-module__root",
 	"row": "row-module__row",
 	"sep": "row-module__sep",
 	"source": "row-module__source",
 	"sourceHead": "row-module__sourceHead",
+	"sourceIndex": "row-module__sourceIndex",
 	"sourceMeta": "row-module__sourceMeta",
 	"sources": "row-module__sources",
 	"sourceSnippet": "row-module__sourceSnippet",
@@ -927,8 +1148,10 @@ function firstLine(text) {
 function WebSearchRow({ block, inspect, t }) {
 	const model = webSearchCardModel(block);
 	const [expanded, setExpanded] = (0, react.useState)(false);
-	const hasBody = model.state === "ok" ? model.provenance !== null || model.sources.length > 0 || model.truncated === true || model.answer !== null || model.text !== null : model.text !== null;
-	const open = expanded && hasBody;
+	const hasBody = model.state === "ok" ? model.provenance.length > 0 || model.sources.length > 0 || model.truncated === true || model.answer !== null || model.text !== null : model.text !== null;
+	const empty = model.state === "ok" && !hasBody;
+	const expandable = hasBody || empty;
+	const open = expanded && expandable;
 	const status = stateStatus(model.state, t);
 	const summary = model.state === "error" && model.text !== null ? firstLine(model.text) : model.title !== "" ? model.title : t("row.title");
 	const summaryClass = model.state === "error" ? `${row_module_default.summary} ${row_module_default.errorSummary}` : row_module_default.summary;
@@ -944,7 +1167,7 @@ function WebSearchRow({ block, inspect, t }) {
 		icon: leadingFor(model.state),
 		title: t("row.title"),
 		open,
-		expandable: hasBody,
+		expandable,
 		expandOnRowClick: true,
 		keepContentWhenOpen: true,
 		onToggle: () => setExpanded((value) => !value),
@@ -956,15 +1179,24 @@ function WebSearchRow({ block, inspect, t }) {
 			key: "summary",
 			className: summaryClass
 		}, summary)]
-	}, (0, react.createElement)("div", { className: row_module_default.bodyWrap }, (0, react.createElement)("div", { className: row_module_default.card }, model.provenance !== null ? (0, react.createElement)("div", { className: row_module_default.provenance }, model.provenance) : null, model.sources.length > 0 ? (0, react.createElement)("ul", { className: row_module_default.sources }, model.sources.map((source, i) => (0, react.createElement)("li", {
+	}, (0, react.createElement)("div", { className: row_module_default.bodyWrap }, (0, react.createElement)("div", { className: row_module_default.card }, model.provenance.length > 0 ? (0, react.createElement)("div", { className: row_module_default.provenance }, model.provenance.map((entry, i) => (0, react.createElement)("div", {
+		key: i,
+		className: row_module_default.provenanceEntry
+	}, entry.query !== null ? (0, react.createElement)("div", { className: row_module_default.provenanceQuery }, entry.query) : null, (0, react.createElement)("div", { className: row_module_default.provenanceLine }, entry.receipt)))) : null, empty ? (0, react.createElement)("div", { className: row_module_default.emptyNote }, t("row.noResults")) : null, model.sources.length > 0 ? (0, react.createElement)("ul", { className: row_module_default.sources }, model.sources.map((source, i) => (0, react.createElement)("li", {
 		key: `${source.url}:${i}`,
 		className: row_module_default.source
-	}, (0, react.createElement)("div", { className: row_module_default.sourceHead }, source.badge !== null ? (0, react.createElement)("span", { className: `${row_module_default.badge} ${row_module_default[`badge_${source.badge.tone}`]}` }, source.badge.detail !== null ? `${source.badge.label} · ${source.badge.detail}` : source.badge.label) : null, (0, react.createElement)("a", {
+	}, (0, react.createElement)("div", { className: row_module_default.sourceHead }, (0, react.createElement)("span", {
+		className: row_module_default.sourceIndex,
+		"aria-hidden": true
+	}, String(i + 1)), source.badge !== null ? (0, react.createElement)("span", { className: `${row_module_default.badge} ${row_module_default[`badge_${source.badge.tone}`]}` }, source.badge.detail !== null ? `${source.badge.label} · ${source.badge.detail}` : source.badge.label) : null, isSafeHref(source.url) ? (0, react.createElement)("a", {
 		className: row_module_default.sourceTitle,
 		href: source.url,
 		target: "_blank",
 		rel: "noopener noreferrer"
-	}, source.title !== null ? source.title : hostnameOf(source.url))), source.snippet !== "" ? (0, react.createElement)("div", { className: row_module_default.sourceSnippet }, source.snippet) : null, (0, react.createElement)("div", { className: row_module_default.sourceMeta }, [source.url, source.publishedAt].filter((part) => part !== null && part !== "").join(" · "))))) : null, model.truncated === true ? (0, react.createElement)("div", { className: row_module_default.truncatedNote }, t("row.truncated", { count: model.sources.length })) : null, model.answer !== null ? (0, react.createElement)("div", { className: row_module_default.answerText }, model.answer) : null, model.text !== null ? (0, react.createElement)("div", { className: model.state === "error" ? `${row_module_default.genericText} ${row_module_default.errorText}` : row_module_default.genericText }, model.text) : null), inspect !== void 0 ? (0, react.createElement)("button", {
+	}, source.title !== null ? source.title : hostnameOf(source.url)) : (0, react.createElement)("span", {
+		className: row_module_default.sourceTitle,
+		"aria-disabled": "true"
+	}, source.title !== null ? source.title : source.url)), source.snippet !== "" ? (0, react.createElement)("div", { className: row_module_default.sourceSnippet }, source.snippet) : null, (0, react.createElement)("div", { className: row_module_default.sourceMeta }, [source.url, source.publishedAt].filter((part) => part !== null && part !== "").join(" · "))))) : null, model.truncated === true ? (0, react.createElement)("div", { className: row_module_default.truncatedNote }, t("row.truncated", { count: model.sources.length })) : null, model.answer !== null ? (0, react.createElement)("div", { className: row_module_default.answerText }, model.answer) : null, model.text !== null ? (0, react.createElement)("div", { className: model.state === "error" ? `${row_module_default.genericText} ${row_module_default.errorText}` : row_module_default.genericText }, model.text) : null), inspect !== void 0 ? (0, react.createElement)("button", {
 		type: "button",
 		className: row_module_default.inspectButton,
 		onClick: inspect

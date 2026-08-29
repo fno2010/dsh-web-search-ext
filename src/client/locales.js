@@ -25,6 +25,7 @@ export const en = {
   "row.failed": "Search failed",
   "row.stopped": "Search stopped",
   "row.truncated": "Showing the first {count} sources. Refine the query for more.",
+  "row.noResults": "No results found.",
   "row.inspect": "Inspect"
 };
 
@@ -55,5 +56,6 @@ export const zh = {
   "row.failed": "搜索失败",
   "row.stopped": "搜索已中止",
   "row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",
+  "row.noResults": "未找到结果。",
   "row.inspect": "查看"
 };

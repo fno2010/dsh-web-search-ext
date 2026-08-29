@@ -6,15 +6,18 @@
 // host's own sources (block.resultView, projected by dsh-tool-web from our
 // seam result) and adds what the generic web card cannot:
 //
-//   - the provenance receipt line (our provider's content; the host forwards
-//     it as the card's `answer`, receipt first) — only when it is OUR receipt
-//     (`web-search-ext:` prefix), so a non-pinned provider never gets our
-//     label on its data;
+//   - the provenance receipt line(s), one per sub-query when the host merged
+//     multiple queries (`### <query>` answer sections) — claimed only when a
+//     line really is our receipt (`web-search-ext:` prefix), so a non-pinned
+//     provider never gets our label on its data;
 //   - per-source verification badges (our verify.js markers, parsed from the
 //     snippet prefix; absent when verifyLevel is off or the provider is not
 //     ours);
 //   - the truncation notice (the wire's structured `truncated` flag, which
-//     carries the G5 numResults-cap case).
+//     carries the G5 numResults-cap case);
+//   - source URLs are clickable only when they are public http(s) links
+//     (mirrors the host's SafeLink policy; anything else renders as inert
+//     text — the wire only guarantees a string).
 //
 // A result without a structured `web` search view (generic view, host error
 // path, older host) degrades to the raw result text instead of throwing —
@@ -27,7 +30,7 @@ import {
   IconInspectOutline12,
   StateDot
 } from "@deepseek-ai/dsh-client-ui-primitives";
-import { webSearchCardModel } from "./model.js";
+import { webSearchCardModel, isSafeHref } from "./model.js";
 import css from "./row.module.css";
 
 /** Title fallback when a source ships no title (usually keyless paths). */
@@ -81,13 +84,17 @@ export function WebSearchRow({ block, inspect, t }) {
   const [expanded, setExpanded] = useState(false);
   const hasBody =
     model.state === "ok"
-      ? model.provenance !== null ||
+      ? model.provenance.length > 0 ||
         model.sources.length > 0 ||
         model.truncated === true ||
         model.answer !== null ||
         model.text !== null
       : model.text !== null;
-  const open = expanded && hasBody;
+  // An ok search that produced nothing still opens to an explicit empty
+  // note instead of a bare, non-expandable row.
+  const empty = model.state === "ok" && !hasBody;
+  const expandable = hasBody || empty;
+  const open = expanded && expandable;
   const status = stateStatus(model.state, t);
   const summary =
     model.state === "error" && model.text !== null
@@ -114,7 +121,7 @@ export function WebSearchRow({ block, inspect, t }) {
         icon: leadingFor(model.state),
         title: t("row.title"),
         open,
-        expandable: hasBody,
+        expandable,
         expandOnRowClick: true,
         keepContentWhenOpen: true,
         onToggle: () => setExpanded((value) => !value),
@@ -129,9 +136,23 @@ export function WebSearchRow({ block, inspect, t }) {
         h(
           "div",
           { className: css.card },
-          model.provenance !== null
-            ? h("div", { className: css.provenance }, model.provenance)
+          model.provenance.length > 0
+            ? h(
+                "div",
+                { className: css.provenance },
+                model.provenance.map((entry, i) =>
+                  h(
+                    "div",
+                    { key: i, className: css.provenanceEntry },
+                    entry.query !== null
+                      ? h("div", { className: css.provenanceQuery }, entry.query)
+                      : null,
+                    h("div", { className: css.provenanceLine }, entry.receipt)
+                  )
+                )
+              )
             : null,
+          empty ? h("div", { className: css.emptyNote }, t("row.noResults")) : null,
           model.sources.length > 0
             ? h(
                 "ul",
@@ -143,6 +164,7 @@ export function WebSearchRow({ block, inspect, t }) {
                     h(
                       "div",
                       { className: css.sourceHead },
+                      h("span", { className: css.sourceIndex, "aria-hidden": true }, String(i + 1)),
                       source.badge !== null
                         ? h(
                             "span",
@@ -154,16 +176,22 @@ export function WebSearchRow({ block, inspect, t }) {
                               : source.badge.label
                           )
                         : null,
-                      h(
-                        "a",
-                        {
-                          className: css.sourceTitle,
-                          href: source.url,
-                          target: "_blank",
-                          rel: "noopener noreferrer"
-                        },
-                        source.title !== null ? source.title : hostnameOf(source.url)
-                      )
+                      isSafeHref(source.url)
+                        ? h(
+                            "a",
+                            {
+                              className: css.sourceTitle,
+                              href: source.url,
+                              target: "_blank",
+                              rel: "noopener noreferrer"
+                            },
+                            source.title !== null ? source.title : hostnameOf(source.url)
+                          )
+                        : h(
+                            "span",
+                            { className: css.sourceTitle, "aria-disabled": "true" },
+                            source.title !== null ? source.title : source.url
+                          )
                     ),
                     source.snippet !== ""
                       ? h("div", { className: css.sourceSnippet }, source.snippet)

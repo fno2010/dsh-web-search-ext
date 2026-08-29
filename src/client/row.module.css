@@ -125,6 +125,36 @@
   color: var(--dsw-alias-label-secondary);
   border-bottom: 1px solid var(--dsw-alias-border-l2);
   padding-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.provenanceEntry {
+  display: flex;
+  flex-direction: column;
+}
+
+.provenanceQuery {
+  color: var(--dsw-alias-label-caption);
+  font-size: 11px;
+}
+
+.provenanceLine {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.emptyNote {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+}
+
+.sourceIndex {
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  flex: none;
+  min-width: 14px;
+  text-align: right;
 }
 
 .sources {

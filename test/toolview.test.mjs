@@ -8,7 +8,7 @@
  * error/stopped states, and the non-web-view fallback (never throws).
  */
 import assert from "node:assert/strict";
-import { parseMarker, queryTitle, webSearchCardModel } from "../src/client/model.js";
+import { isSafeHref, parseMarker, queryTitle, webSearchCardModel } from "../src/client/model.js";
 
 let passed = 0;
 function ok(label) {
@@ -97,7 +97,16 @@ function runningBlock(argsRaw) {
 	const m2 = parseMarker("[unreachable] (fetch failed) ");
 	assert.equal(m2.detail, "fetch failed");
 	assert.equal(m2.rest, "");
-	ok("marker detail extracted; empty rest tolerated");
+	// Detail with nested parens (fetch error reasons can carry them):
+	// a `[^)]*` regex would truncate at the inner ")".
+	const m3 = parseMarker("[unreachable] (error: connect ECONNREFUSED (127.0.0.1:443)) Body text");
+	assert.equal(m3.detail, "error: connect ECONNREFUSED (127.0.0.1:443)");
+	assert.equal(m3.rest, "Body text");
+	// Unbalanced detail (no closing paren): no detail claimed, rest keeps it.
+	const m4 = parseMarker("[timeout] (connect ETIMEDOUT Body");
+	assert.equal(m4.detail, null);
+	assert.equal(m4.rest, "(connect ETIMEDOUT Body");
+	ok("marker detail extracted; balanced parens; unbalanced detail tolerated");
 }
 
 // Not a marker: absent, unknown bracket prefix, or a snippet that merely
@@ -113,6 +122,30 @@ function runningBlock(argsRaw) {
 	ok("absent / unknown / embedded bracket prefixes parse to null (no false-positive badge)");
 }
 
+// Source links: only public http(s) anchors are clickable (mirrors the host's
+// SafeLink policy — the wire only guarantees a string, and our own markers
+// never introduce schemes, but a foreign snippet title can).
+{
+	const safe = [
+		"https://a.example/x",
+		"http://a.example",
+		"https://a.example/x?y=1#z"
+	];
+	for (const url of safe) assert.equal(isSafeHref(url), true, url);
+	const unsafe = [
+		"javascript:alert(1)",
+		"data:text/html,evil",
+		"file:///etc/passwd",
+		"/relative/path",
+		"not a url",
+		"",
+		undefined,
+		null
+	];
+	for (const url of unsafe) assert.equal(isSafeHref(url), false, String(url));
+	ok("isSafeHref: http/https clickable; javascript:/data:/file:/relative/malformed inert");
+}
+
 // ── webSearchCardModel: states ───────────────────────────────────────────────
 
 // Running call: no resultView yet — the card shows query + running sweep only.
@@ -120,7 +153,7 @@ function runningBlock(argsRaw) {
 	const model = webSearchCardModel(runningBlock());
 	assert.equal(model.state, "running");
 	assert.equal(model.title, "quantum computing");
-	assert.equal(model.provenance, null);
+	assert.equal(model.provenance.length, 0);
 	assert.equal(model.sources.length, 0);
 	assert.equal(model.truncated, false);
 	assert.equal(model.text, null);
@@ -150,7 +183,7 @@ function runningBlock(argsRaw) {
 	const model = webSearchCardModel(settledBlock(view));
 	assert.equal(model.state, "ok");
 	assert.equal(model.title, "q1, q2", "view title wins over argsRaw");
-	assert.equal(model.provenance, RECEIPT);
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT }]);
 	assert.equal(model.answer, "Vendor summary text.");
 	assert.equal(model.truncated, true);
 	assert.equal(model.sources.length, 3);
@@ -166,10 +199,59 @@ function runningBlock(argsRaw) {
 {
 	const view = webView({ answer: `${RECEIPT}\n`, sources: [] });
 	const model = webSearchCardModel(settledBlock(view));
-	assert.equal(model.provenance, RECEIPT);
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT }]);
 	assert.equal(model.answer, null, "trailing newline leaves no answer body");
 	assert.equal(model.truncated, false);
 	ok("settled ok: receipt-only answer → provenance only, no empty answer");
+}
+
+// Empty settled result (vendor returned nothing): structured web view with no
+// sources, no answer, no truncation. The row must render the explicit empty
+// note (row.noResults) rather than a bare, non-expandable row.
+{
+	const model = webSearchCardModel(settledBlock(webView()));
+	assert.equal(model.state, "ok");
+	assert.equal(model.provenance.length, 0);
+	assert.equal(model.sources.length, 0);
+	assert.equal(model.answer, null);
+	assert.equal(model.text, null, "a web view has no raw-text fallback");
+	assert.equal(model.truncated, false);
+	ok("settled ok with empty result shape: nothing claimed, no throw");
+}
+
+// Multi-query merge (host dsh-tool-web mergeSearchResults shape): each sub-query
+// section is `### <query>\n\n<receipt>…`. Every section's receipt is claimed as
+// its own provenance entry (with the query label), headers and receipts are
+// stripped from the answer body, and vendor text survives as the answer.
+{
+	const r1 = "web-search-ext: exa · 1.2s · 8 results · liveness: 8 alive";
+	const r2 = "web-search-ext: exa · 0.9s · 5 results · liveness: 4 alive, 1 dead";
+	const view = webView({
+		title: "harness release notes, dsh toolview slots",
+		answer: `### harness release notes\n\n${r1}\n\n### dsh toolview slots\n\n${r2}\n\nVendor follow-up text for the second query.`,
+		sources: [{ url: "https://a.example/1", snippet: "[alive] One" }]
+	});
+	const model = webSearchCardModel(settledBlock(view));
+	assert.deepEqual(model.provenance, [
+		{ query: "harness release notes", receipt: r1 },
+		{ query: "dsh toolview slots", receipt: r2 }
+	]);
+	assert.equal(model.answer, "Vendor follow-up text for the second query.", "receipts+headers stripped, vendor text kept, no re-prefixed headers");
+	ok("multi-query merge: per-query receipts claimed with labels, answer de-duplicated");
+}
+
+// Multi-query merge where a sub-section carries no receipt (host text is
+// provider-owned): that section keeps its `### <query>` header as raw answer
+// text and contributes no provenance.
+{
+	const view = webView({
+		answer: `### q1\n\n${RECEIPT}\n\n### q2\n\nforeign provider section text`,
+		sources: []
+	});
+	const model = webSearchCardModel(settledBlock(view));
+	assert.deepEqual(model.provenance, [{ query: "q1", receipt: RECEIPT }]);
+	assert.equal(model.answer, "### q2\nforeign provider section text", "receipt-less section keeps its header");
+	ok("multi-query merge: receipt-less section stays foreign text with header");
 }
 
 // verifyLevel off: snippets carry no markers → no badges, snippets untouched.
@@ -197,7 +279,7 @@ function runningBlock(argsRaw) {
 		]
 	});
 	const model = webSearchCardModel(settledBlock(view));
-	assert.equal(model.provenance, null, "a foreign answer is not our receipt");
+	assert.equal(model.provenance.length, 0, "a foreign answer is not our receipt");
 	assert.equal(model.answer, "Some other provider's summary line.");
 	assert.equal(model.sources[0].badge.tone, "ok", "leading marker in a foreign snippet still badges");
 	assert.equal(model.sources[1].badge, null, "embedded marker does not badge");
@@ -210,7 +292,7 @@ function runningBlock(argsRaw) {
 		settledBlock(webView(), { isError: true, content: [{ type: "text", text: "web_search: all backends failed — exa: 429 | firecrawl: 401\nsecond line" }] })
 	);
 	assert.equal(model.state, "error");
-	assert.equal(model.provenance, null);
+	assert.equal(model.provenance.length, 0);
 	assert.ok(model.text.startsWith("web_search: all backends failed"));
 	ok("error: state + full text for the row");
 }
@@ -240,7 +322,7 @@ function runningBlock(argsRaw) {
 	const model = webSearchCardModel(settledBlock(view, { content: [{ type: "text", text: "raw fallback text" }] }));
 	assert.equal(model.state, "ok");
 	assert.equal(model.text, "raw fallback text");
-	assert.equal(model.provenance, null);
+	assert.equal(model.provenance.length, 0);
 	assert.equal(model.sources.length, 0);
 	const nullView = webSearchCardModel(settledBlock(null, { content: [{ type: "text", text: "raw" }] }));
 	assert.equal(nullView.text, "raw");
@@ -267,5 +349,8 @@ function runningBlock(argsRaw) {
 	assert.equal(webSearchCardModel(runningBlock(JSON.stringify({ queries: [] }))).title, "");
 	ok("running with empty/malformed/empty-queries argsRaw: bare row");
 }
+
+// Sentinel: the scenario count lives in-test, never in docs.
+assert.equal(passed, 19, "scenario sentinel");
 
 console.log(`\nAll ${passed} toolview model scenarios passed.`);

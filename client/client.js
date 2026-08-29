@@ -81,7 +81,25 @@ const en = {
 	"probe.timeout": "timed out",
 	"probe.network": "network error",
 	"probe.error": "request failed",
-	"probe.disabled": "not enabled"
+	"probe.disabled": "not enabled",
+	"cmd.description": "Configure web-search-ext: preferred backend, status, connectivity test",
+	"cmd.preferExa": "Prefer Exa",
+	"cmd.preferFirecrawl": "Prefer Firecrawl",
+	"cmd.test": "Test connectivity",
+	"cmd.keyedEnv": "keyed (env)",
+	"cmd.keyedFile": "keyed (file)",
+	"cmd.keyless": "keyless",
+	"cmd.keyMissing": "no key, keyless disabled",
+	"cmd.never": "never called",
+	"cmd.lastOk": "last ok {time} ago",
+	"cmd.lastFail": "last failed {time} ago",
+	"cmd.cooldown": "cooldown for {time}",
+	"cmd.neverTested": "never tested",
+	"cmd.testLast": "last test {age} ago: {codes}",
+	"cmd.testFailed": "connectivity test failed (HTTP {status})",
+	"cmd.line": "Slash command: /{name}",
+	"cmd.lineFallback": "Slash command: /{name} (/{primary} is in use)",
+	"cmd.lineUnavail": "Slash command unavailable (/search-engine and /web-search-engine are both in use)"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -148,7 +166,25 @@ const zh = {
 	"probe.timeout": "超时",
 	"probe.network": "网络错误",
 	"probe.error": "请求失败",
-	"probe.disabled": "未启用"
+	"probe.disabled": "未启用",
+	"cmd.description": "配置 web-search-ext：首选后端、状态、连通性测试",
+	"cmd.preferExa": "优先 Exa",
+	"cmd.preferFirecrawl": "优先 Firecrawl",
+	"cmd.test": "测试连通性",
+	"cmd.keyedEnv": "带 key（环境变量）",
+	"cmd.keyedFile": "带 key（文件）",
+	"cmd.keyless": "无 key",
+	"cmd.keyMissing": "无 key 且已禁用 keyless",
+	"cmd.never": "从未调用",
+	"cmd.lastOk": "最近成功：{time} 前",
+	"cmd.lastFail": "最近失败：{time} 前",
+	"cmd.cooldown": "冷却中：剩 {time}",
+	"cmd.neverTested": "从未测试",
+	"cmd.testLast": "上次测试 {age} 前：{codes}",
+	"cmd.testFailed": "连通性测试失败（HTTP {status}）",
+	"cmd.line": "斜杠命令：/{name}",
+	"cmd.lineFallback": "斜杠命令：/{name}（/{primary} 已被占用）",
+	"cmd.lineUnavail": "斜杠命令不可用（/search-engine 与 /web-search-engine 均被占用）"
 };
 //#endregion
 //#region src/client/model.js
@@ -738,6 +774,101 @@ function WebSearchRow({ block, inspect, t }) {
 	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
 }
 //#endregion
+//#region src/client/command.js
+/**
+* Primary command name and its fallback. The host's contribution registry
+* rejects a duplicate name at register time (and a host-catalog collision
+* fails loud at candidate synthesis), so registration tries the primary
+* name first and falls back to the second — the card shows which one
+* actually materialized.
+*/
+const COMMAND_PRIMARY = "search-engine";
+const COMMAND_FALLBACK = "web-search-engine";
+/**
+* Key-state word for one API key ref.
+* @param {{configured: boolean, source: string}} key - credentials.describe
+*   projection (NO_KEY_STATE when the ref is absent).
+* @param {boolean} keylessAllowed - whether the backend serves without a key
+*   (exa: always — the anonymous MCP path; firecrawl: only when
+*   firecrawlKeyless is on).
+* @param {(key: string, params?: object) => string} t - bound translator.
+* @returns {string} one of the closed cmd.keyed* / cmd.keyless words.
+*/
+function keyWord(key, keylessAllowed, t) {
+	if (key !== null && key !== void 0 && key.configured === true) return key.source === "env" ? t("cmd.keyedEnv") : t("cmd.keyedFile");
+	return keylessAllowed ? t("cmd.keyless") : t("cmd.keyMissing");
+}
+/**
+* Status word for one health backends row (search provider): cooldown, last
+* call outcome + age, or "never called". Closed vocabulary, locale-neutral
+* on the wire, translated here.
+* @param {{cooldownRemainingMs: number, lastCallAt: number | null, lastOk: boolean | null} | null} backend
+* @param {(key: string, params?: object) => string} t
+* @returns {string}
+*/
+function backendStatusWord(backend, t) {
+	if (backend === null || backend === void 0) return t("cmd.never");
+	if (typeof backend.cooldownRemainingMs === "number" && backend.cooldownRemainingMs > 0) return t("cmd.cooldown", { time: formatDuration(backend.cooldownRemainingMs) });
+	if (typeof backend.lastCallAt !== "number" || !Number.isFinite(backend.lastCallAt)) return t("cmd.never");
+	return backend.lastOk === true ? t("cmd.lastOk", { time: ageOf(backend.lastCallAt) }) : t("cmd.lastFail", { time: ageOf(backend.lastCallAt) });
+}
+/**
+* One-line probe summary for the "Test connectivity" row: "last test {age}
+* ago: {codes}" where codes join the stored probe's per-backend CLOSED
+* detail codes through the existing probe.* keys (locale parity with the
+* Health tab).
+* @param {{at: number, backends: Array<{label: string, detail: string}>} | null} probe
+* @param {(key: string, params?: object) => string} t
+* @returns {string}
+*/
+function probeWord(probe, t) {
+	if (probe === null || probe === void 0) return t("cmd.neverTested");
+	const codes = (Array.isArray(probe.backends) ? probe.backends : []).filter((b) => b !== null && typeof b === "object" && typeof b.detail === "string").map((b) => `${typeof b.label === "string" && b.label !== "" ? b.label : b.name} ${t(`probe.${b.detail}`)}`).join(" · ");
+	return codes === "" ? t("cmd.neverTested") : t("cmd.testLast", {
+		age: ageOf(probe.at),
+		codes
+	});
+}
+/**
+* Build the popupSelect options for the /search-engine command.
+* @param {object} args
+* @param {(key: string, params?: object) => string} args.t - bound translator.
+* @param {"exa" | "firecrawl"} args.preferred - effective preferred backend
+*   (the merged settings value, schema default "exa" when unset).
+* @param {{configured: boolean, source: string} | null} args.exaKey
+* @param {{configured: boolean, source: string} | null} args.fcKey
+* @param {boolean} args.fcKeyless - effective firecrawlKeyless setting.
+* @param {{backends?: Array<object>, probe?: object | null} | null} args.health -
+*   parseHealth output for the live payload, or null when the health route
+*   is unavailable (degrade: status words fall back to "never called").
+* @returns {Array<{id: string, label: string, detail: string, active?: boolean}>}
+*   Two "prefer <backend>" rows (the active one marked) + one test row.
+*/
+function commandOptions({ t, preferred, exaKey, fcKey, fcKeyless, health }) {
+	const searchBackends = Array.isArray(health?.backends) ? health.backends : [];
+	const exa = searchBackends.find((b) => b !== null && typeof b === "object" && b.provider === "search" && b.name === "exa") ?? null;
+	const fc = searchBackends.find((b) => b !== null && typeof b === "object" && b.provider === "search" && b.name === "firecrawl") ?? null;
+	return [
+		{
+			id: "exa",
+			label: t("cmd.preferExa"),
+			detail: `${keyWord(exaKey, true, t)} · ${backendStatusWord(exa, t)}`,
+			active: preferred === "exa"
+		},
+		{
+			id: "firecrawl",
+			label: t("cmd.preferFirecrawl"),
+			detail: `${keyWord(fcKey, fcKeyless === true, t)} · ${backendStatusWord(fc, t)}`,
+			active: preferred === "firecrawl"
+		},
+		{
+			id: "test",
+			label: t("cmd.test"),
+			detail: probeWord(health?.probe ?? null, t)
+		}
+	];
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -797,12 +928,18 @@ const inject = [
 	"locale",
 	"connection",
 	"settingsScope",
-	"remote"
+	"remote",
+	"commandUi"
 ];
 const NO_KEY_STATE = {
 	configured: false,
 	writable: true,
 	source: ""
+};
+let commandRegistration = {
+	name: null,
+	fallback: false,
+	unavailable: true
 };
 /** Defensively read whatever shape the derived scope exposes. */
 function readScope(scope) {
@@ -848,6 +985,15 @@ function keyStateFrom(res) {
 		exa: one(EXA_REF),
 		fc: one(FC_REF)
 	};
+}
+/** C3: settings-pane hint line — which slash-command name materialized (or none). */
+function commandLineText(t) {
+	if (commandRegistration.name === null) return t("cmd.lineUnavail");
+	if (commandRegistration.fallback) return t("cmd.lineFallback", {
+		name: COMMAND_FALLBACK,
+		primary: COMMAND_PRIMARY
+	});
+	return t("cmd.line", { name: COMMAND_PRIMARY });
 }
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
@@ -1050,7 +1196,7 @@ function WebSearchExtCard(props) {
 		className: card_module_default.settingsPane,
 		role: "tabpanel",
 		id: "dsw-websearch-panel-settings"
-	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, commandLineText(t)), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -1262,6 +1408,79 @@ function apply(ctx) {
 	const scope = ctx.settingsScope.bind({ namespace: NS });
 	const api = ctx.get("connection").api;
 	const remote = ctx.get("remote");
+	if (ctx.commandUi && typeof ctx.commandUi.register === "function") {
+		const value = () => {
+			const snap = readScope(scope);
+			return snap && snap.value && typeof snap.value === "object" ? snap.value : {};
+		};
+		const contribution = {
+			name: COMMAND_PRIMARY,
+			description: t("cmd.description"),
+			available: () => true,
+			ui: {
+				kind: "popupSelect",
+				options: async (_session, signal) => {
+					const [healthPayload, keyRes] = await Promise.all([fetch(HEALTH_ROUTE, {
+						headers: { accept: "application/json" },
+						signal
+					}).then((res) => res.ok ? res.json() : null).catch(() => null), Promise.resolve().then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] })).catch(() => null)]);
+					const v = value();
+					return commandOptions({
+						t,
+						preferred: typeof v.preferred === "string" ? v.preferred : "exa",
+						exaKey: keyStateFrom(keyRes).exa,
+						fcKey: keyStateFrom(keyRes).fc,
+						fcKeyless: v.firecrawlKeyless !== false,
+						health: parseHealth(healthPayload)
+					});
+				},
+				onSelect: async (option) => {
+					if (option.id === "exa" || option.id === "firecrawl") {
+						if (value().preferred === option.id) return;
+						await scope.set("preferred", option.id);
+						return;
+					}
+					if (option.id === "test") {
+						const res = await fetch(PROBE_ROUTE, {
+							method: "POST",
+							headers: { accept: "application/json" }
+						});
+						if (!res.ok) throw new Error(t("cmd.testFailed", { status: res.status }));
+					}
+				}
+			}
+		};
+		try {
+			ctx.effect(() => ctx.commandUi.register(contribution), "web-search-ext: /search-engine command");
+			commandRegistration = {
+				name: COMMAND_PRIMARY,
+				fallback: false,
+				unavailable: false
+			};
+		} catch {
+			try {
+				ctx.effect(() => ctx.commandUi.register({
+					...contribution,
+					name: COMMAND_FALLBACK
+				}), "web-search-ext: /web-search-engine command (fallback)");
+				commandRegistration = {
+					name: COMMAND_FALLBACK,
+					fallback: true,
+					unavailable: false
+				};
+			} catch {
+				commandRegistration = {
+					name: null,
+					fallback: false,
+					unavailable: true
+				};
+			}
+		}
+	} else commandRegistration = {
+		name: null,
+		fallback: false,
+		unavailable: true
+	};
 	ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
 		name: "settings.plugin.item",
 		key: NS,
@@ -1375,7 +1594,25 @@ const en = {
 	"probe.timeout": "timed out",
 	"probe.network": "network error",
 	"probe.error": "request failed",
-	"probe.disabled": "not enabled"
+	"probe.disabled": "not enabled",
+	"cmd.description": "Configure web-search-ext: preferred backend, status, connectivity test",
+	"cmd.preferExa": "Prefer Exa",
+	"cmd.preferFirecrawl": "Prefer Firecrawl",
+	"cmd.test": "Test connectivity",
+	"cmd.keyedEnv": "keyed (env)",
+	"cmd.keyedFile": "keyed (file)",
+	"cmd.keyless": "keyless",
+	"cmd.keyMissing": "no key, keyless disabled",
+	"cmd.never": "never called",
+	"cmd.lastOk": "last ok {time} ago",
+	"cmd.lastFail": "last failed {time} ago",
+	"cmd.cooldown": "cooldown for {time}",
+	"cmd.neverTested": "never tested",
+	"cmd.testLast": "last test {age} ago: {codes}",
+	"cmd.testFailed": "connectivity test failed (HTTP {status})",
+	"cmd.line": "Slash command: /{name}",
+	"cmd.lineFallback": "Slash command: /{name} (/{primary} is in use)",
+	"cmd.lineUnavail": "Slash command unavailable (/search-engine and /web-search-engine are both in use)"
 };
 const zh = {
 	title: "Web 搜索（ext）",
@@ -1442,7 +1679,25 @@ const zh = {
 	"probe.timeout": "超时",
 	"probe.network": "网络错误",
 	"probe.error": "请求失败",
-	"probe.disabled": "未启用"
+	"probe.disabled": "未启用",
+	"cmd.description": "配置 web-search-ext：首选后端、状态、连通性测试",
+	"cmd.preferExa": "优先 Exa",
+	"cmd.preferFirecrawl": "优先 Firecrawl",
+	"cmd.test": "测试连通性",
+	"cmd.keyedEnv": "带 key（环境变量）",
+	"cmd.keyedFile": "带 key（文件）",
+	"cmd.keyless": "无 key",
+	"cmd.keyMissing": "无 key 且已禁用 keyless",
+	"cmd.never": "从未调用",
+	"cmd.lastOk": "最近成功：{time} 前",
+	"cmd.lastFail": "最近失败：{time} 前",
+	"cmd.cooldown": "冷却中：剩 {time}",
+	"cmd.neverTested": "从未测试",
+	"cmd.testLast": "上次测试 {age} 前：{codes}",
+	"cmd.testFailed": "连通性测试失败（HTTP {status}）",
+	"cmd.line": "斜杠命令：/{name}",
+	"cmd.lineFallback": "斜杠命令：/{name}（/{primary} 已被占用）",
+	"cmd.lineUnavail": "斜杠命令不可用（/search-engine 与 /web-search-engine 均被占用）"
 };
 //#endregion
 //#region src/client/model.js
@@ -2032,6 +2287,101 @@ function WebSearchRow({ block, inspect, t }) {
 	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
 }
 //#endregion
+//#region src/client/command.js
+/**
+* Primary command name and its fallback. The host's contribution registry
+* rejects a duplicate name at register time (and a host-catalog collision
+* fails loud at candidate synthesis), so registration tries the primary
+* name first and falls back to the second — the card shows which one
+* actually materialized.
+*/
+const COMMAND_PRIMARY = "search-engine";
+const COMMAND_FALLBACK = "web-search-engine";
+/**
+* Key-state word for one API key ref.
+* @param {{configured: boolean, source: string}} key - credentials.describe
+*   projection (NO_KEY_STATE when the ref is absent).
+* @param {boolean} keylessAllowed - whether the backend serves without a key
+*   (exa: always — the anonymous MCP path; firecrawl: only when
+*   firecrawlKeyless is on).
+* @param {(key: string, params?: object) => string} t - bound translator.
+* @returns {string} one of the closed cmd.keyed* / cmd.keyless words.
+*/
+function keyWord(key, keylessAllowed, t) {
+	if (key !== null && key !== void 0 && key.configured === true) return key.source === "env" ? t("cmd.keyedEnv") : t("cmd.keyedFile");
+	return keylessAllowed ? t("cmd.keyless") : t("cmd.keyMissing");
+}
+/**
+* Status word for one health backends row (search provider): cooldown, last
+* call outcome + age, or "never called". Closed vocabulary, locale-neutral
+* on the wire, translated here.
+* @param {{cooldownRemainingMs: number, lastCallAt: number | null, lastOk: boolean | null} | null} backend
+* @param {(key: string, params?: object) => string} t
+* @returns {string}
+*/
+function backendStatusWord(backend, t) {
+	if (backend === null || backend === void 0) return t("cmd.never");
+	if (typeof backend.cooldownRemainingMs === "number" && backend.cooldownRemainingMs > 0) return t("cmd.cooldown", { time: formatDuration(backend.cooldownRemainingMs) });
+	if (typeof backend.lastCallAt !== "number" || !Number.isFinite(backend.lastCallAt)) return t("cmd.never");
+	return backend.lastOk === true ? t("cmd.lastOk", { time: ageOf(backend.lastCallAt) }) : t("cmd.lastFail", { time: ageOf(backend.lastCallAt) });
+}
+/**
+* One-line probe summary for the "Test connectivity" row: "last test {age}
+* ago: {codes}" where codes join the stored probe's per-backend CLOSED
+* detail codes through the existing probe.* keys (locale parity with the
+* Health tab).
+* @param {{at: number, backends: Array<{label: string, detail: string}>} | null} probe
+* @param {(key: string, params?: object) => string} t
+* @returns {string}
+*/
+function probeWord(probe, t) {
+	if (probe === null || probe === void 0) return t("cmd.neverTested");
+	const codes = (Array.isArray(probe.backends) ? probe.backends : []).filter((b) => b !== null && typeof b === "object" && typeof b.detail === "string").map((b) => `${typeof b.label === "string" && b.label !== "" ? b.label : b.name} ${t(`probe.${b.detail}`)}`).join(" · ");
+	return codes === "" ? t("cmd.neverTested") : t("cmd.testLast", {
+		age: ageOf(probe.at),
+		codes
+	});
+}
+/**
+* Build the popupSelect options for the /search-engine command.
+* @param {object} args
+* @param {(key: string, params?: object) => string} args.t - bound translator.
+* @param {"exa" | "firecrawl"} args.preferred - effective preferred backend
+*   (the merged settings value, schema default "exa" when unset).
+* @param {{configured: boolean, source: string} | null} args.exaKey
+* @param {{configured: boolean, source: string} | null} args.fcKey
+* @param {boolean} args.fcKeyless - effective firecrawlKeyless setting.
+* @param {{backends?: Array<object>, probe?: object | null} | null} args.health -
+*   parseHealth output for the live payload, or null when the health route
+*   is unavailable (degrade: status words fall back to "never called").
+* @returns {Array<{id: string, label: string, detail: string, active?: boolean}>}
+*   Two "prefer <backend>" rows (the active one marked) + one test row.
+*/
+function commandOptions({ t, preferred, exaKey, fcKey, fcKeyless, health }) {
+	const searchBackends = Array.isArray(health?.backends) ? health.backends : [];
+	const exa = searchBackends.find((b) => b !== null && typeof b === "object" && b.provider === "search" && b.name === "exa") ?? null;
+	const fc = searchBackends.find((b) => b !== null && typeof b === "object" && b.provider === "search" && b.name === "firecrawl") ?? null;
+	return [
+		{
+			id: "exa",
+			label: t("cmd.preferExa"),
+			detail: `${keyWord(exaKey, true, t)} · ${backendStatusWord(exa, t)}`,
+			active: preferred === "exa"
+		},
+		{
+			id: "firecrawl",
+			label: t("cmd.preferFirecrawl"),
+			detail: `${keyWord(fcKey, fcKeyless === true, t)} · ${backendStatusWord(fc, t)}`,
+			active: preferred === "firecrawl"
+		},
+		{
+			id: "test",
+			label: t("cmd.test"),
+			detail: probeWord(health?.probe ?? null, t)
+		}
+	];
+}
+//#endregion
 //#region src/client/card.module.css
 var card_module_default = {
 	"badge": "card-module__badge",
@@ -2091,12 +2441,18 @@ const inject = [
 	"locale",
 	"connection",
 	"settingsScope",
-	"remote"
+	"remote",
+	"commandUi"
 ];
 const NO_KEY_STATE = {
 	configured: false,
 	writable: true,
 	source: ""
+};
+let commandRegistration = {
+	name: null,
+	fallback: false,
+	unavailable: true
 };
 /** Defensively read whatever shape the derived scope exposes. */
 function readScope(scope) {
@@ -2142,6 +2498,15 @@ function keyStateFrom(res) {
 		exa: one(EXA_REF),
 		fc: one(FC_REF)
 	};
+}
+/** C3: settings-pane hint line — which slash-command name materialized (or none). */
+function commandLineText(t) {
+	if (commandRegistration.name === null) return t("cmd.lineUnavail");
+	if (commandRegistration.fallback) return t("cmd.lineFallback", {
+		name: COMMAND_FALLBACK,
+		primary: COMMAND_PRIMARY
+	});
+	return t("cmd.line", { name: COMMAND_PRIMARY });
 }
 function WebSearchExtCard(props) {
 	const { t, scope, api, remote } = props;
@@ -2344,7 +2709,7 @@ function WebSearchExtCard(props) {
 		className: card_module_default.settingsPane,
 		role: "tabpanel",
 		id: "dsw-websearch-panel-settings"
-	}, (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
+	}, (0, react.createElement)("p", { className: card_module_default.hint }, commandLineText(t)), (0, react.createElement)("div", { className: card_module_default.field }, (0, react.createElement)("div", { className: card_module_default.head }, (0, react.createElement)("label", { className: card_module_default.label }, t("preferred"))), (0, react.createElement)("select", {
 		className: card_module_default.input,
 		disabled: ro,
 		value: String(draft?.preferred ?? "exa"),
@@ -2556,6 +2921,79 @@ function apply(ctx) {
 	const scope = ctx.settingsScope.bind({ namespace: NS });
 	const api = ctx.get("connection").api;
 	const remote = ctx.get("remote");
+	if (ctx.commandUi && typeof ctx.commandUi.register === "function") {
+		const value = () => {
+			const snap = readScope(scope);
+			return snap && snap.value && typeof snap.value === "object" ? snap.value : {};
+		};
+		const contribution = {
+			name: COMMAND_PRIMARY,
+			description: t("cmd.description"),
+			available: () => true,
+			ui: {
+				kind: "popupSelect",
+				options: async (_session, signal) => {
+					const [healthPayload, keyRes] = await Promise.all([fetch(HEALTH_ROUTE, {
+						headers: { accept: "application/json" },
+						signal
+					}).then((res) => res.ok ? res.json() : null).catch(() => null), Promise.resolve().then(() => api.credentials.describe({ refs: [EXA_REF, FC_REF] })).catch(() => null)]);
+					const v = value();
+					return commandOptions({
+						t,
+						preferred: typeof v.preferred === "string" ? v.preferred : "exa",
+						exaKey: keyStateFrom(keyRes).exa,
+						fcKey: keyStateFrom(keyRes).fc,
+						fcKeyless: v.firecrawlKeyless !== false,
+						health: parseHealth(healthPayload)
+					});
+				},
+				onSelect: async (option) => {
+					if (option.id === "exa" || option.id === "firecrawl") {
+						if (value().preferred === option.id) return;
+						await scope.set("preferred", option.id);
+						return;
+					}
+					if (option.id === "test") {
+						const res = await fetch(PROBE_ROUTE, {
+							method: "POST",
+							headers: { accept: "application/json" }
+						});
+						if (!res.ok) throw new Error(t("cmd.testFailed", { status: res.status }));
+					}
+				}
+			}
+		};
+		try {
+			ctx.effect(() => ctx.commandUi.register(contribution), "web-search-ext: /search-engine command");
+			commandRegistration = {
+				name: COMMAND_PRIMARY,
+				fallback: false,
+				unavailable: false
+			};
+		} catch {
+			try {
+				ctx.effect(() => ctx.commandUi.register({
+					...contribution,
+					name: COMMAND_FALLBACK
+				}), "web-search-ext: /web-search-engine command (fallback)");
+				commandRegistration = {
+					name: COMMAND_FALLBACK,
+					fallback: true,
+					unavailable: false
+				};
+			} catch {
+				commandRegistration = {
+					name: null,
+					fallback: false,
+					unavailable: true
+				};
+			}
+		}
+	} else commandRegistration = {
+		name: null,
+		fallback: false,
+		unavailable: true
+	};
 	ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
 		name: "settings.plugin.item",
 		key: NS,

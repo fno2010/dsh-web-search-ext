@@ -54,7 +54,10 @@ function receiptBackend(receipt) {
   const rest = receipt.slice(RECEIPT_PREFIX.length).trimStart();
   const sep = rest.indexOf(" · ");
   const label = (sep === -1 ? rest : rest.slice(0, sep)).trim();
-  return label !== "" ? label : null;
+  // Real labels are kebab-case backend names (exa-rest / exa-mcp / firecrawl)
+  // and never contain the " · " separator — anything else is a malformed
+  // receipt and must not display as a backend.
+  return label !== "" && !label.includes("·") ? label : null;
 }
 
 /**

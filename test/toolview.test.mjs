@@ -261,6 +261,11 @@ function runningBlock(argsRaw) {
 		{ query: "q two", receipt: r2, backend: "firecrawl" }
 	]);
 	assert.deepEqual(model.backends, ["exa-rest", "firecrawl"], "union, first-seen order");
+	// Malformed receipt (empty label): the line is still claimed as
+	// provenance, but its "backend" must not display as garbage.
+	const bad = webSearchCardModel(settledBlock(webView({ answer: "web-search-ext:  · 1.2s · 5 results" })));
+	assert.equal(bad.provenance[0].backend, null, "empty-label receipt claims provenance but no backend");
+	assert.deepEqual(bad.backends, []);
 	ok("C4 backend: two backends in one merge → per-entry labels + union");
 }
 

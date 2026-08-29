@@ -17,7 +17,15 @@ export const en = {
   saving: "Saving…",
   saved: "Saved.",
   error: "Save failed:",
-  pending: "unsaved changes"
+  pending: "unsaved changes",
+
+  // web_search toolview card (C1)
+  "row.title": "Search",
+  "row.running": "Searching the web…",
+  "row.failed": "Search failed",
+  "row.stopped": "Search stopped",
+  "row.truncated": "Showing the first {count} sources. Refine the query for more.",
+  "row.inspect": "Inspect"
 };
 
 export const zh = {
@@ -39,5 +47,13 @@ export const zh = {
   saving: "保存中…",
   saved: "已保存。",
   error: "保存失败：",
-  pending: "未保存的更改"
+  pending: "未保存的更改",
+
+  // web_search toolview card (C1)
+  "row.title": "搜索",
+  "row.running": "正在搜索网页…",
+  "row.failed": "搜索失败",
+  "row.stopped": "搜索已中止",
+  "row.truncated": "仅显示前 {count} 条来源。细化查询可获取更多。",
+  "row.inspect": "查看"
 };

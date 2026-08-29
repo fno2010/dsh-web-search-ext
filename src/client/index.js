@@ -22,6 +22,7 @@
 import { createElement as h, useState, useEffect, useRef } from "react";
 import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
+import { WebSearchRow } from "./row.js";
 import css from "./card.module.css";
 
 const NS = "web-search-ext";
@@ -354,6 +355,17 @@ function apply(ctx) {
     locale: NS,
     inject: () => ({ t, scope, api, remote })
   }, WebSearchExtCard));
+
+  // web_search toolview card (C1): take over the host's built-in web row for
+  // the `web_search` tool. A key the shipped composition already covers is
+  // replaced, not shared — our card renders the same structured sources plus
+  // the provenance receipt and per-source verification badges, and degrades
+  // to the raw result text whenever the view is not a structured web card.
+  ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({
+    name: "tool.call.toolview",
+    key: "web_search",
+    locale: NS
+  }, WebSearchRow));
 }
 
 export { apply, inject };

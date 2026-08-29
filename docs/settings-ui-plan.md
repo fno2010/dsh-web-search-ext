@@ -354,13 +354,18 @@ verification) can survive to `resultView`. Therefore:
 - **Verification state re-surfaces the C1 badge** (marker label + optional
   detail such as "8/9 words" or "fetch failed"); "not verified" when the
   snippet carries no marker (verifyLevel off, or non-pinned provider).
-- **Interaction is client-side only**: clicking a source head (role="button",
-  keyboard Enter/Space; the title anchor stops propagation so opening the
-  link does not toggle) expands a per-source detail block; one expanded at a
-  time. No wire, host, or provider changes — the whole feature is
-  `src/client/` + scenarios in `test/toolview.test.mjs` (backend parsing,
-  dedupe/union, multi-backend merge, non-pinned empty backends; scenario
-  count asserted in-test only, not in docs).
+- **Interaction is client-side only**: the source head is a
+  mouse-convenience toggle zone (plain div — no `role="button"` wrapper,
+  which would swallow the nested title anchor's key events and hide it from
+  screen readers); keyboard activation is a dedicated chevron
+  `<button type="button">` carrying `aria-expanded` / `aria-controls` (the
+  drill region's `id`) / `aria-label`, and clicking the title anchor still
+  just opens the link (event stopPropagation). One expanded at a time; the
+  open index resets when the row is reused for a different call. No wire,
+  host, or provider changes — the whole feature is `src/client/` +
+  scenarios in `test/toolview.test.mjs` (backend parsing, dedupe/union,
+  multi-backend merge, non-pinned empty backends; scenario count asserted
+  in-test only, not in docs).
 
 ## Open questions / risks
 

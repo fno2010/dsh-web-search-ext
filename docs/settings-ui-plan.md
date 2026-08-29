@@ -513,9 +513,10 @@ packages):
 2. The session wire has exactly two tool events: `tool/call` and
    `tool/result` (dsh-session known event types). There is no
    `tool/progress` event.
-3. dsh-tool-web (the host tool that owns the web card) has no progress
-   channel; its own web rows keep a *generic pending* card while running
-   (`webCardModel` returns null until the block settles with a `kind`).
+3. The host's own web card keeps a *generic pending* card while running —
+   `webCardModel` (dsh-client-ui-tool) returns null until the block settles
+   with a `kind`; and dsh-tool-web, the host tool that owns the web seam,
+   exposes no progress channel either.
 4. The host's row renderer re-renders only on session-snapshot changes.
    The running affordance is a pure CSS sweep animation on
    `[data-state=running]` (dsh-client-ui-tool — no timer or elapsed-time

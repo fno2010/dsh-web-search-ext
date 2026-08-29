@@ -54,10 +54,11 @@ function receiptBackend(receipt) {
   const rest = receipt.slice(RECEIPT_PREFIX.length).trimStart();
   const sep = rest.indexOf(" · ");
   const label = (sep === -1 ? rest : rest.slice(0, sep)).trim();
-  // Real labels are kebab-case backend names (exa-rest / exa-mcp / firecrawl)
-  // and never contain the " · " separator — anything else is a malformed
-  // receipt and must not display as a backend.
-  return label !== "" && !label.includes("·") ? label : null;
+  // Real labels are kebab-case backend identifiers (exa-rest / exa-mcp /
+  // firecrawl). Bound the output to that shape so a malformed receipt can
+  // never display as a backend: an empty label, a no-space "·" glued to the
+  // label ("exa-rest·1s"), a bare timestamp, or free text all fail the test.
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(label) ? label : null;
 }
 
 /**

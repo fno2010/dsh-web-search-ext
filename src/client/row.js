@@ -34,7 +34,7 @@
 // path, older host) degrades to the raw result text instead of throwing —
 // failure is always visible, never silent.
 
-import { createElement as h, useState } from "react";
+import { createElement as h, useEffect, useState } from "react";
 import {
   DisclosureRow,
   IconGlobeOutline14,
@@ -96,6 +96,10 @@ export function WebSearchRow({ block, inspect, t }) {
   const [expanded, setExpanded] = useState(false);
   // C4: per-result drill-down — index of the expanded source row, or null.
   const [drillIndex, setDrillIndex] = useState(null);
+  // If the host reuses this row instance for a different call, the open
+  // drill-down is meaningless — close it. (Out-of-range indexes no-op
+  // safely anyway; this is state hygiene, not a correctness guard.)
+  useEffect(() => setDrillIndex(null), [block.callId]);
   const hasBody =
     model.state === "ok"
       ? model.provenance.length > 0 ||
@@ -179,16 +183,11 @@ export function WebSearchRow({ block, inspect, t }) {
                       "div",
                       {
                         className: css.sourceHead,
-                        role: "button",
-                        tabIndex: 0,
-                        "aria-expanded": drillIndex === i,
-                        onClick: () => setDrillIndex(drillIndex === i ? null : i),
-                        onKeyDown: (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            setDrillIndex(drillIndex === i ? null : i);
-                          }
-                        }
+                        // Mouse convenience toggle zone. Keyboard access is the
+                        // dedicated chevron button below — a role="button"
+                        // wrapper here would swallow the nested <a>'s key
+                        // events and hide the link from screen readers.
+                        onClick: () => setDrillIndex(drillIndex === i ? null : i)
                       },
                       h("span", { className: css.sourceIndex, "aria-hidden": true }, String(i + 1)),
                       source.badge !== null
@@ -219,7 +218,21 @@ export function WebSearchRow({ block, inspect, t }) {
                             { className: css.sourceTitle, "aria-disabled": "true" },
                             source.title !== null ? source.title : source.url
                           ),
-                      h("span", { className: css.drillToggle, "aria-hidden": true }, "›")
+                      h(
+                        "button",
+                        {
+                          type: "button",
+                          className: css.drillToggle,
+                          "aria-expanded": drillIndex === i,
+                          "aria-controls": `${block.callId ?? "websearch"}-drill-${i}`,
+                          "aria-label": t("row.drill.toggle"),
+                          onClick: (event) => {
+                            event.stopPropagation();
+                            setDrillIndex(drillIndex === i ? null : i);
+                          }
+                        },
+                        "›"
+                      )
                     ),
                     // C4: per-result drill-down — why this result: which
                     // backend served it (receipt-derived; the per-source
@@ -228,7 +241,7 @@ export function WebSearchRow({ block, inspect, t }) {
                     drillIndex === i
                       ? h(
                           "div",
-                          { className: css.drill },
+                          { id: `${block.callId ?? "websearch"}-drill-${i}`, className: css.drill },
                           [
                             model.backends.length > 0
                               ? h(

@@ -32,6 +32,7 @@ export const en = {
   "row.drill.backend": "Backend",
   "row.drill.merged": " (merged across sub-queries)",
   "row.drill.published": "Published",
+  "row.drill.toggle": "Expand details",
   "row.drill.unknown": "unknown",
   "row.drill.verification": "Verification",
   "row.drill.notVerified": "not verified"
@@ -71,6 +72,7 @@ export const zh = {
   "row.drill.backend": "来源后端",
   "row.drill.merged": "（跨子查询合并）",
   "row.drill.published": "发布时间",
+  "row.drill.toggle": "展开详情",
   "row.drill.unknown": "未知",
   "row.drill.verification": "校验状态",
   "row.drill.notVerified": "未校验"

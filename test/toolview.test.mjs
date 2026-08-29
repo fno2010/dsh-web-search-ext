@@ -16,7 +16,7 @@ function ok(label) {
 	console.log(`  ok ${label}`);
 }
 
-const RECEIPT = "web-search-ext: exa · 1.2s · 8 results · liveness: 6 alive, 1 dead, 1 blocked";
+const RECEIPT = "web-search-ext: exa-rest · 1.2s · 8 results · liveness: 6 alive, 1 dead, 1 blocked";
 
 function webView(overrides = {}) {
 	return {
@@ -183,8 +183,8 @@ function runningBlock(argsRaw) {
 	const model = webSearchCardModel(settledBlock(view));
 	assert.equal(model.state, "ok");
 	assert.equal(model.title, "q1, q2", "view title wins over argsRaw");
-	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa" }]);
-	assert.deepEqual(model.backends, ["exa"], "single receipt → single backend");
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa-rest" }]);
+	assert.deepEqual(model.backends, ["exa-rest"], "single receipt → single backend");
 	assert.equal(model.answer, "Vendor summary text.");
 	assert.equal(model.truncated, true);
 	assert.equal(model.sources.length, 3);
@@ -200,8 +200,8 @@ function runningBlock(argsRaw) {
 {
 	const view = webView({ answer: `${RECEIPT}\n`, sources: [] });
 	const model = webSearchCardModel(settledBlock(view));
-	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa" }]);
-	assert.deepEqual(model.backends, ["exa"]);
+	assert.deepEqual(model.provenance, [{ query: null, receipt: RECEIPT, backend: "exa-rest" }]);
+	assert.deepEqual(model.backends, ["exa-rest"]);
 	assert.equal(model.answer, null, "trailing newline leaves no answer body");
 	assert.equal(model.truncated, false);
 	ok("settled ok: receipt-only answer → provenance only, no empty answer");
@@ -226,8 +226,8 @@ function runningBlock(argsRaw) {
 // its own provenance entry (with the query label), headers and receipts are
 // stripped from the answer body, and vendor text survives as the answer.
 {
-	const r1 = "web-search-ext: exa · 1.2s · 8 results · liveness: 8 alive";
-	const r2 = "web-search-ext: exa · 0.9s · 5 results · liveness: 4 alive, 1 dead";
+	const r1 = "web-search-ext: exa-rest · 1.2s · 8 results · liveness: 8 alive";
+	const r2 = "web-search-ext: exa-rest · 0.9s · 5 results · liveness: 4 alive, 1 dead";
 	const view = webView({
 		title: "harness release notes, dsh toolview slots",
 		answer: `### harness release notes\n\n${r1}\n\n### dsh toolview slots\n\n${r2}\n\nVendor follow-up text for the second query.`,
@@ -235,10 +235,10 @@ function runningBlock(argsRaw) {
 	});
 	const model = webSearchCardModel(settledBlock(view));
 	assert.deepEqual(model.provenance, [
-		{ query: "harness release notes", receipt: r1, backend: "exa" },
-		{ query: "dsh toolview slots", receipt: r2, backend: "exa" }
+		{ query: "harness release notes", receipt: r1, backend: "exa-rest" },
+		{ query: "dsh toolview slots", receipt: r2, backend: "exa-rest" }
 	]);
-	assert.deepEqual(model.backends, ["exa"], "identical backends dedupe");
+	assert.deepEqual(model.backends, ["exa-rest"], "identical backends dedupe");
 	assert.equal(model.answer, "Vendor follow-up text for the second query.", "receipts+headers stripped, vendor text kept, no re-prefixed headers");
 	ok("multi-query merge: per-query receipts claimed with labels, answer de-duplicated");
 }
@@ -261,11 +261,19 @@ function runningBlock(argsRaw) {
 		{ query: "q two", receipt: r2, backend: "firecrawl" }
 	]);
 	assert.deepEqual(model.backends, ["exa-rest", "firecrawl"], "union, first-seen order");
-	// Malformed receipt (empty label): the line is still claimed as
-	// provenance, but its "backend" must not display as garbage.
+	// Malformed receipts: the line is still claimed as provenance, but its
+	// "backend" must not display as garbage. Three shapes: empty label, a "·"
+	// glued to the label without spaces, and a free-text label with a space —
+	// all fall outside the kebab-label bound (receiptBackend in model.js).
 	const bad = webSearchCardModel(settledBlock(webView({ answer: "web-search-ext:  · 1.2s · 5 results" })));
 	assert.equal(bad.provenance[0].backend, null, "empty-label receipt claims provenance but no backend");
 	assert.deepEqual(bad.backends, []);
+	const glued = webSearchCardModel(settledBlock(webView({ answer: "web-search-ext: exa-rest·1s · 5 results" })));
+	assert.equal(glued.provenance[0].backend, null, "no-space separator: label outside the kebab bound");
+	assert.deepEqual(glued.backends, []);
+	const free = webSearchCardModel(settledBlock(webView({ answer: "web-search-ext: totally-not-a-label whatever" })));
+	assert.equal(free.provenance[0].backend, null, "free-text label: outside the kebab bound");
+	assert.deepEqual(free.backends, []);
 	ok("C4 backend: two backends in one merge → per-entry labels + union");
 }
 
@@ -278,7 +286,7 @@ function runningBlock(argsRaw) {
 		sources: []
 	});
 	const model = webSearchCardModel(settledBlock(view));
-	assert.deepEqual(model.provenance, [{ query: "q1", receipt: RECEIPT, backend: "exa" }]);
+	assert.deepEqual(model.provenance, [{ query: "q1", receipt: RECEIPT, backend: "exa-rest" }]);
 	assert.equal(model.answer, "### q2\nforeign provider section text", "receipt-less section keeps its header");
 	ok("multi-query merge: receipt-less section stays foreign text with header");
 }

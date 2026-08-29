@@ -188,6 +188,7 @@
   padding: 0;
   border: 0;
   background: transparent;
+  font-family: inherit;
   color: var(--dsw-alias-label-caption);
   font-size: 12px;
   line-height: 16px;

@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-include": "^1.0.6",
-    "@tsdown/css": "^0.22.14",
+    "@tsdown/css": "^0.23.0",
     "js-yaml": "^4.3.1",
     "tsdown": "^0.22.14"
   }

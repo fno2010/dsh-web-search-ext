@@ -5,9 +5,9 @@
  * own patch engine (applyEntryPatches from @deepseek-ai/cordis-plugin-include,
  * the exact function the host uses) on top of the real layer stack:
  *
- *   BASE_ROWS    — dsh-base@0.1.1-rc.2 rows this patch targets (verbatim
+ *   BASE_ROWS    — dsh-base@0.2.1-rc.2 rows this patch targets (verbatim
  *                  values, verified on the running host)
- *   WEB_APP_ROWS — the @deepseek-ai/dsh-web-app@0.1.1-rc.2 web-profile patch
+ *   WEB_APP_ROWS — the @deepseek-ai/dsh-web-app@0.2.1-rc.2 web-profile patch
  *                  entry that disables the profile-layer `tool-web` row
  *
  * 0.3.1 lesson, encoded as assertions: the 0.3.0 hotfix originally patched
@@ -15,7 +15,7 @@
  * The fixture omitted the web-app layer and the preset layer, so the test
  * passed against a composition the host never builds — on a real `dsh web`
  * host the row is `disabled: true` upstream and the model-facing tool comes
- * from the agent-preset layer (shipped with `fetch: false`), i.e. the patch
+ * from the agent-preset layer (pre-0.2 presets shipped `fetch: false`), i.e. the patch
  * row was inert. This version composes the layers the host actually composes
  * and asserts the REAL resulting state:
  *
@@ -37,11 +37,11 @@
  * Base fixture source (bump when the host harness updates, and re-verify
  * against the installed @deepseek-ai/dsh-base / dsh-web-app — see the note
  * in AGENTS.md):
- *   - @deepseek-ai/dsh-base@0.1.1-rc.2, cordis.patch.yml rows `web`,
- *     `web-search-deepseek`, `tool-web`
- *   - @deepseek-ai/dsh-web-app@0.1.1-rc.2, web-profile patch entry `tool-web`
+ *   - @deepseek-ai/dsh-base@0.2.1-rc.2, cordis.patch.yml rows `web`,
+ *     `web-search-deepseek`, `web-fetch-http`, `tool-web`
+ *   - @deepseek-ai/dsh-web-app@0.2.1-rc.2, web-profile patch entry `tool-web`
  * Patch engine pin (must match the host's engine semantics):
- *   - @deepseek-ai/cordis-plugin-include@1.0.6
+ *   - @deepseek-ai/cordis-plugin-include@1.0.10
  */
 
 import assert from "node:assert/strict";
@@ -57,7 +57,7 @@ function ok(name, fn) {
 }
 
 /**
- * The base rows as shipped in @deepseek-ai/dsh-base@0.1.1-rc.2. The real file
+ * The base rows as shipped in @deepseek-ai/dsh-base@0.2.1-rc.2. The real file
  * is one top-level `- insert:` list; only the rows relevant to this plugin's
  * composition are reproduced here (verbatim config values).
  */
@@ -65,7 +65,7 @@ const BASE_ROWS = [
 	{
 		id: "web",
 		name: "@deepseek-ai/dsh-web",
-		config: { searchProvider: "deepseek-official" }
+		config: { searchProvider: "deepseek-official", fetchProvider: "http" }
 	},
 	{
 		id: "web-search-deepseek",
@@ -73,14 +73,18 @@ const BASE_ROWS = [
 		config: { apiKeyEnv: "DEEPSEEK_API_KEY" }
 	},
 	{
+		id: "web-fetch-http",
+		name: "@deepseek-ai/dsh-web-fetch-http"
+	},
+	{
 		id: "tool-web",
 		name: "@deepseek-ai/dsh-tool-web",
-		config: { fetch: false, searchTimeoutMs: 60000 }
+		config: { fetch: true, searchTimeoutMs: 60000 }
 	}
 ];
 
 /**
- * The web-profile patch entry from @deepseek-ai/dsh-web-app@0.1.1-rc.2
+ * The web-profile patch entry from @deepseek-ai/dsh-web-app@0.2.1-rc.2
  * (verbatim: the web profile disables the profile-layer tool-web row — the
  * model-facing web tools come from the agent-preset layer instead).
  */
@@ -145,7 +149,7 @@ function compose(bundleFirst, profileRows = []) {
 		const row = byId.get("tool-web");
 		assert.ok(row, "tool-web row missing from composed tree");
 		assert.equal(row.disabled, true, "web-app disables the profile-layer tool-web row; the host really composes it disabled");
-		assert.deepEqual(row.config, { fetch: false, searchTimeoutMs: 60000 }, "disabled row keeps the base config");
+		assert.deepEqual(row.config, { fetch: true, searchTimeoutMs: 60000 }, "disabled row keeps the base config");
 	});
 }
 
@@ -173,7 +177,7 @@ function compose(bundleFirst, profileRows = []) {
 		const row = byId.get("tool-web");
 		assert.ok(row, "tool-web row missing from composed tree");
 		assert.notEqual(row.disabled, true, "our patch must not disable tool-web");
-		assert.deepEqual(row.config, { fetch: false, searchTimeoutMs: 60000 });
+		assert.deepEqual(row.config, { fetch: true, searchTimeoutMs: 60000 });
 	});
 }
 

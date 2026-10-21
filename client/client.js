@@ -656,7 +656,7 @@ function leadingFor(state) {
 	switch (state) {
 		case "error": return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.StateDot, { state: "error" });
 		case "stopped": return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.StateDot, { state: "warning" });
-		default: return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconGlobeOutline14, { size: 14 });
+		default: return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconGlobeOutlineRegular, { size: 14 });
 	}
 }
 /** Visually hidden run-state label for the colour-only lifecycle cues. */
@@ -775,7 +775,7 @@ function WebSearchRow({ block, inspect, t }) {
 		type: "button",
 		className: row_module_default.inspectButton,
 		onClick: inspect
-	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
+	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutlineRegular, {}), t("row.inspect")]) : null)));
 }
 //#endregion
 //#region src/client/command.js
@@ -953,9 +953,9 @@ const FIELDS = [
 const inject = [
 	"slots",
 	"locale",
-	"connection",
-	"settingsScope",
+	"configForms",
 	"remote",
+	"remote.credentials",
 	"commandUi"
 ];
 const NO_KEY_STATE = {
@@ -1201,7 +1201,7 @@ function WebSearchExtCard(props) {
 		className: card_module_default.header,
 		"aria-expanded": open,
 		onClick: () => setOpen((o) => !o)
-	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
+	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutlineRegular, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
 		className: card_module_default.tabs,
 		role: "tablist"
 	}, (0, react.createElement)("button", {
@@ -1260,7 +1260,7 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutlineRegular, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
 		t,
 		panelId: "dsw-websearch-panel-health"
 	})) : null);
@@ -1438,8 +1438,14 @@ function apply(ctx) {
 		zh
 	}), "web-search-ext: dictionaries");
 	const t = ctx.locale.bind(NS);
-	const scope = ctx.settingsScope.bind({ namespace: NS });
-	const api = ctx.get("connection").api;
+	const scope = ctx.configForms.get(NS);
+	const api = { credentials: {
+		describe: async ({ refs }) => {
+			const response = await ctx.remote.credentials.describe(refs);
+			return response && response.ok ? { credentials: response.value } : null;
+		},
+		set: ({ ref, value }) => ctx.remote.credentials.set(ref, value)
+	} };
 	const remote = ctx.get("remote");
 	if (ctx.commandUi && typeof ctx.commandUi.register === "function") {
 		const value = () => {
@@ -1514,10 +1520,11 @@ function apply(ctx) {
 		fallback: false,
 		unavailable: true
 	};
-	ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
-		name: "settings.plugin.item",
-		key: NS,
-		locale: NS,
+	ctx.slots.inject("settings.plugins.tab", () => ctx.slots.register({
+		name: "settings.plugins.tab",
+		id: NS,
+		order: 30,
+		label: () => t("title"),
 		inject: () => ({
 			t,
 			scope,
@@ -2203,7 +2210,7 @@ function leadingFor(state) {
 	switch (state) {
 		case "error": return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.StateDot, { state: "error" });
 		case "stopped": return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.StateDot, { state: "warning" });
-		default: return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconGlobeOutline14, { size: 14 });
+		default: return (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconGlobeOutlineRegular, { size: 14 });
 	}
 }
 /** Visually hidden run-state label for the colour-only lifecycle cues. */
@@ -2322,7 +2329,7 @@ function WebSearchRow({ block, inspect, t }) {
 		type: "button",
 		className: row_module_default.inspectButton,
 		onClick: inspect
-	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutline12, {}), t("row.inspect")]) : null)));
+	}, [(0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconInspectOutlineRegular, {}), t("row.inspect")]) : null)));
 }
 //#endregion
 //#region src/client/command.js
@@ -2500,9 +2507,9 @@ const FIELDS = [
 const inject = [
 	"slots",
 	"locale",
-	"connection",
-	"settingsScope",
+	"configForms",
 	"remote",
+	"remote.credentials",
 	"commandUi"
 ];
 const NO_KEY_STATE = {
@@ -2748,7 +2755,7 @@ function WebSearchExtCard(props) {
 		className: card_module_default.header,
 		"aria-expanded": open,
 		onClick: () => setOpen((o) => !o)
-	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutline14, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
+	}, (0, react.createElement)("div", { className: card_module_default.headText }, (0, react.createElement)("div", { className: card_module_default.name }, t("title")), (0, react.createElement)("div", { className: card_module_default.description }, t("description"))), dirty && !saving ? (0, react.createElement)("span", { className: card_module_default.pending }, t("pending")) : null, (0, react.createElement)("span", { className: open ? `${card_module_default.chevron} ${card_module_default.chevronOpen}` : card_module_default.chevron }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconChevronDownOutlineRegular, { size: 14 }))), open ? (0, react.createElement)("div", { className: card_module_default.body }, (0, react.createElement)("div", {
 		className: card_module_default.tabs,
 		role: "tablist"
 	}, (0, react.createElement)("button", {
@@ -2807,7 +2814,7 @@ function WebSearchExtCard(props) {
 		display: "inline-flex",
 		alignItems: "center",
 		gap: 6
-	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutline16, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
+	} }, (0, react.createElement)("span", { className: card_module_default.spin }, (0, react.createElement)(_deepseek_ai_dsh_client_ui_primitives.IconLoadingOutlineRegular, { size: 16 })), t("saving")) : t("save")))) : (0, react.createElement)(HealthTab, {
 		t,
 		panelId: "dsw-websearch-panel-health"
 	})) : null);
@@ -2985,8 +2992,14 @@ function apply(ctx) {
 		zh
 	}), "web-search-ext: dictionaries");
 	const t = ctx.locale.bind(NS);
-	const scope = ctx.settingsScope.bind({ namespace: NS });
-	const api = ctx.get("connection").api;
+	const scope = ctx.configForms.get(NS);
+	const api = { credentials: {
+		describe: async ({ refs }) => {
+			const response = await ctx.remote.credentials.describe(refs);
+			return response && response.ok ? { credentials: response.value } : null;
+		},
+		set: ({ ref, value }) => ctx.remote.credentials.set(ref, value)
+	} };
 	const remote = ctx.get("remote");
 	if (ctx.commandUi && typeof ctx.commandUi.register === "function") {
 		const value = () => {
@@ -3061,10 +3074,11 @@ function apply(ctx) {
 		fallback: false,
 		unavailable: true
 	};
-	ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
-		name: "settings.plugin.item",
-		key: NS,
-		locale: NS,
+	ctx.slots.inject("settings.plugins.tab", () => ctx.slots.register({
+		name: "settings.plugins.tab",
+		id: NS,
+		order: 30,
+		label: () => t("title"),
 		inject: () => ({
 			t,
 			scope,

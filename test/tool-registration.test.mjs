@@ -70,7 +70,8 @@ function makeCtx({ globalTools = {}, scopedTools = {} } = {}) {
 			has: (name) => global.has(name)
 		},
 		systemPrompt: {
-			section: (spec) => sections.push(spec)
+			section: (spec) => sections.push(spec),
+			getSectionOrder: (key) => (key === "TOOL_WEB_FETCH" ? 111 : 0)
 		},
 		web: {
 			fetch: async (request, signal) => {

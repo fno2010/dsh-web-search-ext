@@ -4,7 +4,7 @@ Thanks for improving the plugin! This file covers development, conventions, addi
 
 ## Development
 
-- Node.js >= 22. The host half (`lib/`) has no build step; the client half (`src/client/`) builds to the **committed** `client/client.js` via `npm run build:client` (tsdown) — after any `src/client/` change, rebuild and commit the bundle (CI rebuilds and fails on drift, and the publish job never builds). Install deps with `npm install` (a lockfile-less dev is fine; the package publishes `lib/`, the built `client/` bundle, the Cordis patch file, and the docs).
+- Node.js >= 22. The host half (`lib/`) has no build step; the client half (`src/client/`) builds to the **committed** `client/client.js` via `npm run build:client` (tsdown) — after any `src/client/` change, rebuild and commit the bundle (CI rebuilds and fails on drift, and the publish job never builds). `package-lock.json` is committed and CI installs with `npm ci`; use `npm install` only when intentionally updating dependencies, then commit the regenerated lockfile. The package publishes `lib/`, the built `client/` bundle, the Cordis patch file, and the docs.
 - Run the suite: `npm test`
   - **Part A** — mocked failover/mapping/verification/fetch scenarios (deterministic, no network; the scenario count is asserted inside the suite).
   - **Part B** — live keyless smoke calls (Exa anonymous MCP, Firecrawl keyless, dual plan). Skipped automatically when `CI` is set (`CI=true npm test` = Part A only). Part B hits shared anonymous rate limits — don't run it in a tight loop.
@@ -18,6 +18,13 @@ Thanks for improving the plugin! This file covers development, conventions, addi
 - **Squash merges carry one Conventional subject + a hand-written body.** The merge commit's title is the PR's single Conventional-Commit subject (GitHub's automatic `(#N)` suffix is fine); the body is hand-written (what changed and why). Never use GitHub's default "full commit history" bullet body — intermediate commits are working state, not shippable history.
 - **Test baseline**: any new backend or behaviour change ships with a mocked failover/mapping scenario in `test/failover.test.mjs`. No scenario, no merge.
 - No API keys or secrets in the diff, ever.
+
+## Dependency updates
+
+- Dependabot opens weekly npm and Actions PRs. They are **review inputs, not auto-merge candidates**: run the suite and read the diff.
+- Changes to the client build toolchain (`tsdown`, `@tsdown/css`, or a transitive bundler such as `rolldown`) also change the emitted `client/client.js`. Dependabot cannot commit that artifact, so its PR will fail the bundle-drift gate. Treat it as a notification: land the version bump in a manual PR together with the rebuilt bundle (or push the rebuilt bundle to the Dependabot branch). Never merge the manifest change with a stale bundle.
+- Major test-tool bumps (e.g. `js-yaml` 5) may need code changes; migrate the tests in the same PR instead of pinning silently.
+- Do not pin a transitive build dependency without also committing the lockfile; the lockfile is the reproducible source of truth.
 
 ## Review
 

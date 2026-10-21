@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 24
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Test (Part A; Part B live smoke skipped in CI)
         run: npm test
       # The published tarball ships the committed client/client.js (the npm
@@ -101,7 +101,7 @@ jobs:
       # install, so its own imports resolve from THIS checkout: install its
       # dependencies first.
       - name: Install this plugin's own dependencies (link-install target)
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Boot the web host for real and verify the plugin tree loads
         run: |
           log="$(mktemp)"

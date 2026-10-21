@@ -74,8 +74,5 @@
     "@tsdown/css": "^0.22.14",
     "js-yaml": "^4.3.1",
     "tsdown": "^0.22.14"
-  },
-  "overrides": {
-    "rolldown": "1.2.6"
   }
 }

@@ -135,5 +135,8 @@ jobs:
             exit 1
           fi
           [ -n "$url" ] || { echo "e2e-host: FAILED — boot never reached the server"; exit 1; }
-          curl -fsS -o /dev/null "$url" || { echo "e2e-host: FAILED — server not responding"; exit 1; }
+          # The launch URL answers 303 and sets the browser-session cookie;
+          # follow it with a cookie jar, then expect the authenticated root.
+          jar="$(mktemp)"
+          curl -fsS -L -c "$jar" -b "$jar" -o /dev/null "$url" || { echo "e2e-host: FAILED — server not responding"; exit 1; }
           echo "e2e-host: boot OK ($url) — plugin tree loaded, no import/load failures"

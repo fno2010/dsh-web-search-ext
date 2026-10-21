@@ -2,13 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
-
-### Changed
-
-- **DeepSeek Harness 0.2.x compatibility**: settings now ride the plugin's own volatile Cordis config (`ctx.configForms` on the client, `.volatile()` fields on the host) instead of the removed `installSettingsSection`/`settingsNamespace` helpers; client credentials calls use the typed `remote.credentials` namespace; the card registers into `settings.plugins.tab`; `@deepseek-ai/dsh-client-runtime` left the client inject list (replaced by `dsh-client-modules`); removed `…Outline14`/`…Outline12` icon imports (`IconChevronDown`, `IconLoading`, `IconGlobe`, `IconInspect`) became the renamed `…OutlineRegular` icons. Peer ranges and `engines.dsh` now target `>=0.2.1-rc.1 <0.3.0-0`, and `@deepseek-ai/schemastery` is `^3.18.5` (first release with `.volatile()`).
-
-## [0.3.1] - 2026-08-30
+## [0.3.1] - 2026-10-21
 
 ### Added
 
@@ -17,17 +11,18 @@ All notable changes to this project are documented in this file.
 - **Session Health tab on the Web**: the settings card's Health tab shows session telemetry served by the host's `GET /web-search-ext/health` — uptime, per-backend success/failure counts, last-call timing, active 429 cooldowns, and session search/fetch counts. The payload is counters and closed codes only (no credentials, URLs, or query text), and the tab shows an explicit unavailable state with a retry when the route is not mounted.
 - **First-install connectivity probe**: the Health tab's Connectivity section probes Exa (keyed REST or anonymous MCP) and Firecrawl (keyed or keyless) — automatically once when the tab first opens with no stored result, and at will via "Test now". The host runs the probe on demand at `POST /web-search-ext/probe` and never at apply time, so installs, host restarts, and CI make zero vendor calls; the payload carries plan literals and closed codes only (no vendor messages, URLs, or keys).
 - **`/search-engine` slash command**: switch the preferred backend, see live status (key source, last-call outcome, active 429 cooldown), and run the connectivity test — straight from the composer's `/` menu, in the host's popup shell. If `/search-engine` is already taken the command registers under `/web-search-engine` instead, and the settings card says which name materialized (or that neither was available) — the fallback is surfaced, never silent.
-- **Verification-tier selector in the settings card**: the card now exposes `verifyLevel` (`off` / `liveness` / `content`) as a labeled select. A saved tier applies from the next `web_search`/`web_fetch` onward — no restart; the host resolves the settings document live per call. A hand-edited `settings.yaml` with an unrecognized tier shows the schema default instead of a dead option, and saving writes the schema-valid value back.
+- **Verification-tier selector in the settings card**: the card now exposes `verifyLevel` (`off` / `liveness` / `content`) as a labeled select. A saved tier applies from the next `web_search`/`web_fetch` onward — no restart; the host resolves the settings document live per call. An unrecognized tier written directly into the profile patch shows the schema default instead of a dead option, and saving writes the schema-valid value back.
 - **Context budget**: `numResults` is now a hard cap on `web_search` output — a caller's larger `maxResults` is clamped before any backend runs, vendor over-delivery is clamped before verification (so L0/L1 never probes a URL that will not be returned), and the receipt reports the cap with the structured `truncated` flag.
 
 ### Fixed
 
-- **`web_fetch` available on live hosts**: 0.3.0 pinned this plugin as the web seam's fetch provider, but no composition path registered the model-facing `web_fetch` tool (preset layers ship `fetch: false` and `dsh web` disables the profile-layer `tool-web` row), so live hosts returned `unknown tool "web_fetch"`. The plugin now registers the stock `web_fetch` tool at apply time when the preset layer left it unregistered — same schema, prompt section, and presentation as the harness stock tool, dedup-guarded, with execution routed through the SSRF-guarded `ctx.web.fetch`.
+- **`web_fetch` available on live hosts**: 0.3.0 pinned this plugin as the web seam's fetch provider, but no composition path registered the model-facing `web_fetch` tool (pre-0.2 preset layers shipped `fetch: false`, and `dsh web` disables the profile-layer `tool-web` row), so live hosts returned `unknown tool "web_fetch"`. The plugin now registers the stock `web_fetch` tool at apply time when the preset layer left it unregistered — same schema, prompt section, and presentation as the harness stock tool, dedup-guarded, with execution routed through the SSRF-guarded `ctx.web.fetch`.
 - **L1 byte cap**: when a fetched chunk crossed `contentCheckBytes`, the entire chunk was dropped while `length` still counted the dropped bytes, so `contentCheckMinBytes` could gate on bytes that were never kept. The crossing chunk's fitting prefix is now retained (decoded-character cap, matching the existing slice model).
 - **Client entry no longer fails to apply on live hosts**: the `web_search` toolview registration collided with the host's built-in `web-toolview` entry — same keyed slot, same key, same default priority 0 — which the slot registry hard-rejects, so the whole client entry failed to load ("Failed to load plugins") and the settings card, Health tab, and `/search-engine` command all died with it. The registration now shadows the host entry at an explicit priority (the registry renders the lowest-priority entry per key), and the committed bundle's registration is asserted in `test/toolview.test.mjs` because no CI path runs the browser-side registry.
 
 ### Changed
 
+- **DeepSeek Harness 0.2.x compatibility**: settings now ride the plugin's own volatile Cordis config (`ctx.configForms` on the client, `.volatile()` fields on the host) instead of the removed `installSettingsSection`/`settingsNamespace` helpers; client credentials calls use the typed `remote.credentials` namespace; the card registers into `settings.plugins.tab`; `@deepseek-ai/dsh-client-runtime` left the client inject list (replaced by `dsh-client-modules`); removed `…Outline14`/`…Outline12` icon imports (`IconChevronDown`, `IconLoading`, `IconGlobe`, `IconInspect`) became the renamed `…OutlineRegular` icons. Peer ranges and `engines.dsh` now target `>=0.2.1-rc.1 <0.3.0-0`, and `@deepseek-ai/schemastery` is `^3.18.5` (first release with `.volatile()`).
 - Attribution user-agent bumped to `dsh-web-search-ext/0.3.1`.
 
 ## [0.3.0] - 2026-08-26

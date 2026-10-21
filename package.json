@@ -73,6 +73,6 @@
     "@deepseek-ai/cordis-plugin-include": "^1.0.10",
     "@tsdown/css": "^0.22.14",
     "js-yaml": "^4.3.1",
-    "tsdown": "^0.22.14"
+    "tsdown": "^0.23.1"
   }
 }

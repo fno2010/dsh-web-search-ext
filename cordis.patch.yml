@@ -15,9 +15,9 @@
 # `searchProvider` / `fetchProvider` the seam never reports
 # WEB_PROVIDER_AMBIGUOUS.
 #
-# Keys are configured through the settings section (`web-search-ext`
-# in settings.yaml) or the credentials service (EXA_API_KEY /
-# FIRECRAWL_API_KEY). No key is required: search falls back to Exa's
+# Keys are configured through this row's config (`web-search-ext` in the
+# profile patch, or the Web settings card) or the credentials service
+# (EXA_API_KEY / FIRECRAWL_API_KEY). No key is required: search falls back to Exa's
 # anonymous hosted MCP endpoint, and both fetch backends work keyless
 # (Firecrawl keyless scrape, Exa anonymous MCP fetch).
 #

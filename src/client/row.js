@@ -42,8 +42,8 @@
 import { createElement as h, useEffect, useState } from "react";
 import {
   DisclosureRow,
-  IconGlobeOutline14,
-  IconInspectOutline12,
+  IconGlobeOutlineRegular,
+  IconInspectOutlineRegular,
   MarkdownText,
   StateDot
 } from "@deepseek-ai/dsh-client-ui-primitives";
@@ -68,7 +68,7 @@ function leadingFor(state) {
     case "stopped":
       return h(StateDot, { state: "warning" });
     default:
-      return h(IconGlobeOutline14, { size: 14 });
+      return h(IconGlobeOutlineRegular, { size: 14 });
   }
 }
 
@@ -361,7 +361,7 @@ export function WebSearchRow({ block, inspect, t }) {
           ? h(
               "button",
               { type: "button", className: css.inspectButton, onClick: inspect },
-              [h(IconInspectOutline12, {}), t("row.inspect")]
+              [h(IconInspectOutlineRegular, {}), t("row.inspect")]
             )
           : null
       )

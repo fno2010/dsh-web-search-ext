@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **DeepSeek Harness 0.2.x compatibility**: settings now ride the plugin's own volatile Cordis config (`ctx.configForms` on the client, `.volatile()` fields on the host) instead of the removed `installSettingsSection`/`settingsNamespace` helpers; client credentials calls use the typed `remote.credentials` namespace; the card registers into `settings.plugins.tab`; `@deepseek-ai/dsh-client-runtime` left the client inject list (replaced by `dsh-client-modules`); removed `…Outline14`/`…Outline12` icon imports (`IconChevronDown`, `IconLoading`, `IconGlobe`, `IconInspect`) became the renamed `…OutlineRegular` icons. Peer ranges and `engines.dsh` now target `>=0.2.1-rc.1 <0.3.0-0`, and `@deepseek-ai/schemastery` is `^3.18.5` (first release with `.volatile()`).
+
 ## [0.3.1] - 2026-08-30
 
 ### Added

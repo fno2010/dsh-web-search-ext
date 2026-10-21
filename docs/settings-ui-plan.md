@@ -1,5 +1,12 @@
 # Settings UI Plan — `dsh-web-search-ext` client-side Settings card
 
+> **Historical plan (0.1.x).** The shipped card has since moved to the 0.2.x
+> plugin APIs: `ctx.configForms.get(entryId)` instead of `settingsScope`, the
+> `settings.plugins.tab` slot instead of `settings.plugin.item`, volatile
+> Cordis config fields instead of `installSettingsSection`, and
+> `ctx.remote.credentials` for key state. Treat the API names below as the
+> design record, not current code.
+
 Status: researched plan (no feature code written). All claims cite installed
 harness artifacts (`@deepseek-ai/dsh` 0.1.1-rc.2 under
 `node_modules/@deepseek-ai/`) unless noted; the live web profile at

@@ -20,7 +20,7 @@
 // shadow — and the card renders them disabled up front.
 
 import { createElement as h, useState, useEffect, useRef } from "react";
-import { IconChevronDownOutline14, IconLoadingOutline16 } from "@deepseek-ai/dsh-client-ui-primitives";
+import { IconChevronDownOutlineRegular, IconLoadingOutlineRegular } from "@deepseek-ai/dsh-client-ui-primitives";
 import { en, zh } from "./locales.js";
 import { WebSearchRow } from "./row.js";
 import { HEALTH_ROUTE, PROBE_ROUTE, parseHealth, formatDuration, ageOf } from "./health.js";
@@ -35,7 +35,7 @@ const NUMERIC = ["numResults", "maxSnippetChars", "rateLimitCooldownSec"];
 const FIELDS = ["preferred", "verifyLevel", ...NUMERIC, "firecrawlKeyless"];
 
 // Module-level injection: services this client plugin needs, by name.
-const inject = ["slots", "locale", "connection", "settingsScope", "remote", "commandUi"];
+const inject = ["slots", "locale", "configForms", "remote", "remote.credentials", "commandUi"];
 
 const NO_KEY_STATE = { configured: false, writable: true, source: "" };
 
@@ -298,7 +298,7 @@ function WebSearchExtCard(props) {
         ? h("span", { className: css.pending }, t("pending"))
         : null,
       h("span", { className: open ? `${css.chevron} ${css.chevronOpen}` : css.chevron },
-        h(IconChevronDownOutline14, { size: 14 }))
+        h(IconChevronDownOutlineRegular, { size: 14 }))
     ),
     open
       ? h("div", { className: css.body },
@@ -394,7 +394,7 @@ function WebSearchExtCard(props) {
                     disabled: !busy || saving || ro,
                     onClick: () => save()
                   }, saving ? h("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
-                    h("span", { className: css.spin }, h(IconLoadingOutline16, { size: 16 })),
+                    h("span", { className: css.spin }, h(IconLoadingOutlineRegular, { size: 16 })),
                     t("saving")) : t("save"))
                 )
               )
@@ -602,11 +602,21 @@ function apply(ctx) {
   ctx.effect(() => ctx.locale.register(NS, { en, zh }), "web-search-ext: dictionaries");
   const t = ctx.locale.bind(NS);
 
-  // Settings: derived scope bound to our namespace (no extra wire read).
-  const scope = ctx.settingsScope.bind({ namespace: NS });
+  // Settings: shared form for our Host entry (the plugin row id equals NS).
+  const scope = ctx.configForms.get(NS);
 
   // Wire APIs + forwarded events, surfaced to the card through the slot.
-  const api = ctx.get("connection").api;
+  // 0.2.x: credentials live on the typed remote namespace; describe/set take
+  // positional arguments and answer { ok, value } / { ok, error }.
+  const api = {
+    credentials: {
+      describe: async ({ refs }) => {
+        const response = await ctx.remote.credentials.describe(refs);
+        return response && response.ok ? { credentials: response.value } : null;
+      },
+      set: ({ ref, value }) => ctx.remote.credentials.set(ref, value)
+    }
+  };
   const remote = ctx.get("remote");
 
   // C3: /search-engine command (client contribution; the host's popupSelect
@@ -685,11 +695,12 @@ function apply(ctx) {
     commandRegistration = { name: null, fallback: false, unavailable: true };
   }
 
-  // Plugins → configurable tab: one keyed card per settings namespace.
-  ctx.slots.inject("settings.plugin.item", () => ctx.slots.register({
-    name: "settings.plugin.item",
-    key: NS,
-    locale: NS,
+  // Settings → Plugins tab: one card for this plugin's Host entry.
+  ctx.slots.inject("settings.plugins.tab", () => ctx.slots.register({
+    name: "settings.plugins.tab",
+    id: NS,
+    order: 30,
+    label: () => t("title"),
     inject: () => ({ t, scope, api, remote })
   }, WebSearchExtCard));
 

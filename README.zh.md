@@ -24,7 +24,7 @@
 - **来源回执**：`web_search` 结果携带单行回执（`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`），标明实际应答的后端，并显式披露限制（如无 key Exa 无法执行时间窗口过滤）而非静默忽略
 - **时间窗口**：`freshness: 24h | 7d | 30d` 在后端支持时随请求发出（Exa `startPublishedDate`、Firecrawl `tbs`）；无 key Exa MCP 路径无法按日期过滤，回执会明确说明
 - **可选 key**，按后端独立解析，优先级：设置明文 → 凭证服务 → 启动环境变量
-- **Web 端设置卡片**：设置 → 插件 → 插件配置 中可编辑六个核心配置字段——含校验层级（`off` / `liveness` / `content`，自下一次搜索起热生效）——和两个 API key，key 状态自动发现自凭证各层（时间窗口仍只在 `settings.yaml`）
+- **Web 端设置卡片**：设置 → 插件 → **Web Search (ext)** 标签页中可编辑六个核心配置字段——含校验层级（`off` / `liveness` / `content`，自下一次搜索起热生效）——和两个 API key，key 状态自动发现自凭证各层（时间窗口仍只能改配置文件）
 - **Web 端 `web_search` 卡片**：对话中的 `web_search` 行接管宿主的内置 web 卡片，额外显示来源回执行、按来源的校验徽章（按状态着色：`alive`、`verified`、`dead 404` 等）、截断提示、逐条下钻（点击来源可查看其服务后端、新鲜度与校验状态），以及搜索进行中的进度指示（扫光动画 + 客户端计时的已耗时标签——宿主不提供进行中进度通道，结果到达前不声称阶段与服务后端）；当 web seam 未固定到本插件时优雅降级（不冒领回执、不虚构徽章、不声称后端），不会把别人后端的结果显示成 web-search-ext 的结果
 - **Web 端会话 Health 标签页**：设置卡片的 Health 标签页显示宿主 `GET /web-search-ext/health` 路由提供的会话遥测——运行时长、各后端成功/失败次数、最近调用时间、活动中的 429 冷却、会话搜索/抓取计数；载荷仅含计数器（不含凭证、URL、查询文本），路由未注册（CLI/headless 场景）时标签页显式显示不可用状态并给出重试，而非空白
 - **Web 端首装连接探测**：Health 标签页的连接状态区探测 Exa（带 key REST 或无 key MCP）与 Firecrawl（带 key 或无 key）——首次打开标签页且无已存结果时自动探测一次，"立即测试"可随时重测——每个后端显示封闭状态码（正常 / 限流 (429) / 认证被拒绝 / 超时 / 网络错误 / 请求失败 / 未启用）与耗时。宿主仅在 `POST /web-search-ext/probe` 按需探测，apply 时不探测，因此安装、宿主重启与 CI 全程不产生供应商调用；载荷只含计划字面量与封闭状态码（不含供应商消息、URL、密钥）
@@ -51,11 +51,11 @@ dsh plugin --profile web add ./path/to/dsh-web-search-ext
 
 bundle patch 通过设置 `web.searchProvider: web-search-ext` 让本插件接管内置 `web_search` 工具，并设置 `web.fetchProvider: web-search-ext` 接管 `web_fetch`。官方 `deepseek-official` 提供方保持注册但不使用；显式选择同时避免了 `WEB_PROVIDER_AMBIGUOUS`。
 
-插件还会让模型侧的 `web_fetch` 工具开箱即用。该工具正常情况下由 agent-preset 层（`tool-web`）注册，但所有出厂 preset 中该行都是 `fetch: false`，且 `dsh web` profile 还会禁用 profile 层的 `tool-web` 行——因此没有任何出厂组合路径会注册 `web_fetch`，即使 fetch provider 已装好，模型调用也会报 `unknown tool "web_fetch"`。本插件在 apply 阶段补齐这一缺口：当 `web_fetch` 尚未注册时，复用 `@deepseek-ai/dsh-tool-web` 自己的 `applyWebFetchTool` 注册出厂工具（schema、提示词、呈现与 harness 完全一致）。工具的执行路径走 `ctx.web.fetch`——即 pin 到本插件的 web 缝——其抓取路径有 fail-closed 的 SSRF 检查（仅允许公共 http(s) 目标，这正是 base 禁用该工具的原因）。若某个 preset 启用了 `tool-web.fetch`，它注册的 agent 层工具优先于本插件的注册；若工具已存在，本插件的注册步骤自动跳过。要彻底关闭 `web_fetch`，卸载本插件即可。
+插件还会让模型侧的 `web_fetch` 工具开箱即用。该工具正常情况下由 agent-preset 层（`tool-web`）注册；0.2 之前的出厂 preset 中该行是 `fetch: false`，且 `dsh web` profile 仍会禁用 profile 层的 `tool-web` 行——因此某些组合下不会有任何路径注册 `web_fetch`，即使 fetch provider 已装好，模型调用也会报 `unknown tool "web_fetch"`。本插件在 apply 阶段补齐这一缺口：当 `web_fetch` 尚未注册时，复用 `@deepseek-ai/dsh-tool-web` 自己的 `applyWebFetchTool` 注册出厂工具（schema、提示词、呈现与 harness 完全一致）。工具的执行路径走 `ctx.web.fetch`——即 pin 到本插件的 web 缝——其抓取路径有 fail-closed 的 SSRF 检查（仅允许公共 http(s) 目标，这正是 base 禁用该工具的原因）。若某个 preset 启用了 `tool-web.fetch`，它注册的 agent 层工具优先于本插件的注册；若工具已存在，本插件的注册步骤自动跳过。要彻底关闭 `web_fetch`，卸载本插件即可。
 
 ## 配置
 
-设置命名空间 `web-search-ext`，位于 `~/.dsh/settings.yaml`（热加载）：
+配置位于当前 profile 的 patch 文件中本插件的行：`$DSH_HOME/profiles/<profile>/cordis.patch.yml`（可直接编辑，或使用设置卡片）。该行热加载：插件每次调用都读取其 volatile 字段。
 
 | 字段 | 默认值 | 说明 |
 |---|---|---|
@@ -78,10 +78,12 @@ bundle patch 通过设置 `web.searchProvider: web-search-ext` 让本插件接�
 | `fetchMaxChars` | `50000` | `web_fetch` 输出字符上限 |
 
 ```yaml
-web-search-ext:
-  preferred: exa
-  numResults: 8
-  # rateLimitCooldownSec: 60   # 其余均为默认值
+- id: web-search-ext
+  name: '@fno2010/dsh-web-search-ext'
+  config:
+    preferred: exa
+    numResults: 8
+    # rateLimitCooldownSec: 60   # 其余均为默认值
 ```
 
 也可以不用 bundle patch，用环境变量选择本插件：`DSH_WEB_SEARCH_PROVIDER=web-search-ext`。
@@ -90,11 +92,11 @@ web-search-ext:
 
 每个后端按以下优先级解析 key：
 
-1. 设置段里的明文 key（`exaApiKey` / `firecrawlApiKey`）
+1. 插件配置行里的明文 key（`exaApiKey` / `firecrawlApiKey`）
 2. 凭证服务：`~/.dsh/.credentials.yaml`（或 `.env` 文件）中的 `EXA_API_KEY` / `FIRECRAWL_API_KEY` 条目
 3. 同名的启动环境变量
 
-**设置界面（Web）**：本插件在 **设置 → 插件 → 插件配置** 中有卡片，可编辑六个配置字段（含校验层级）和两个 API key。key 状态自动发现自上述各层——`~/.dsh/.credentials.yaml` 变更时"已配置/未配置"徽章实时更新；由 live 进程环境变量提供的 key 渲染为只读，因为宿主会拒绝会被环境变量值遮蔽的 UI 写入。（"模型"页面只管理 LLM 提供方凭证。）
+**设置界面（Web）**：本插件在 **设置 → 插件 → Web Search (ext)** 标签页中有卡片，可编辑六个配置字段（含校验层级）和两个 API key；写入会持久化到 profile patch 的本插件行。key 状态自动发现自上述各层——`~/.dsh/.credentials.yaml` 变更时"已配置/未配置"徽章实时更新；由 live 进程环境变量提供的 key 渲染为只读，因为宿主会拒绝会被环境变量值遮蔽的 UI 写入。（"模型"页面只管理 LLM 提供方凭证。）
 
 一个 key 都没有也能工作：Exa 走匿名 MCP 端点，Firecrawl 以无 key 方式尝试。
 

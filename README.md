@@ -24,7 +24,7 @@ The built-in `web_search` tool is backend-pluggable; the in-box default provider
 - **Provenance receipt**: `web_search` results carry a one-line receipt (`web-search-ext: <backend> · <elapsed>s · <n> results · liveness: …`), naming the backend that actually served the result and surfacing limitations (e.g. keyless Exa cannot honor a freshness window) instead of hiding them
 - **Freshness window**: `freshness: 24h | 7d | 30d` is sent on the wire where the backend supports it (Exa `startPublishedDate`, Firecrawl `tbs`); the keyless Exa MCP path says so in the receipt
 - **Optional keys** with per-backend precedence: settings literal → credentials service → launch environment variable
-- **Settings card on the Web**: Settings → Plugins → Plugin configuration exposes the six core config fields — including the verification tier (`off` / `liveness` / `content`, hot-applied from the next search onward) — and both API keys, with key state auto-discovered from the credentials layers (the freshness window remains `settings.yaml`-only)
+- **Settings card on the Web**: Settings → Plugins → the **Web Search (ext)** tab exposes the six core config fields — including the verification tier (`off` / `liveness` / `content`, hot-applied from the next search onward) — and both API keys, with key state auto-discovered from the credentials layers (the freshness window remains config-file-only)
 - **`web_search` toolview card on the Web**: the `web_search` row in a conversation takes over the host's built-in web card and adds the provenance receipt line, tone-coded per-source verification badges (`alive`, `verified`, `dead 404`, …), the truncation notice, a per-result drill-down (click a source to see its serving backend, freshness, and verification state), and an in-flight indicator while a search is running (sweep animation + a client-ticked elapsed label — the host ships no in-flight progress channel, so neither the phase nor the serving backend is claimed until the result settles); when the web seam is not pinned to this provider it degrades gracefully (no receipt line claimed, no badges invented, no backend claimed) instead of mislabeling someone else's results
 - **Session Health tab on the Web**: the settings card's Health tab shows session telemetry served at the host's `GET /web-search-ext/health` route — uptime, per-backend success/failure counts, last-call timing, active 429 cooldowns, and session search/fetch counts; the payload is counters only (no credentials, URLs, or query text), and the tab shows an explicit unavailable state with a retry when the route is not mounted (CLI/headless profiles)
 - **First-install connectivity probe on the Web**: the Health tab's Connectivity section probes Exa (keyed REST or anonymous MCP) and Firecrawl (keyed or keyless) — automatically once when the tab first opens with no stored result, and at will via "Test now" — and shows each backend's outcome as a closed code (OK / rate limited / auth rejected / timed out / network error / request failed / not enabled) with its latency. The host runs the probe on demand at `POST /web-search-ext/probe` and never at apply time, so installs, host restarts, and CI make zero vendor calls; the payload carries plan literals and closed codes only (no vendor messages, URLs, or keys)
@@ -51,11 +51,11 @@ Installing a plugin requires restarting the running `dsh web` process (the profi
 
 The bundle patch selects this provider for the `web_search` tool (`web.searchProvider: web-search-ext`) and for `web_fetch` (`web.fetchProvider: web-search-ext`). The official `deepseek-official` provider stays registered but unused; the explicit selection also prevents `WEB_PROVIDER_AMBIGUOUS`.
 
-The plugin also makes the model-facing `web_fetch` tool available out of the box. The stock tool is normally registered by the agent-preset layer (`tool-web`), but every shipped preset ships that row with `fetch: false`, and the `dsh web` profile additionally disables the profile-layer `tool-web` row — so no stock composition registers `web_fetch`, and the model gets `unknown tool "web_fetch"` even with a working fetch provider installed. This plugin closes the gap at apply time: when `web_fetch` is not already registered, it registers the stock tool by reusing `@deepseek-ai/dsh-tool-web`'s own `applyWebFetchTool` (same schema, prompt, and presentation as the harness). The tool's execution routes through `ctx.web.fetch` — the seam pinned to this provider — whose fetch path is guarded by a fail-closed SSRF check (public http(s) targets only; the base's reason for disabling the tool). A preset that enables `tool-web.fetch` registers its own agent-scoped tool, which takes precedence; if the tool is already registered, this plugin's step is a no-op. To keep `web_fetch` off entirely, uninstall the plugin.
+The plugin also makes the model-facing `web_fetch` tool available out of the box. The stock tool is normally registered by the agent-preset layer (`tool-web`); harness lines before 0.2 shipped that row with `fetch: false`, and the `dsh web` profile still disables the profile-layer `tool-web` row — so a composition can end up with no `web_fetch` at all, leaving the model with `unknown tool "web_fetch"` even with a working fetch provider installed. This plugin closes the gap at apply time: when `web_fetch` is not already registered, it registers the stock tool by reusing `@deepseek-ai/dsh-tool-web`'s own `applyWebFetchTool` (same schema, prompt, and presentation as the harness). The tool's execution routes through `ctx.web.fetch` — the seam pinned to this provider — whose fetch path is guarded by a fail-closed SSRF check (public http(s) targets only; the base's reason for disabling the tool). A preset that enables `tool-web.fetch` registers its own agent-scoped tool, which takes precedence; if the tool is already registered, this plugin's step is a no-op. To keep `web_fetch` off entirely, uninstall the plugin.
 
 ## Configuration
 
-Settings namespace `web-search-ext` in `~/.dsh/settings.yaml` (hot-reloaded):
+Config lives in this plugin's row in the active profile patch, `$DSH_HOME/profiles/<profile>/cordis.patch.yml` (edit it directly, or use the settings card). The row is hot-reloaded: the plugin reads its volatile fields on every call.
 
 | Field | Default | Description |
 |---|---|---|
@@ -78,10 +78,12 @@ Settings namespace `web-search-ext` in `~/.dsh/settings.yaml` (hot-reloaded):
 | `fetchMaxChars` | `50000` | Character cap for `web_fetch` provider output |
 
 ```yaml
-web-search-ext:
-  preferred: exa
-  numResults: 8
-  # rateLimitCooldownSec: 60   # all other values are defaults
+- id: web-search-ext
+  name: '@fno2010/dsh-web-search-ext'
+  config:
+    preferred: exa
+    numResults: 8
+    # rateLimitCooldownSec: 60   # all other values are defaults
 ```
 
 Or select this provider without the bundle patch: `DSH_WEB_SEARCH_PROVIDER=web-search-ext`.
@@ -90,11 +92,11 @@ Or select this provider without the bundle patch: `DSH_WEB_SEARCH_PROVIDER=web-s
 
 Any of these, in order of precedence per backend:
 
-1. Literal key in the settings section (`exaApiKey` / `firecrawlApiKey`)
+1. Literal key in the plugin's config row (`exaApiKey` / `firecrawlApiKey`)
 2. Credentials service: the `EXA_API_KEY` / `FIRECRAWL_API_KEY` entries in `~/.dsh/.credentials.yaml` (or a `.env` file)
 3. Launch environment variable of the same name
 
-**Settings UI (Web)**: this plugin has a card on **Settings → Plugins → Plugin configuration** that edits the six config fields (including the verification tier) and both API keys. Key state is auto-discovered from the layers above — the configured/not-configured badges update live when `~/.dsh/.credentials.yaml` changes — and a key supplied by the live process environment is rendered read-only, because the host rejects UI writes that an environment value would shadow. (The "Models" page manages LLM provider credentials only.)
+**Settings UI (Web)**: this plugin has a **Web Search (ext)** tab on **Settings → Plugins** that edits the six config fields (including the verification tier) and both API keys; writes persist to the profile patch row. Key state is auto-discovered from the layers above — the configured/not-configured badges update live when `~/.dsh/.credentials.yaml` changes — and a key supplied by the live process environment is rendered read-only, because the host rejects UI writes that an environment value would shadow. (The "Models" page manages LLM provider credentials only.)
 
 No keys at all still works: Exa uses its anonymous MCP endpoint and Firecrawl is tried keyless.
 

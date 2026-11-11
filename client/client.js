@@ -1454,7 +1454,7 @@ function apply(ctx) {
 		};
 		const contribution = {
 			name: COMMAND_PRIMARY,
-			description: t("cmd.description"),
+			description: () => t("cmd.description"),
 			available: () => true,
 			ui: {
 				kind: "popupSelect",
@@ -3008,7 +3008,7 @@ function apply(ctx) {
 		};
 		const contribution = {
 			name: COMMAND_PRIMARY,
-			description: t("cmd.description"),
+			description: () => t("cmd.description"),
 			available: () => true,
 			ui: {
 				kind: "popupSelect",

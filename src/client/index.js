@@ -638,7 +638,10 @@ function apply(ctx) {
     };
     const contribution = {
       name: COMMAND_PRIMARY,
-      description: t("cmd.description"),
+      // DSH's CommandContribution reads label/description as getters on every
+      // candidate pass; a plain string throws inside the '/' command source and
+      // drops the whole Commands section for the session.
+      description: () => t("cmd.description"),
       available: () => true,
       ui: {
         kind: "popupSelect",
